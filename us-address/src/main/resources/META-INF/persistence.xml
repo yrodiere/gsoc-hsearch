@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.1" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+  <!--
+      Transaction type
+      * JTA: In Java EE environment, transactions are managed by the container
+        and by default its JTA transaction. You can get entity manager by
+        lookup or injection.
+      * RESOURCE_LOCAL: In Java SE, application have to manage transactions
+        explicitly and resource local transactions are native transactions. You
+        have to create EntityManagerFactory and then can create entity manager
+        from it.
+   -->
+  <persistence-unit name="us-address" transaction-type="JTA">
+    <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+    <jta-data-source>java:/MySqlDS-addresses</jta-data-source>
+    <class>io.github.mincongh.entity.Address</class>
+    <class>io.github.mincongh.entity.AddressPK</class>
+    <properties>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
+      <property name="hibernate.show_sql" value="true" />
+      <property name="hibernate.format_sql" value="true" />
+    </properties>
+  </persistence-unit>
+</persistence>
