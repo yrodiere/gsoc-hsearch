@@ -2,6 +2,7 @@ package io.github.mincongh.session;
 
 import java.util.List;
 
+import javax.ejb.Asynchronous;
 import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -34,22 +35,17 @@ public class AddressSession {
 
     @SuppressWarnings("unchecked")
     public List<Address> getAddresses() {
-        List<Address> addresses = null;
-        if (entityManager == null)  {
-            logger.warn("entityManager is NULL");
-            return null;
-        }
-        addresses = entityManager
+        return entityManager
                 .createQuery("SELECT a FROM Address a WHERE a.type = :type")
                 .setParameter("type", "Rd")
                 .setMaxResults(1000)
                 .getResultList();
-        if (addresses.isEmpty()) {
-            logger.warn("No result found.");
-        }
-        return addresses;
     }
     
+    // @Asynchronous Used to mark a session bean method as an asynchronous 
+    //     method or to designate all business methods of a session bean class 
+    //     as asynchronous.
+    @Asynchronous
     public void index() throws InterruptedException {
         fullTextEntityManager = Search.getFullTextEntityManager(entityManager);
         fullTextEntityManager

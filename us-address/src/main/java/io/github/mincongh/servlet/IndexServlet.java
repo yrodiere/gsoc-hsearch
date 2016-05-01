@@ -25,10 +25,9 @@ public class IndexServlet extends HttpServlet {
     
     @EJB
     private AddressSession addressSession;
-    
+
     protected void service(HttpServletRequest request,
             HttpServletResponse response) {
-        
         try {
             addressSession.index();
         } catch (InterruptedException e) {
