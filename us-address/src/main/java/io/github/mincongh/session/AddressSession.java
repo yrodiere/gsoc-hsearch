@@ -36,10 +36,10 @@ public class AddressSession {
     @SuppressWarnings("unchecked")
     public List<Address> getAddresses() {
         return entityManager
-                .createQuery("SELECT a FROM Address a WHERE a.type = :type")
-                .setParameter("type", "Rd")
-                .setMaxResults(1000)
-                .getResultList();
+            .createQuery("SELECT a FROM Address a WHERE a.type = :type")
+            .setParameter("type", "Rd")
+            .setMaxResults(1000)
+            .getResultList();
     }
     
     // @Asynchronous Used to mark a session bean method as an asynchronous 
@@ -49,11 +49,26 @@ public class AddressSession {
     public void index() throws InterruptedException {
         fullTextEntityManager = Search.getFullTextEntityManager(entityManager);
         fullTextEntityManager
-                .createIndexer(Address.class)
-                .batchSizeToLoadObjects(10000)
-                .cacheMode(CacheMode.NORMAL)
-                .threadsToLoadObjects(4)        // 4 threads
-                .transactionTimeout(3600)       // 3600 seconds
-                .startAndWait();
+            // Delete existing index and rebuild, for all Address instances
+            .createIndexer(Address.class)
+            // Batch of 10000 objects per query
+            .batchSizeToLoadObjects(10000)
+            // CacheMode.IGNORE:
+            // The session will never interact with the cache, except to 
+            // invalidate cache items when updates occur
+            .cacheMode(CacheMode.IGNORE)
+            // 4 parallel threads to load the Address instances
+            // They will also need to process indexed embedded relations and
+            // custom FieldBridges to finally output a Lucene document
+            .threadsToLoadObjects(4)
+            // Time out in 3600 seconds for its transactions
+            // these transactions are read-only
+            .transactionTimeout(3600)
+            // The MassIndexer uses a forward-only scrollable result to iterate
+            // on the primary keys to be loaded, but MySQL’s JDBC driver will
+            // load all values in memory. To avoid this "optimization", set 
+            // idFetchSize to Integer.MIN_VALUE.
+            .idFetchSize(Integer.MIN_VALUE)
+            .startAndWait();
     }
 }
