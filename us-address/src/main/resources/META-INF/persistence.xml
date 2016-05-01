@@ -14,11 +14,11 @@
     <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
     <jta-data-source>java:/MySqlDS-addresses</jta-data-source>
     <class>io.github.mincongh.entity.Address</class>
-    <class>io.github.mincongh.entity.AddressPK</class>
+    <!-- <class>io.github.mincongh.entity.AddressPK</class> -->
     <properties>
       <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
-      <property name="hibernate.show_sql" value="true" />
-      <property name="hibernate.format_sql" value="true" />
+      <property name="hibernate.show_sql" value="false" />
+      <property name="hibernate.format_sql" value="false" />
     </properties>
   </persistence-unit>
 </persistence>

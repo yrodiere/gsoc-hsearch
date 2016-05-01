@@ -1,25 +1,53 @@
 package io.github.mincongh.entity;
 
 import java.io.Serializable;
+
 import javax.persistence.*;
+
+import org.hibernate.search.annotations.DocumentId;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
 
 
 /**
- * The persistent class for the Address database table.
+ * The persistent class for the address database table.
  * 
+ * @author Mincong HUANG
  */
 @Entity
+@Indexed
 @NamedQuery(name="Address.findAll", query="SELECT a FROM Address a")
+@Table(uniqueConstraints={@UniqueConstraint(columnNames={"id", "seq"})})
 public class Address implements Serializable {
+    
 	private static final long serialVersionUID = 1L;
 
-	@EmbeddedId
-	private AddressPK id;
-
+	// @Id defines the PRIMARY KEY of this entity, used by JPA 2.1.
+	// @DocumentId is the id property used by Hibernate Search to ensure index
+	//     unicity of a given entity. If @Id is used, this annotation can
+	//     be omitted, but it is not the case in our application. Used for
+	//     Hibernate Search.
+	// @GeneratedValue(strategy=GenerationType.IDENTITY) means this is an
+	//     AUTO_INCREMENT column in MySQL database.
+	@Id
+    @Column(name="address_id")
+	@DocumentId
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private int addressId;
+	
+	@Column(columnDefinition="char(10)")
+	private String id;
+	
+	@Column(columnDefinition="char(3)")
+	private String seq;
+	
 	private float endlat;
 
 	private float endlong;
 
+	// @Column(columnDefinition="char(11)") maps a column of type CHAR(11)
+	//     else, there will be an HibernateException : Wrong column type ... 
+	//     Found: char, expected: varchar(255)
 	@Column(columnDefinition="char(11)")
 	private String leftaddr1;
 
@@ -29,6 +57,7 @@ public class Address implements Serializable {
 	private int leftzip;
 
 	@Column(columnDefinition="char(30)")
+	@Field
 	private String name;
 
 	@Column(name="name_dtmf", columnDefinition="char(30)")
@@ -61,14 +90,14 @@ public class Address implements Serializable {
 	public Address() {
 	}
 
-	public AddressPK getId() {
-		return this.id;
+	public int getAddressId() {
+	    return this.addressId;
 	}
-
-	public void setId(AddressPK id) {
-		this.id = id;
+	
+	public void setAddressId(int addressId) {
+	    this.addressId = addressId;
 	}
-
+	
 	public float getEndlat() {
 		return this.endlat;
 	}
@@ -83,6 +112,14 @@ public class Address implements Serializable {
 
 	public void setEndlong(float endlong) {
 		this.endlong = endlong;
+	}
+	
+	public String getId() {
+	    return this.id;
+	}
+	
+	public void setId(String id) {
+	    this.id = id;
 	}
 
 	public String getLeftaddr1() {
@@ -164,7 +201,15 @@ public class Address implements Serializable {
 	public void setRightzip(int rightzip) {
 		this.rightzip = rightzip;
 	}
+	
+	public void setSeq(String seq) {
+	    this.seq = seq;
+	}
 
+	public String getSeq() {
+	    return this.seq;
+	}
+	
 	public float getStartlat() {
 		return this.startlat;
 	}
@@ -199,13 +244,14 @@ public class Address implements Serializable {
 
     @Override
     public String toString() {
-        return "Address [id=" + id + ", endlat=" + endlat + ", endlong="
-                + endlong + ", leftaddr1=" + leftaddr1 + ", leftaddr2="
-                + leftaddr2 + ", leftzip=" + leftzip + ", name=" + name
-                + ", nameDtmf=" + nameDtmf + ", prefix=" + prefix
-                + ", prefixDtmf=" + prefixDtmf + ", rightaddr1=" + rightaddr1
-                + ", rightaddr2=" + rightaddr2 + ", rightzip=" + rightzip
-                + ", startlat=" + startlat + ", startlong=" + startlong
-                + ", type=" + type + ", typeDtmf=" + typeDtmf + "]";
+        return "Address [addressId=" + addressId + ", id=" + id + ", seq=" + seq
+                + ", endlat=" + endlat + ", endlong=" + endlong + ", leftaddr1="
+                + leftaddr1 + ", leftaddr2=" + leftaddr2 + ", leftzip="
+                + leftzip + ", name=" + name + ", nameDtmf=" + nameDtmf
+                + ", prefix=" + prefix + ", prefixDtmf=" + prefixDtmf
+                + ", rightaddr1=" + rightaddr1 + ", rightaddr2=" + rightaddr2
+                + ", rightzip=" + rightzip + ", startlat=" + startlat
+                + ", startlong=" + startlong + ", type=" + type + ", typeDtmf="
+                + typeDtmf + "]";
     }
 }
