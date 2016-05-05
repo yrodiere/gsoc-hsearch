@@ -22,6 +22,10 @@ import io.github.mincongh.entity.Address;
 @Stateful
 public class SearchSession {
     
+    public static final String KEYWORD = "keyword";
+    public static final String FUZZY = "fuzzy";
+    public static final String WILDCARD = "wildcard";
+    
     // This particular EntityManager is injected as an EXTENDED persistence
     // context, which simply means that the EntityManager is created when the
     // @Stateful bean is created and destroyed when the @Stateful bean is
@@ -45,7 +49,7 @@ public class SearchSession {
     }
     
     @SuppressWarnings("unchecked")
-    public List<Address> search(String searchString) {
+    public List<Address> search(String queryType, String searchString) {
         
         // get hiberante search full-text entity manager via 
         // the javax persistence entity manager
@@ -59,15 +63,8 @@ public class SearchSession {
                 .get();
         
         // get a lucuene search query via query builder
-        org.apache.lucene.search.Query luceneQuery = queryBuilder
-                // keyword query
-                .keyword()
-                // this search will be applied to the following fields
-                .onFields("name", "type")
-                // put the searchString into the matching criteria
-                .matching(searchString)
-                // create
-                .createQuery();
+        org.apache.lucene.search.Query luceneQuery = 
+                buildQuery(queryBuilder, queryType, searchString);
         
         // then cast the lucene search query into JPA query
         javax.persistence.Query jpaQuery = fullTextEntityManager
@@ -76,5 +73,65 @@ public class SearchSession {
         
         // get the results
         return jpaQuery.getResultList();
+    }
+    
+    /**
+     * Use different type of query.
+     * 
+     * @param builder query builder
+     * @param queryType the type of query. For instant, "fuzzy", "keyword" 
+     *        and "wildcard" queries are supported. Default value is "keyword"
+     *        query.
+     * @param searchString the search string given by the user.
+     * @return the converted lucene query
+     */
+    private org.apache.lucene.search.Query buildQuery(QueryBuilder builder, 
+            String queryType, String searchString) {
+        org.apache.lucene.search.Query query;
+        // prevent null case
+        if (queryType == null) {
+            queryType = "";
+        }
+        
+        switch (queryType) {
+            
+            // With a fuzzy search, keywords match against fields even when
+            // they are off by one or more characters. The number of off-char
+            // is called "Edit Distance".
+            case SearchSession.FUZZY :
+                query = builder
+                        .keyword()
+                        .fuzzy()
+                        .onFields("name", "type")
+                        .matching(searchString)
+                        .createQuery();
+                break;
+            
+            // Lucene supports single and multiple character wildcard searches 
+            // within single terms (not within phrase queries). 
+            // To perform a single character wildcard search, use the "?" symbol
+            // To perform a multiple character wildcard search, use the "*"
+            // symbol
+            case SearchSession.WILDCARD :
+                query = builder
+                        .keyword()
+                        .wildcard()
+                        .onFields("name", "type")
+                        .matching(searchString)
+                        .createQuery();
+                break;
+            
+            // The most basic form of search. As the name suggests, this query
+            // type searches for one or more particular words.
+            case SearchSession.KEYWORD :
+            default:
+                query = builder
+                        .keyword()
+                        .onFields("name", "type")
+                        .matching(searchString)
+                        .createQuery();
+                break;
+        }
+        return query;
     }
 }

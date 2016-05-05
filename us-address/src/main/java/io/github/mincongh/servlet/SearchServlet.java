@@ -29,7 +29,8 @@ public class SearchServlet extends HttpServlet {
             HttpServletResponse response) throws ServletException, IOException {
         
         String searchString = request.getParameter("q");
-        List<Address> addresses = searchSession.search(searchString);
+        String queryType = request.getParameter("type");
+        List<Address> addresses = searchSession.search(queryType, searchString);
         if (addresses != null) {
             logger.info(addresses.size() + " rows found.");
             for (Address a : addresses) {
