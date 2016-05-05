@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.jboss.logging.Logger;
 
-import io.github.mincongh.session.AddressSession;
+import io.github.mincongh.session.IndexSession;
 
 /**
  * Index entities for Hibernate Search
@@ -24,12 +24,12 @@ public class IndexServlet extends HttpServlet {
     private Logger logger = Logger.getLogger(this.getClass());
     
     @EJB
-    private AddressSession addressSession;
+    private IndexSession indexSession;
 
     protected void service(HttpServletRequest request,
             HttpServletResponse response) {
         try {
-            addressSession.index();
+            indexSession.index();
         } catch (InterruptedException e) {
             logger.error(e);
         }

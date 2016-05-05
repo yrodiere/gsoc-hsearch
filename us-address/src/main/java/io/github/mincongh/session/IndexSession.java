@@ -11,12 +11,18 @@ import javax.persistence.PersistenceContextType;
 import org.hibernate.CacheMode;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
-import org.jboss.logging.Logger;
 
 import io.github.mincongh.entity.Address;
 
+/**
+ * Index Session bean is used for indexing all entities in the databases for
+ * hibernate search. This session bean is run in an asynchronous way, which
+ * guarantee the main thread is not crashed. 
+ * 
+ * @author Mincong HUANG
+ */
 @Stateful
-public class AddressSession {
+public class IndexSession {
     
     // This particular EntityManager is injected as an EXTENDED persistence
     // context, which simply means that the EntityManager is created when the
@@ -26,11 +32,9 @@ public class AddressSession {
     @PersistenceContext(unitName = "us-address", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
     
-    private Logger logger = Logger.getLogger(this.getClass());
-    
     private FullTextEntityManager fullTextEntityManager;
     
-    public AddressSession() {
+    public IndexSession() {
     }
 
     @SuppressWarnings("unchecked")
@@ -69,6 +73,7 @@ public class AddressSession {
             // load all values in memory. To avoid this "optimization", set 
             // idFetchSize to Integer.MIN_VALUE.
             .idFetchSize(Integer.MIN_VALUE)
-            .startAndWait();
+            // run in asynchronous way
+            .start();
     }
 }

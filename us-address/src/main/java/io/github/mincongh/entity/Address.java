@@ -82,6 +82,7 @@ public class Address implements Serializable {
 	private float startlong;
 
 	@Column(columnDefinition="char(4)")
+	@Field
 	private String type;
 
 	@Column(name="type_dtmf", columnDefinition="char(4)")
