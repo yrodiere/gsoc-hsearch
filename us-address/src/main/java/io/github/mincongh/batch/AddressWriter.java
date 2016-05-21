@@ -6,7 +6,7 @@ import java.util.List;
 import javax.batch.api.chunk.ItemWriter;
 import javax.inject.Named;
 
-import io.github.mincongh.entity.Address;
+import org.hibernate.search.backend.AddLuceneWork;
 
 @Named
 public class AddressWriter implements ItemWriter {
@@ -27,11 +27,21 @@ public class AddressWriter implements ItemWriter {
         // TODO Auto-generated method stub
     }
 
+    /**
+     * Write items to destination :
+     * TODO: add more description here
+     * For instance, they do nothing but print to the console.
+     * 
+     * @param items items to write. This is a list of AddLuceneWorks processed
+     *         previously by the AddressProcessor.
+     */
     @Override
     public void writeItems(List<Object> items) throws Exception {
+        System.out.println("----------wirteItems(List<Object>) start----------");
         for (Object item: items) {
-            System.out.printf("%d,", ((Address) item).getAddressId());
+//          System.out.printf("%d,", ((Address) item).getAddressId());
+            System.out.println((AddLuceneWork) item);
         }
-        System.out.printf("%n");
+        System.out.println("----------wirteItems(List<Object>) end----------");
     }
 }

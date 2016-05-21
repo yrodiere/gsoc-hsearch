@@ -6,6 +6,9 @@ import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.JobExecution;
 import javax.ejb.Asynchronous;
 import javax.ejb.Stateful;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceContextType;
 
 /**
  * Session bean for different batch processes.
@@ -15,7 +18,16 @@ import javax.ejb.Stateful;
 @Stateful
 public class BatchSession {
 
+    // Job operator is used to control different batch jobs
     private JobOperator jobOperator;
+    
+    // This particular EntityManager is injected as an EXTENDED persistence
+    // context, which simply means that the EntityManager is created when the
+    // @Stateful bean is created and destroyed when the @Stateful bean is
+    // destroyed. Simply put, the data in the EntityManager is cached for the
+    // lifetime of the @Stateful bean
+    @PersistenceContext(unitName = "us-address", type = PersistenceContextType.EXTENDED)
+    private EntityManager entityManager;
     
     public BatchSession() {
         this.jobOperator = BatchRuntime.getJobOperator();

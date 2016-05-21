@@ -12,6 +12,8 @@ import javax.persistence.PersistenceContext;
 import io.github.mincongh.entity.Address;
 
 /**
+ * The item reader, which reads entities from Hibernate session and more
+ * TODO: add more explicit explanations
  * 
  * @author Mincong HUANG
  */
