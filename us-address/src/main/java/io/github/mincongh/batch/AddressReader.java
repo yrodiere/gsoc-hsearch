@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.batch.api.chunk.ItemReader;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -32,6 +33,7 @@ import io.github.mincongh.entity.Address;
  * @author Mincong HUANG
  */
 @Named
+@Singleton
 public class AddressReader implements ItemReader {
 
     // Entity manager is used for fetching entities from persistence context.
@@ -178,5 +180,13 @@ public class AddressReader implements ItemReader {
     @Override
     public Object readItem() throws Exception {
         return iterator.hasNext() ? iterator.next() : null;
+    }
+    
+    /**
+     * Getter for EntityIndexBinding
+     */
+    // TODO: should have better way to do this
+    public EntityIndexBinding getEntityIndexBinding() {
+        return entityIndexBinding;
     }
 }

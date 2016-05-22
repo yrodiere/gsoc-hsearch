@@ -20,6 +20,7 @@ public class AddressWriter implements ItemWriter {
     @Override
     public void close() throws Exception {
         // TODO Auto-generated method stub
+        // TODO: shutdown executor
     }
 
     @Override
