@@ -33,6 +33,14 @@ public class BatchSession {
         this.jobOperator = BatchRuntime.getJobOperator();
     }
     
+    /**
+     * Load Address entity's ids and print them in the console. 
+     */
+    @Asynchronous
+    public void printId() {
+       jobOperator.start("print-address-id", null);
+    }
+    
     @Asynchronous
     public void printAddressesTop1000() throws InterruptedException {
         long executionId = jobOperator.start("print-addresses-job", null);

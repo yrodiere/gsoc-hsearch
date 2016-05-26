@@ -18,10 +18,13 @@ public class BatchServlet extends HttpServlet {
     
     protected void service(HttpServletRequest request,
             HttpServletResponse response) {
-        try {
-            batchSession.printAddressesTop1000();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        
+        System.out.println("batchSession#printId() called");
+        batchSession.printId();
+//      try {
+//          batchSession.printAddressesTop1000();
+//      } catch (InterruptedException e) {
+//          e.printStackTrace();
+//      }
     }
 }
