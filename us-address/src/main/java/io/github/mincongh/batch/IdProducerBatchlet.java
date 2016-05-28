@@ -4,7 +4,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.batch.api.BatchProperty;
 import javax.batch.api.Batchlet;
+import javax.batch.runtime.BatchStatus;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -25,9 +28,17 @@ import io.github.mincongh.entity.Address;
 @Named
 public class IdProducerBatchlet implements Batchlet {
 
-    private final int BATCH_SIZE = 500;
-    private final int FETCH_SIZE = 1000;
-    private final int MAX_RESULTS = 100 * 1000 * 1000;
+    @Inject
+    @BatchProperty
+    private int listCapacity;
+    
+    @Inject
+    @BatchProperty
+    private int fetchSize;
+    
+    @Inject
+    @BatchProperty
+    private int maxResults;
     
     @PersistenceContext(unitName = "us-address")
     private EntityManager em;
@@ -56,23 +67,23 @@ public class IdProducerBatchlet implements Batchlet {
         ScrollableResults scrollableIds = session
             .createCriteria(Address.class)
             .setCacheable(false)
-            .setFetchSize(FETCH_SIZE)
+            .setFetchSize(fetchSize)
             .setProjection(Projections.id())
-            .setMaxResults(MAX_RESULTS)
+            .setMaxResults(maxResults)
             .scroll(ScrollMode.FORWARD_ONLY);
         
-        List<Serializable> ids = new ArrayList<>(BATCH_SIZE);
+        List<Serializable> ids = new ArrayList<>(listCapacity);
         long count = 0;
         try {
             while (scrollableIds.next()) {
                 Serializable id = (Serializable) scrollableIds.get(0);
                 ids.add(id);
-                if (ids.size() == BATCH_SIZE) {
+                if (ids.size() == listCapacity) {
                     for (Serializable i : ids) {
                         System.out.printf("%d ", i);
                     }
                     System.out.printf("%n");
-                    ids = new ArrayList<>(BATCH_SIZE);
+                    ids = new ArrayList<>(listCapacity);
                 }
                 count++;
                 if (count == totalCount) {
@@ -82,9 +93,9 @@ public class IdProducerBatchlet implements Batchlet {
         } finally {
             scrollableIds.close();
         }
-        return null;
+        return BatchStatus.COMPLETED.toString();
     }
-
+    
     @Override
     public void stop() throws Exception {
         if (session.isOpen()) {

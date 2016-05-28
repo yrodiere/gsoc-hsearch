@@ -1,5 +1,7 @@
 package io.github.mincongh.session;
 
+import java.util.Properties;
+
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
@@ -38,7 +40,10 @@ public class BatchSession {
      */
     @Asynchronous
     public void printId() {
-       jobOperator.start("print-address-id", null);
+        Properties jobParams = new Properties();
+        jobParams.setProperty("fetchSize", "10000");
+        jobParams.setProperty("listCapacity", "5000");
+        jobOperator.start("print-address-id", jobParams);
     }
     
     @Asynchronous
