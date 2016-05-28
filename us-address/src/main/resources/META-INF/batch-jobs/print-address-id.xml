@@ -3,7 +3,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd"
     version="1.0">
-  <step id="idProduction">
+  <step id="produceId" next="readId">
     <batchlet ref="idProducerBatchlet">
       <properties>
       
@@ -30,5 +30,8 @@
         
       </properties>
     </batchlet>
+  </step>
+  <step id="readId">
+    <batchlet ref="idReaderBatchlet"/>
   </step>
 </job>

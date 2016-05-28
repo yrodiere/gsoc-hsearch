@@ -43,6 +43,7 @@ public class BatchSession {
         Properties jobParams = new Properties();
         jobParams.setProperty("fetchSize", "10000");
         jobParams.setProperty("arrayCapacity", "5000");
+        jobParams.setProperty("maxResults", "10000");
         jobOperator.start("print-address-id", jobParams);
     }
     

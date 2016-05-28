@@ -38,6 +38,9 @@ public class IdProducerBatchlet implements Batchlet {
     @BatchProperty
     private int maxResults;
     
+    @Inject
+    private IdProductionContext idProductionContext;
+    
     @PersistenceContext(unitName = "us-address")
     private EntityManager em;
     private Session session;
@@ -82,6 +85,10 @@ public class IdProducerBatchlet implements Batchlet {
                         System.out.printf("%d ", _id);
                     }
                     System.out.printf("%n");
+                    
+                    // TODO: check the below line
+                    idProductionContext.add(ids);
+                    
                     ids = new Serializable[arrayCapacity];
                     i = 0;
                 }
