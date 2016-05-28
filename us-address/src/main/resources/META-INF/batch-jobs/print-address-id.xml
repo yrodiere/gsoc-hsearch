@@ -21,7 +21,7 @@
                  new ArrayList<MyEntity>(listCapacity);
              
              -->
-        <property name="listCapacity" value="#{jobParameters['listCapacity']}?:500;"/>
+        <property name="arrayCapacity" value="#{jobParameters['arrayCapacity']}?:500;"/>
         
         <!-- maxResults - the limit of rows returned in criteria
              It defines the limit of results the query will ever get. Same as

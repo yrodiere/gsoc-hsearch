@@ -42,7 +42,7 @@ public class BatchSession {
     public void printId() {
         Properties jobParams = new Properties();
         jobParams.setProperty("fetchSize", "10000");
-        jobParams.setProperty("listCapacity", "5000");
+        jobParams.setProperty("arrayCapacity", "5000");
         jobOperator.start("print-address-id", jobParams);
     }
     

@@ -1,8 +1,6 @@
 package io.github.mincongh.batch;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.api.Batchlet;
@@ -30,7 +28,7 @@ public class IdProducerBatchlet implements Batchlet {
 
     @Inject
     @BatchProperty
-    private int listCapacity;
+    private int arrayCapacity;
     
     @Inject
     @BatchProperty
@@ -56,12 +54,12 @@ public class IdProducerBatchlet implements Batchlet {
         session = em.unwrap(Session.class);
         
         // get total number of id
-        long totalCount = (long) session
+        long rowCount = (long) session
             .createCriteria(Address.class)
             .setProjection(Projections.rowCount())
             .setCacheable(false)
             .uniqueResult();
-        System.out.printf("Total count = %d%n", totalCount);
+        System.out.printf("Total row = %d%n", rowCount);
         
         // load ids and store in scrollable results
         ScrollableResults scrollableIds = session
@@ -71,24 +69,23 @@ public class IdProducerBatchlet implements Batchlet {
             .setProjection(Projections.id())
             .setMaxResults(maxResults)
             .scroll(ScrollMode.FORWARD_ONLY);
-        
-        List<Serializable> ids = new ArrayList<>(listCapacity);
-        long count = 0;
+
+        Serializable[] ids = new Serializable[arrayCapacity];
+        long row = 0;
+        int i = 0;
         try {
-            while (scrollableIds.next()) {
+            while (scrollableIds.next() && row < rowCount) {
                 Serializable id = (Serializable) scrollableIds.get(0);
-                ids.add(id);
-                if (ids.size() == listCapacity) {
-                    for (Serializable i : ids) {
-                        System.out.printf("%d ", i);
+                ids[i++] = id;
+                if (i == arrayCapacity) {
+                    for (Serializable _id : ids) {
+                        System.out.printf("%d ", _id);
                     }
                     System.out.printf("%n");
-                    ids = new ArrayList<>(listCapacity);
+                    ids = new Serializable[arrayCapacity];
+                    i = 0;
                 }
-                count++;
-                if (count == totalCount) {
-                    break;
-                }
+                row++;
             }
         } finally {
             scrollableIds.close();
