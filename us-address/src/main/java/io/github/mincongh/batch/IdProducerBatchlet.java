@@ -26,17 +26,9 @@ import io.github.mincongh.entity.Address;
 @Named
 public class IdProducerBatchlet implements Batchlet {
 
-    @Inject
-    @BatchProperty
-    private int arrayCapacity;
-    
-    @Inject
-    @BatchProperty
-    private int fetchSize;
-    
-    @Inject
-    @BatchProperty
-    private int maxResults;
+    @Inject @BatchProperty private int arrayCapacity;
+    @Inject @BatchProperty private int fetchSize;
+    @Inject @BatchProperty private int maxResults;
     
     @Inject
     private IdProductionContext idProductionContext;
@@ -82,7 +74,7 @@ public class IdProducerBatchlet implements Batchlet {
                 ids[i++] = id;
                 if (i == arrayCapacity) {
                     for (Serializable _id : ids) {
-                        System.out.printf("%d ", _id);
+                        System.out.printf("%5d ", _id);
                     }
                     System.out.printf("%n");
                     

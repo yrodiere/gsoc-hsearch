@@ -11,17 +11,21 @@ import javax.inject.Singleton;
 @Singleton
 public class IdProductionContext {
     
-    private Queue<Serializable[]> idProductionQueue;
+    private Queue<Serializable[]> idChunkQueue;
     
     public IdProductionContext() {
-        this.idProductionQueue = new LinkedList<Serializable[]>();
+        this.idChunkQueue = new LinkedList<Serializable[]>();
     }
     
-    public void add(Serializable[] idArray) {
-        idProductionQueue.add(idArray);
+    public synchronized void add(Serializable[] idArray) {
+        idChunkQueue.add(idArray);
     }
     
-    public Serializable[] poll() {
-        return idProductionQueue.poll();
+    public synchronized Serializable[] poll() {
+        return idChunkQueue.poll();
+    }
+    
+    public synchronized int size() {
+        return idChunkQueue.size();
     }
 }
