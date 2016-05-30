@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<job id="print-addresses-job" xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd"
+    version="1.0">
+  <step id="loadId" next="produceLuceneDoc">
+    <batchlet ref="idProducerBatchlet">
+      <properties>
+        <!-- fetchSize - The number of rows returned in one chunk in criteria.
+             It tells the JDBC driver how many rows to return in one chunk, for 
+             large queries. It will do nothing if your driver does not support 
+             it. -->
+        <property name="fetchSize" value="#{jobParameters['fetchSize']}?:1000;"/>
+        <!-- arrayCapacity - The initial capacity of the list. Previously called 
+             batchSize, named changed to avoid naming confusion. Used to 
+             construct an empty array with the specified capacity. -->
+        <property name="arrayCapacity" value="#{jobParameters['arrayCapacity']}?:500;"/>
+        <!-- maxResults - the limit of rows returned in criteria. It defines the
+             limit of results the query will ever get. Same as LIMIT in SQL. -->
+        <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;"/>
+      </properties>
+    </batchlet>
+  </step>
+  <step id="produceLuceneDoc">
+    <chunk item-count="10">
+      <reader ref="batchItemReader"/>
+      <processor ref="batchItemProcessor"/>
+      <writer ref="batchItemWriter"/>
+    </chunk>
+    <partition>
+      <mapper ref="lucenePartitionMapper">
+        <properties>
+          <property name="partitionCapacity" value="#{jobParameters['partitionCapacity']}?:1;"/>
+          <property name="threads" value="#{jobParameters['threads']}?:2;"/>
+        </properties>
+      </mapper>
+      <collector ref="lucenePartitionCollector"/>
+      <analyzer ref="lucenePartitionAnalyzer"/>
+      <reducer ref="lucenePartitionReducer"/>
+    </partition>
+  </step>
+</job>

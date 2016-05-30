@@ -9,27 +9,29 @@ import javax.inject.Named;
 
 /**
  * Read identifiers of entities via entity manager. The result is going to be
- * stored then be used for Lucene document production.
+ * stored then be used for Lucene document production. This demo is not used 
+ * any more. 
  * 
+ * @deprecated
  * @author Mincong HUANG
  */
 @Named
 public class IdReaderBatchlet implements Batchlet {
     
     @Inject
-    private IdProductionContext idProductionContext;
+    private IndexingContext indexingContext;
     
     @Override
     public String process() throws Exception {
         
-        Serializable[] ids = idProductionContext.poll();
+        Serializable[] ids = indexingContext.poll();
         while (ids != null) {
             String msg = "";
             for (Serializable _id : ids) {
                 msg += String.format("%5d ", _id);
             }
             System.out.printf("%s%n", msg);
-            ids = idProductionContext.poll();
+            ids = indexingContext.poll();
         }
         
         System.out.println("IdReaderBatchlet#process() completed.");

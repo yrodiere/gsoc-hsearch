@@ -9,11 +9,11 @@ import javax.inject.Singleton;
 
 @Named
 @Singleton
-public class IdProductionContext {
+public class IndexingContext {
     
     private Queue<Serializable[]> idChunkQueue;
     
-    public IdProductionContext() {
+    public IndexingContext() {
         this.idChunkQueue = new LinkedList<Serializable[]>();
     }
     

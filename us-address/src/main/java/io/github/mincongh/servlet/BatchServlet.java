@@ -20,7 +20,7 @@ public class BatchServlet extends HttpServlet {
             HttpServletResponse response) {
         
         System.out.println("batchSession#printId() called");
-        batchSession.printId();
+        batchSession.massIndex();
 //      try {
 //          batchSession.printAddressesTop1000();
 //      } catch (InterruptedException e) {

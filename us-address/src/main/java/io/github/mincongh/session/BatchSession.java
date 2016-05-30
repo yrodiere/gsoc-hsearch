@@ -36,15 +36,45 @@ public class BatchSession {
     }
     
     /**
-     * Load Address entity's ids and print them in the console. 
+     * Mass index the Address entity's.
+     * <p>Here're some parameters and expected results:
+     * <ul>
+     * <li><b>array capacity</b> = 500
+     * 
+     * <li><b>partition capacity</b> = 50
+     * 
+     * <li><b>max results</b> = 100 * 1000
+     * 
+     * <li><b>queue size</b>
+     *      = max results / array capacity
+     *      = 100 * 1000 / 500
+     *      = 200
+     * 
+     * <li><b>number of partitions</b>
+     *      = queue size / partition capacity
+     *      = 200 / 50
+     *      = 4
+     * 
+     * <li><b>minimum checkpoint count (without stop)</b>
+     *      = (1 close + partition capacity / checkpoint per N items) * nb partitions
+     *      = (1 + 50 / 10) * 4
+     *      = 6 * 4
+     *      = 24
+     *      This number will be greater in reality, because some threads process
+     *      more items than it capacity expected. And the checkpoint number will
+     *      be increased. 
+     *      
+     * </ul>
      */
     @Asynchronous
-    public void printId() {
+    public void massIndex() {
         Properties jobParams = new Properties();
-        jobParams.setProperty("fetchSize", "10000");
-        jobParams.setProperty("arrayCapacity", "5000");
-        jobParams.setProperty("maxResults", "10000");
-        jobOperator.start("print-address-id", jobParams);
+        jobParams.setProperty("fetchSize", "1000");
+        jobParams.setProperty("arrayCapacity", "500");
+        jobParams.setProperty("maxResults", "100000");
+        jobParams.setProperty("partitionCapacity", "50");
+        jobParams.setProperty("threads", "4");
+        jobOperator.start("mass-index", jobParams);
     }
     
     @Asynchronous

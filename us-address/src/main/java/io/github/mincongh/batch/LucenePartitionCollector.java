@@ -6,7 +6,7 @@ import javax.batch.api.partition.PartitionCollector;
 import javax.inject.Named;
 
 @Named
-public class IdPartitionCollector implements PartitionCollector {
+public class LucenePartitionCollector implements PartitionCollector {
 
     /**
      * The collectPartitionData method receives control periodically during 

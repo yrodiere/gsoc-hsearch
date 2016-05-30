@@ -19,7 +19,8 @@ import io.github.mincongh.entity.Address;
 
 /**
  * Read identifiers of entities via entity manager. The result is going to be
- * stored then be used for Lucene document production.
+ * stored in {@code IndexingContext}, then be used for Lucene document 
+ * production in the next step.
  * 
  * @author Mincong HUANG
  */
@@ -31,7 +32,7 @@ public class IdProducerBatchlet implements Batchlet {
     @Inject @BatchProperty private int maxResults;
     
     @Inject
-    private IdProductionContext idProductionContext;
+    private IndexingContext indexingContext;
     
     @PersistenceContext(unitName = "us-address")
     private EntityManager em;
@@ -77,10 +78,8 @@ public class IdProducerBatchlet implements Batchlet {
                         System.out.printf("%5d ", _id);
                     }
                     System.out.printf("%n");
-                    
-                    // TODO: check the below line
-                    idProductionContext.add(ids);
-                    
+                    indexingContext.add(ids);
+                    // reset id array and index
                     ids = new Serializable[arrayCapacity];
                     i = 0;
                 }

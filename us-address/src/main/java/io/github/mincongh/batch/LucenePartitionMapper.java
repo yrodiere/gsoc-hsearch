@@ -10,17 +10,29 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 /**
- * Id partition mapper provides a map partitions plan to the step "printId".
- * The partition plan is defined dynamically, according to the id production 
- * context.
+ * Lucene partition mapper provides a partition plan to the Lucene production 
+ * step: "produceLuceneDoc". The partition plan is defined dynamically, 
+ * according to the indexing context.
+ * <p>
+ * Several batch properties are used in this mapper:
+ * <ul>
+ * <li><b>partitionCapacity</b> defines the capacity of one partition: the 
+ * number of id arrays that will be treated in this partition. So the number of 
+ * partition is computed by the equation: <br>
+ * {@code nbPartition = nbArray / partitionCapacity;}
+ * 
+ * <li><b>threads</b> defines the number of threads wished by the user. Default
+ * value is defined in the job xml file. However, the valued used might be 
+ * smaller, depending on the number of partitions.
+ * </ul>
  * 
  * @author Mincong HUANG
  */
 @Named
-public class IdPartitionMapper implements PartitionMapper {
+public class LucenePartitionMapper implements PartitionMapper {
 
     @Inject
-    private IdProductionContext idProductionContext;
+    private IndexingContext indexingContext;
     
     @Inject @BatchProperty private int partitionCapacity;
     @Inject @BatchProperty private int threads;
@@ -28,7 +40,7 @@ public class IdPartitionMapper implements PartitionMapper {
     @Override
     public PartitionPlan mapPartitions() throws Exception {
         
-        int queueSize = idProductionContext.size();
+        int queueSize = indexingContext.size();
         int partitions = Math.max(queueSize / partitionCapacity, 1); // minimum 1 partition
         
         return new PartitionPlanImpl() {

@@ -4,7 +4,7 @@ import javax.batch.api.partition.PartitionReducer;
 import javax.inject.Named;
 
 @Named
-public class IdPartitionReducer implements PartitionReducer {
+public class LucenePartitionReducer implements PartitionReducer {
 
     @Override
     public void beginPartitionedStep() throws Exception {
