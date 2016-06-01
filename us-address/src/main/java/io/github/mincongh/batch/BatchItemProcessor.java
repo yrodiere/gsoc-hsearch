@@ -1,20 +1,57 @@
 package io.github.mincongh.batch;
 
 import java.io.Serializable;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.batch.api.chunk.ItemProcessor;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CriteriaBuilder.In;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.EntityType;
+
+import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.search.backend.AddLuceneWork;
+import org.hibernate.search.bridge.TwoWayFieldBridge;
+import org.hibernate.search.bridge.spi.ConversionContext;
+import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
+import org.hibernate.search.engine.impl.HibernateSessionLoadingInitializer;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
+import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
+import org.hibernate.search.hcore.util.impl.ContextHelper;
+import org.hibernate.search.spi.InstanceInitializer;
 
 import io.github.mincongh.entity.Address;
 
 /**
  * Batch item processor loads entities using entity IDs, provided by batch item
  * reader. Please notice that the process runs under multiple partitions, which
- * means the input IDs are provided by the item reader in the same partition. 
+ * means the input IDs are provided by the item reader in the same partition.
+ * 
+ * <p>
+ * Several attributes are used in this class :
+ * <ul>
+ * <li>{@code session} is the Hibernate session unwrapped from JPA entity. It
+ *      will be used to construct the Lucene work.
+ *  
+ * <li>{@code searchIntegrator} is an interface which gives access to runtime
+ *      configuration, it is intended to be used by Search components.
+ * 
+ * <li>{@code entityIndexBinding} Entity index binding specifies the relation
+ *      and options from an indexed entity to its index(es).
+ * 
+ * <li>{@code docBuilder} is the document builder for indexed entity (Address).
+ * 
+ * <li>{@code sessionInitializer} TODO: don't know what it is.
+ * 
+ * <li>{@code conversionContext} TODO: don't know what it is.
+ * </ul>
  * 
  * @author Mincong HUANG
  */
@@ -23,6 +60,11 @@ public class BatchItemProcessor implements ItemProcessor {
     
     @PersistenceContext(unitName = "us-address")
     private EntityManager em;
+    private Session session;
+    private ExtendedSearchIntegrator searchIntegrator;
+    private DocumentBuilderIndexedEntity docBuilder;
+    private InstanceInitializer sessionInitializer;
+    private ConversionContext conversionContext;
     
     /**
      * Process an input item into an output item. Here, the input item is an 
@@ -38,12 +80,62 @@ public class BatchItemProcessor implements ItemProcessor {
     public Object processItem(Object item) throws Exception {
         
         int[] ids = toIntArray((Serializable[]) item);
+        List<Address> addresses = null;
+        List<AddLuceneWork> addWorks = null;
         
+        
+        // obtain entities using JPA criteria query
         CriteriaQuery<Address> q = em.getCriteriaBuilder().createQuery(Address.class);
-        Root<Address> _address = q.from(Address.class);
-        q.where(_address.get("addressId").in(ids));
+        Root<Address> address = q.from(Address.class);
+        Path<Integer> addressId = address.get("addressId");
+        In<Integer> inIds = em.getCriteriaBuilder().in(addressId);
+        for (int id : ids) {
+            inIds.value(id);
+        }
+        q.where(inIds);
+        addresses = em.createQuery(q).getResultList();
+        return addresses;
+        /*
+        // produce lucene works
+        session = em.unwrap(Session.class);
+        searchIntegrator = ContextHelper.getSearchintegrator(session);
+        docBuilder = searchIntegrator
+                .getIndexBindings()
+                .get(Address.class)
+                .getDocumentBuilder();
+        conversionContext = new ContextualExceptionBridgeHelper();
+        sessionInitializer = new HibernateSessionLoadingInitializer(
+                (SessionImplementor) session
+        );
+        String tenantId = null;
+        addWorks = new LinkedList<>();
+        for (Address address: addresses) {
+            Serializable id = session.getIdentifier(address);
+            TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
+            conversionContext.pushProperty(docBuilder.getIdKeywordName());
+            String idInString = null;
+            try {
+                idInString = conversionContext
+                        .setClass(Address.class)
+                        .twoWayConversionContext(idBridge)
+                        .objectToString(id);
+            } finally {
+                conversionContext.popProperty();
+            }
+            AddLuceneWork addWork = docBuilder.createAddWork(
+                    tenantId,
+                    Address.class,
+                    address,
+                    id,
+                    idInString,
+                    sessionInitializer,
+                    conversionContext
+            );
+            addWorks.add(addWork);
+        }
         
-        return em.createQuery(q).getResultList();
+        return addWorks;
+        */
     }
     
     /**
