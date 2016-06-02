@@ -10,10 +10,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder.In;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.EntityType;
 
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -83,20 +81,21 @@ public class BatchItemProcessor implements ItemProcessor {
         List<Address> addresses = null;
         List<AddLuceneWork> addWorks = null;
         
-        
-        // obtain entities using JPA criteria query
-        CriteriaQuery<Address> q = em.getCriteriaBuilder().createQuery(Address.class);
-        Root<Address> address = q.from(Address.class);
-        Path<Integer> addressId = address.get("addressId");
-        In<Integer> inIds = em.getCriteriaBuilder().in(addressId);
-        for (int id : ids) {
-            inIds.value(id);
-        }
-        q.where(inIds);
+        CriteriaQuery<Address> q = buildCriteriaQuery(Address.class, ids);
         addresses = em.createQuery(q).getResultList();
-        return addresses;
-        /*
-        // produce lucene works
+        addWorks = buildAddLuceneWorks(addresses);
+        
+        return addWorks;
+    }
+    
+    /**
+     * Build addLuceneWorks using entities. This method is inspired by the
+     * current mass indexer implementation.
+     * 
+     * @param entities entities obtained from JPA entity manager
+     * @return a list of addLuceneWorks
+     */
+    private <T> List<AddLuceneWork> buildAddLuceneWorks(List<T> entities) {
         session = em.unwrap(Session.class);
         searchIntegrator = ContextHelper.getSearchintegrator(session);
         docBuilder = searchIntegrator
@@ -108,9 +107,9 @@ public class BatchItemProcessor implements ItemProcessor {
                 (SessionImplementor) session
         );
         String tenantId = null;
-        addWorks = new LinkedList<>();
-        for (Address address: addresses) {
-            Serializable id = session.getIdentifier(address);
+        List<AddLuceneWork> addWorks = new LinkedList<>();
+        for (T entity: entities) {
+            Serializable id = session.getIdentifier(entity);
             TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
             conversionContext.pushProperty(docBuilder.getIdKeywordName());
             String idInString = null;
@@ -124,8 +123,8 @@ public class BatchItemProcessor implements ItemProcessor {
             }
             AddLuceneWork addWork = docBuilder.createAddWork(
                     tenantId,
-                    Address.class,
-                    address,
+                    entity.getClass(),
+                    entity,
                     id,
                     idInString,
                     sessionInitializer,
@@ -133,9 +132,30 @@ public class BatchItemProcessor implements ItemProcessor {
             );
             addWorks.add(addWork);
         }
-        
         return addWorks;
-        */
+    }
+    
+    /**
+     * Build criteria query using JPA criteria builder.
+     * 
+     * TODO: the type of entry array ids should be generic.
+     * 
+     * @param clazz the target class
+     * @param ids the identifiers, of which the correspondent entities should be
+     *          selected. 
+     * @return the criteria query built
+     */
+    private <T> CriteriaQuery<T> buildCriteriaQuery(Class<T> clazz, int[] ids) {
+        CriteriaQuery<T> q = em.getCriteriaBuilder().createQuery(clazz);
+        Root<T> root = q.from(clazz);
+        // TODO: get attribute id in generic type
+        Path<Integer> attrId = root.get("addressId");
+        In<Integer> inIds = em.getCriteriaBuilder().in(attrId);
+        for (int id : ids) {
+            inIds.value(id);
+        }
+        q.where(inIds);
+        return q;
     }
     
     /**
