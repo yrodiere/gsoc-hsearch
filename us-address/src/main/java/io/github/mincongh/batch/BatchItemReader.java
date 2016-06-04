@@ -31,6 +31,7 @@ public class BatchItemReader implements ItemReader {
      * The checkpointInfo method returns the current checkpoint data for this 
      * reader. It is called before a chunk checkpoint is committed.
      * 
+     * @return the checkpoint info
      * @throws Exception thrown for any errors.
      */
     @Override

@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.batch.api.chunk.ItemProcessor;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -22,8 +23,10 @@ import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
 import org.hibernate.search.engine.impl.HibernateSessionLoadingInitializer;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
+import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.spi.InstanceInitializer;
+import org.hibernate.search.store.IndexShardingStrategy;
 
 import io.github.mincongh.entity.Address;
 
@@ -49,6 +52,10 @@ import io.github.mincongh.entity.Address;
  * <li>{@code sessionInitializer} TODO: don't know what it is.
  * 
  * <li>{@code conversionContext} TODO: don't know what it is.
+ * 
+ * <li>{@code shardingStrategy} TODO: add description
+ * 
+ * <li>{@code indexingContext} TODO: add description
  * </ul>
  * 
  * @author Mincong HUANG
@@ -61,8 +68,12 @@ public class BatchItemProcessor implements ItemProcessor {
     private Session session;
     private ExtendedSearchIntegrator searchIntegrator;
     private DocumentBuilderIndexedEntity docBuilder;
+    private EntityIndexBinding entityIndexBinding;
     private InstanceInitializer sessionInitializer;
     private ConversionContext conversionContext;
+    private IndexShardingStrategy shardingStrategy;
+    @Inject
+    private IndexingContext indexingContext;
     
     /**
      * Process an input item into an output item. Here, the input item is an 
@@ -98,10 +109,12 @@ public class BatchItemProcessor implements ItemProcessor {
     private <T> List<AddLuceneWork> buildAddLuceneWorks(List<T> entities) {
         session = em.unwrap(Session.class);
         searchIntegrator = ContextHelper.getSearchintegrator(session);
-        docBuilder = searchIntegrator
+        entityIndexBinding = searchIntegrator
                 .getIndexBindings()
-                .get(Address.class)
-                .getDocumentBuilder();
+                .get(Address.class);
+        shardingStrategy = entityIndexBinding.getSelectionStrategy();
+        indexingContext.setIndexShardingStrategy(shardingStrategy);
+        docBuilder = entityIndexBinding.getDocumentBuilder();
         conversionContext = new ContextualExceptionBridgeHelper();
         sessionInitializer = new HibernateSessionLoadingInitializer(
                 (SessionImplementor) session
