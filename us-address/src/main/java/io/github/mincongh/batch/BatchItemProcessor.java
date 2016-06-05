@@ -14,6 +14,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 
+import org.hibernate.CacheMode;
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.search.backend.AddLuceneWork;
@@ -93,7 +94,13 @@ public class BatchItemProcessor implements ItemProcessor {
         List<AddLuceneWork> addWorks = null;
         
         CriteriaQuery<Address> q = buildCriteriaQuery(Address.class, ids);
-        addresses = em.createQuery(q).getResultList();
+        addresses = em
+                .createQuery(q)
+                // don't insert into cache.
+                .setHint("javax.persistence.cache.storeMode", "BYPASS")
+                // get data directly from the database.
+                .setHint("javax.persistence.cache.retrieveMode", "BYPASS")
+                .getResultList();
         addWorks = buildAddLuceneWorks(addresses);
         
         return addWorks;
