@@ -7,11 +7,14 @@ import java.util.Queue;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.hibernate.search.store.IndexShardingStrategy;
+
 @Named
 @Singleton
 public class IndexingContext {
     
     private Queue<Serializable[]> idChunkQueue;
+    private IndexShardingStrategy indexShardingStrategy;
     
     public IndexingContext() {
         this.idChunkQueue = new LinkedList<Serializable[]>();
@@ -27,5 +30,13 @@ public class IndexingContext {
     
     public synchronized int size() {
         return idChunkQueue.size();
+    }
+    
+    public IndexShardingStrategy getIndexShardingStrategy() {
+        return indexShardingStrategy;
+    }
+    
+    public void setIndexShardingStrategy(IndexShardingStrategy indexShardingStrategy) {
+        this.indexShardingStrategy = indexShardingStrategy;
     }
 }
