@@ -5,6 +5,7 @@ import java.io.Serializable;
 import javax.batch.api.BatchProperty;
 import javax.batch.api.Batchlet;
 import javax.batch.runtime.BatchStatus;
+import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
@@ -32,6 +33,9 @@ public class IdProducerBatchlet implements Batchlet {
     @Inject @BatchProperty private int maxResults;
     
     @Inject
+    private JobContext jobContext;
+    
+    @Inject
     private IndexingContext indexingContext;
     
     @PersistenceContext(unitName = "us-address")
@@ -56,6 +60,7 @@ public class IdProducerBatchlet implements Batchlet {
             .setCacheable(false)
             .uniqueResult();
         System.out.printf("Total row = %d%n", rowCount);
+        jobContext.setTransientUserData(rowCount);
         
         // load ids and store in scrollable results
         ScrollableResults scrollableIds = session
@@ -74,10 +79,12 @@ public class IdProducerBatchlet implements Batchlet {
                 Serializable id = (Serializable) scrollableIds.get(0);
                 ids[i++] = id;
                 if (i == arrayCapacity) {
+                    /*
                     for (Serializable _id : ids) {
                         System.out.printf("%5d ", _id);
                     }
                     System.out.printf("%n");
+                    */
                     indexingContext.add(ids);
                     // reset id array and index
                     ids = new Serializable[arrayCapacity];

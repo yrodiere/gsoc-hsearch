@@ -35,7 +35,13 @@
         </properties>
       </mapper>
       <collector ref="lucenePartitionCollector"/>
-      <analyzer ref="lucenePartitionAnalyzer"/>
+      <analyzer ref="lucenePartitionAnalyzer">
+        <properties>
+          <!-- maxResults - the limit of rows returned in criteria. It defines the
+               limit of results the query will ever get. Same as LIMIT in SQL. -->
+          <property name="maxResults" value="#{jobParameters['maxResults']}?:2147483647;"/>
+        </properties>
+      </analyzer>
       <reducer ref="lucenePartitionReducer"/>
     </partition>
   </step>
