@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.batch.api.chunk.ItemProcessor;
+import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
@@ -14,7 +15,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 
-import org.hibernate.CacheMode;
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.search.backend.AddLuceneWork;
@@ -75,6 +75,8 @@ public class BatchItemProcessor implements ItemProcessor {
     private IndexShardingStrategy shardingStrategy;
     @Inject
     private IndexingContext indexingContext;
+    @Inject
+    private StepContext stepContext;
     
     /**
      * Process an input item into an output item. Here, the input item is an 
@@ -102,8 +104,22 @@ public class BatchItemProcessor implements ItemProcessor {
                 .setHint("javax.persistence.cache.retrieveMode", "BYPASS")
                 .getResultList();
         addWorks = buildAddLuceneWorks(addresses);
-        
+        updateWorksCount(addWorks.size());
+  
         return addWorks;
+    }
+    
+    /**
+     * Update the Lucene Works counts using the step context.
+     * 
+     * @param currentCount the works processed during the current 
+     *          processItem().
+     */
+    private void updateWorksCount(int currentCount) {
+        Object userData = stepContext.getTransientUserData();
+        int previousCount = userData != null ? (int) userData : 0;
+        int totalCount = previousCount + currentCount;
+        stepContext.setTransientUserData(totalCount);
     }
     
     /**
@@ -190,5 +206,5 @@ public class BatchItemProcessor implements ItemProcessor {
             array[i] = (int) s[i];
         }
         return array;
-      }
+    }
 }

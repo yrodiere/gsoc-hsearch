@@ -9,12 +9,17 @@ import javax.inject.Named;
 @Named
 public class LucenePartitionAnalyzer implements PartitionAnalyzer {
 
-    private int checkpoints = 0;
+    private int workCount = 0;
     
+    /**
+     * 
+     * @param fromCollector the checkpoint obtained from partition collector's 
+     *          collectPartitionData
+     */
     @Override
-    public void analyzeCollectorData(Serializable checkpoint) throws Exception {
-        checkpoints += (int) checkpoint;
-        System.out.printf("#analyzeCollectorData(): %d checkpoints.%n", checkpoints);
+    public void analyzeCollectorData(Serializable fromCollector) throws Exception {
+        workCount += (int) fromCollector;
+        System.out.printf("#analyzeCollectorData(): %d works processed.%n", workCount);
     }
 
     @Override
