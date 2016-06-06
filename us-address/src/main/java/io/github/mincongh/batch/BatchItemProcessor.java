@@ -103,7 +103,7 @@ public class BatchItemProcessor implements ItemProcessor {
                 // get data directly from the database.
                 .setHint("javax.persistence.cache.retrieveMode", "BYPASS")
                 .getResultList();
-        addWorks = buildAddLuceneWorks(addresses);
+        addWorks = buildAddLuceneWorks(addresses, Address.class);
         updateWorksCount(addWorks.size());
   
         return addWorks;
@@ -127,14 +127,20 @@ public class BatchItemProcessor implements ItemProcessor {
      * current mass indexer implementation.
      * 
      * @param entities entities obtained from JPA entity manager
+     * @param classOfEntity the class type of selected entities
      * @return a list of addLuceneWorks
      */
-    private <T> List<AddLuceneWork> buildAddLuceneWorks(List<T> entities) {
+    private <T> List<AddLuceneWork> buildAddLuceneWorks(List<T> entities, 
+            Class<T> classOfEntity) {
+        
+        List<AddLuceneWork> addWorks = new LinkedList<>();
+        String tenantId = null;
+        
         session = em.unwrap(Session.class);
         searchIntegrator = ContextHelper.getSearchintegrator(session);
         entityIndexBinding = searchIntegrator
                 .getIndexBindings()
-                .get(Address.class);
+                .get(classOfEntity);
         shardingStrategy = entityIndexBinding.getSelectionStrategy();
         indexingContext.setIndexShardingStrategy(shardingStrategy);
         docBuilder = entityIndexBinding.getDocumentBuilder();
@@ -142,8 +148,7 @@ public class BatchItemProcessor implements ItemProcessor {
         sessionInitializer = new HibernateSessionLoadingInitializer(
                 (SessionImplementor) session
         );
-        String tenantId = null;
-        List<AddLuceneWork> addWorks = new LinkedList<>();
+        
         for (T entity: entities) {
             Serializable id = session.getIdentifier(entity);
             TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
@@ -168,6 +173,7 @@ public class BatchItemProcessor implements ItemProcessor {
             );
             addWorks.add(addWork);
         }
+        
         return addWorks;
     }
     
