@@ -39,23 +39,23 @@ public class BatchSession {
      * Mass index the Address entity's.
      * <p>Here're some parameters and expected results:
      * <ul>
-     * <li><b>array capacity</b> = 500
+     * <li><b>array capacity</b> = 1000
      * 
-     * <li><b>partition capacity</b> = 50
+     * <li><b>partition capacity</b> = 125
      * 
-     * <li><b>max results</b> = 100 * 1000
+     * <li><b>max results</b> = 1 * 1000 * 1000
      * 
      * <li><b>queue size</b>
      *      = max results / array capacity
-     *      = 100 * 1000 / 500
-     *      = 200
+     *      = 1 * 1000 * 1000 / 1000
+     *      = 1000
      * 
      * <li><b>number of partitions</b>
      *      = queue size / partition capacity
-     *      = 200 / 50
+     *      = 1000 / 250
      *      = 4
      * 
-     * <li><b>minimum checkpoint count (without stop)</b>
+     * <li><b>minimum checkpoint count (without stop) (not updated)</b>
      *      = (1 close + partition capacity / checkpoint per N items) * nb partitions
      *      = (1 + 50 / 10) * 4
      *      = 6 * 4
@@ -68,13 +68,27 @@ public class BatchSession {
      */
     @Asynchronous
     public void massIndex() {
+        Long start = System.currentTimeMillis();
         Properties jobParams = new Properties();
-        jobParams.setProperty("fetchSize", "1000");
-        jobParams.setProperty("arrayCapacity", "500");
-        jobParams.setProperty("maxResults", "100000");
-        jobParams.setProperty("partitionCapacity", "50");
+        jobParams.setProperty("fetchSize", "200000");
+        jobParams.setProperty("arrayCapacity", "1000");
+        jobParams.setProperty("maxResults", "1000000");
+        jobParams.setProperty("partitionCapacity", "250");
         jobParams.setProperty("threads", "4");
-        jobOperator.start("mass-index", jobParams);
+        Long executionId = jobOperator.start("mass-index", jobParams);
+        JobExecution execution = jobOperator.getJobExecution(executionId);
+        int i = 0; 
+        while (!execution.getBatchStatus().equals(BatchStatus.COMPLETED) && i < 200) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            i++;
+        }
+        Long end = System.currentTimeMillis();
+        System.out.printf("%d rounds, delta T = %d ms.%n", i, end - start);
     }
     
     @Asynchronous
