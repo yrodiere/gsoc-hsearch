@@ -1,8 +1,7 @@
 package io.github.mincongh.batch;
 
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -13,22 +12,23 @@ import org.hibernate.search.store.IndexShardingStrategy;
 @Singleton
 public class IndexingContext {
     
-    private Queue<Serializable[]> idChunkQueue;
+    private ConcurrentLinkedQueue<Serializable[]> idChunkQueue;
+    
     private IndexShardingStrategy indexShardingStrategy;
     
     public IndexingContext() {
-        this.idChunkQueue = new LinkedList<Serializable[]>();
+        this.idChunkQueue = new ConcurrentLinkedQueue<>();
     }
     
-    public synchronized void add(Serializable[] idArray) {
+    public void add(Serializable[] idArray) {
         idChunkQueue.add(idArray);
     }
     
-    public synchronized Serializable[] poll() {
+    public Serializable[] poll() {
         return idChunkQueue.poll();
     }
     
-    public synchronized int size() {
+    public int size() {
         return idChunkQueue.size();
     }
     
