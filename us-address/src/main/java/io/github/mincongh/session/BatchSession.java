@@ -68,14 +68,19 @@ public class BatchSession {
      */
     @Asynchronous
     public void massIndex() {
+        
         Long start = System.currentTimeMillis();
+        
         Properties jobParams = new Properties();
         jobParams.setProperty("fetchSize", "200000");
         jobParams.setProperty("arrayCapacity", "1000");
         jobParams.setProperty("maxResults", "1000000");
         jobParams.setProperty("partitionCapacity", "250");
         jobParams.setProperty("threads", "4");
+        jobParams.setProperty("purgeAtStart", String.valueOf(true));
         Long executionId = jobOperator.start("mass-index", jobParams);
+        
+        // calculate the performance
         JobExecution execution = jobOperator.getJobExecution(executionId);
         int i = 0; 
         while (!execution.getBatchStatus().equals(BatchStatus.COMPLETED) && i < 200) {
