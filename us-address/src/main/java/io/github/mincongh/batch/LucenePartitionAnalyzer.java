@@ -27,8 +27,8 @@ public class LucenePartitionAnalyzer implements PartitionAnalyzer {
      * 
      * Then it shows the total mass index progress in percentage. This method is
      * very similar to the current simple progress monitor. Note: concerning
-     * the "total" number of entities to process, it depends on 2 values : the
-     * number of row in the db table and the max results to process, defined by
+     * the number of total entities loaded, it depends on 2 values : the number
+     * of row in the database table and the max results to process, defined by
      * user before the job start. So the minimum between them will be used.
      * 
      * @param fromCollector the checkpoint obtained from partition collector's 
@@ -38,11 +38,11 @@ public class LucenePartitionAnalyzer implements PartitionAnalyzer {
     public void analyzeCollectorData(Serializable fromCollector) throws Exception {
         
         long rowCount = (long) jobContext.getTransientUserData();
-        int total = Math.min((int) rowCount, maxResults);
+        int entitiesLoaded = Math.min((int) rowCount, maxResults);
 
         workCount += (int) fromCollector;
-        if (total != 0) {
-            percentage = 100 * (float) workCount / total;
+        if (entitiesLoaded != 0) {
+            percentage = workCount * 100f / entitiesLoaded;
         }
         System.out.printf("#analyzeCollectorData(): %d works processed (%.1f%%).%n",
                 workCount, percentage);
