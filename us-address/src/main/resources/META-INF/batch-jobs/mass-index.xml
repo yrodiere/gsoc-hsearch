@@ -3,7 +3,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd"
     version="1.0">
-  <step id="loadId" next="decisionBeforeIndex">
+  <step id="loadId" next="beforeIndexDecision">
     <batchlet ref="idProducerBatchlet">
       <properties>
         <!-- fetchSize - The number of rows returned in one chunk in criteria.
@@ -21,7 +21,7 @@
       </properties>
     </batchlet>
   </step>
-  <decision id="decisionBeforeIndex" ref="beforeIndexDecider">
+  <decision id="beforeIndexDecision" ref="beforeIndexDecider">
     <properties>
       <property name="purgeAtStart" value="#{jobParameters['purgeAtStart']}?:false"/>
     </properties>
