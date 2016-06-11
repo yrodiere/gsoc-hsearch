@@ -31,6 +31,7 @@ public class IdProducerBatchlet implements Batchlet {
     @Inject @BatchProperty private int arrayCapacity;
     @Inject @BatchProperty private int fetchSize;
     @Inject @BatchProperty private int maxResults;
+    @Inject @BatchProperty private String entityType;
     
     @Inject
     private JobContext jobContext;
@@ -55,11 +56,11 @@ public class IdProducerBatchlet implements Batchlet {
         
         // get total number of id
         long rowCount = (long) session
-            .createCriteria(Address.class)
+            .createCriteria(Class.forName(entityType))
             .setProjection(Projections.rowCount())
             .setCacheable(false)
             .uniqueResult();
-        System.out.printf("Total row = %d%n", rowCount);
+        System.out.printf("entityType = %s (%d rows).%n", entityType, rowCount);
         jobContext.setTransientUserData(rowCount);
         
         // load ids and store in scrollable results

@@ -3,7 +3,10 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd"
     version="1.0">
+<!-- 
   <step id="loadId" next="purgeDecision">
+ -->
+  <step id="loadId" next="optimizeAfterIndex">
     <batchlet ref="idProducerBatchlet">
       <properties>
         <!-- fetchSize - The number of rows returned in one chunk in criteria.
@@ -18,8 +21,25 @@
         <!-- maxResults - the limit of rows returned in criteria. It defines the
              limit of results the query will ever get. Same as LIMIT in SQL. -->
         <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;"/>
+        <!-- entity type provided by the partition plan -->
+        <property name="entityType" value="#{partitionPlan['entityType']}"/>
       </properties>
     </batchlet>
+    <partition>
+      <!-- 
+           TODO: we have 2 partitions, but there're no way to reduce them at
+           the end !!! In order to debug the situation, the next step is set to
+           the optimization directly.
+       -->
+      <plan partitions="2">
+        <properties partition="0">
+          <property name="entityType" value="io.github.mincongh.entity.Address"/>
+        </properties>
+        <properties partition="1">
+          <property name="entityType" value="io.github.mincongh.entity.Stock"/>
+        </properties>
+      </plan>
+    </partition>
   </step>
   <decision id="purgeDecision" ref="purgeDecider">
     <properties>
