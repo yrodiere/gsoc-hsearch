@@ -31,6 +31,12 @@
            the end !!! In order to debug the situation, the next step is set to
            the optimization directly.
        -->
+      <mapper ref="entityPartitionMapper">
+        <properties>
+          <property name="rootEntitiesStr" value="#{jobParameters['rootEntitiesStr']}"/>
+        </properties>
+      </mapper>
+<!-- 
       <plan partitions="2">
         <properties partition="0">
           <property name="entityType" value="io.github.mincongh.entity.Address"/>
@@ -39,6 +45,7 @@
           <property name="entityType" value="io.github.mincongh.entity.Stock"/>
         </properties>
       </plan>
+ -->
     </partition>
   </step>
   <decision id="purgeDecision" ref="purgeDecider">

@@ -1,6 +1,8 @@
 package io.github.mincongh.session;
 
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
@@ -80,6 +82,7 @@ public class BatchSession {
         jobParams.setProperty("purgeAtStart", String.valueOf(true));
         jobParams.setProperty("optimizeAfterPurge", String.valueOf(true));
         jobParams.setProperty("optimizeAtEnd", String.valueOf(true));
+        jobParams.setProperty("rootEntitiesStr", getRootEntities().toString());
         Long executionId = jobOperator.start("mass-index", jobParams);
         
         // calculate the performance
@@ -110,5 +113,12 @@ public class BatchSession {
         }
         String msg = i <= 10 ? "Finished" : "Failed";
         System.out.println(msg);
+    }
+    
+    private Set<String> getRootEntities() {
+        Set<String> rootEntities = new HashSet<>();
+        rootEntities.add("io.github.mincongh.entity.Address");
+        rootEntities.add("io.github.mincongh.entity.Stock");
+        return rootEntities;
     }
 }
