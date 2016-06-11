@@ -3,7 +3,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd"
     version="1.0">
-  <step id="loadId" next="beforeIndexDecision">
+  <step id="loadId" next="purgeDecision">
     <batchlet ref="idProducerBatchlet">
       <properties>
         <!-- fetchSize - The number of rows returned in one chunk in criteria.
@@ -21,17 +21,27 @@
       </properties>
     </batchlet>
   </step>
-  <decision id="beforeIndexDecision" ref="beforeIndexDecider">
+  <decision id="purgeDecision" ref="purgeDecider">
     <properties>
-      <property name="purgeAtStart" value="#{jobParameters['purgeAtStart']}?:false"/>
+      <property name="purgeAtStart" value="#{jobParameters['purgeAtStart']}?:false;"/>
     </properties>
-    <next on="purgeIndex" to="purgeIndex"/>
-    <next on="produceLuceneDoc" to="produceLuceneDoc"/>
+    <next on="true" to="purgeIndex"/>
+    <next on="false" to="produceLuceneDoc"/>
   </decision>
-  <step id="purgeIndex" next="produceLuceneDoc">
+  <step id="purgeIndex" next="afterPurgeDecision">
     <batchlet ref="indexPurgerBatchlet"/>
   </step>
-  <step id="produceLuceneDoc">
+  <decision id="afterPurgeDecision" ref="afterPurgeDecider">
+    <properties>
+      <property name="optimizeAfterPurge" value="#{jobParameters['optimizeAfterPurge']}?:false;"/>
+    </properties>
+    <next on="true" to="optimizeAfterPurge"/>
+    <next on="false" to="produceLuceneDoc"/>
+  </decision>
+  <step id="optimizeAfterPurge" next="produceLuceneDoc">
+    <batchlet ref="optimizerBatchlet"/>
+  </step>
+  <step id="produceLuceneDoc" next="afterIndexDecision">
     <chunk item-count="3">
       <reader ref="batchItemReader"/>
       <processor ref="batchItemProcessor"/>
@@ -54,5 +64,15 @@
       </analyzer>
       <reducer ref="lucenePartitionReducer"/>
     </partition>
+  </step>
+  <decision id="afterIndexDecision" ref="afterIndexDecider">
+    <properties>
+      <property name="optimizeAtEnd" value="#{jobParameters['optimizeAtEnd']}?:false;"/>
+    </properties>
+    <next on="true" to="optimizeAfterIndex"/>
+    <end on="false" exit-status=""/><!-- TODO: add exit-status -->
+  </decision>
+  <step id="optimizeAfterIndex">
+    <batchlet ref="optimizerBatchlet"/>
   </step>
 </job>

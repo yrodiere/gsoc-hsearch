@@ -83,12 +83,13 @@ public class BatchItemWriter implements ItemWriter {
     @Override
     @SuppressWarnings("unchecked")
     public void writeItems(List<Object> items) throws Exception {
-        
+/*
         if (items != null) {
             System.out.printf("#writeItems(...): %d lucene work arrays written.%n", items.size());
         } else {
             System.out.printf("#writeItems(...): null.%n");
         }
+*/
         IndexShardingStrategy shardingStrategy = 
                 indexingContext.getIndexShardingStrategy();
         for (Object item : items) {
@@ -98,7 +99,8 @@ public class BatchItemWriter implements ItemWriter {
                 executor.performStreamOperation(
                         addWork,
                         shardingStrategy,
-                        monitor,
+//                      monitor,
+                        null,
                         forceAsync
                 );
             }

@@ -78,6 +78,8 @@ public class BatchSession {
         jobParams.setProperty("partitionCapacity", "250");
         jobParams.setProperty("threads", "4");
         jobParams.setProperty("purgeAtStart", String.valueOf(true));
+        jobParams.setProperty("optimizeAfterPurge", String.valueOf(true));
+        jobParams.setProperty("optimizeAtEnd", String.valueOf(true));
         Long executionId = jobOperator.start("mass-index", jobParams);
         
         // calculate the performance

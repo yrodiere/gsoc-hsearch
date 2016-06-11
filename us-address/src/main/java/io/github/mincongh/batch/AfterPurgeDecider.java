@@ -11,34 +11,24 @@ import javax.inject.Named;
  * user requires a index purge, then the next step should be a purge, else, 
  * the next step will be directly the index chunk. Index purge use 
  * IndexPurgerBatchlet. 
+ * TODO: modify javadoc 
  * 
  * @author Mincong HUANG
  */
 @Named
-public class BeforeIndexDecider implements Decider {
+public class AfterPurgeDecider implements Decider {
 
     @Inject @BatchProperty
-    private Boolean purgeAtStart;
-    private final String PURGE_IDX = "purgeIndex";
-    private final String PRODUCE_DOC = "produceLuceneDoc";
+    private Boolean optimizeAfterPurge;
     
     /**
-     * Decide the next step
+     * Decide the next step using the target batch property.
      * 
-     * @param executions not used for the moment.
+     * @param executions step executions.
      */
     @Override
     public String decide(StepExecution[] executions) throws Exception {
-        
-        String nextStep = purgeAtStart ? PURGE_IDX : PRODUCE_DOC;
-        
-        for (StepExecution se : executions) {
-            System.out.println(se.getStepName() + " "
-                    + se.getBatchStatus().toString() + " "
-                    + se.getExitStatus()
-            );
-        }
-        
-        return nextStep;
+        System.out.printf("AfterPurgeDecide#decide: %s%n", String.valueOf(optimizeAfterPurge));
+        return String.valueOf(optimizeAfterPurge);
     }
 }

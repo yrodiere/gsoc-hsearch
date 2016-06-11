@@ -36,7 +36,7 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public Serializable checkpointInfo() throws Exception {
-        System.out.println("BatchItemReader#checkpointInfo()");
+//      System.out.println("BatchItemReader#checkpointInfo()");
         return null;
     }
 
