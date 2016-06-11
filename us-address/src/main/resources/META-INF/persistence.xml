@@ -14,6 +14,7 @@
     <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
     <jta-data-source>java:/MySqlDS-addresses</jta-data-source>
     <class>io.github.mincongh.entity.Address</class>
+    <class>io.github.mincongh.entity.Stock</class>
     <properties>
       <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
       <property name="hibernate.show_sql" value="false" />

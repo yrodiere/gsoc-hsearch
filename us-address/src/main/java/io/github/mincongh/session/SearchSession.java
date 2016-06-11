@@ -12,6 +12,7 @@ import org.hibernate.search.jpa.Search;
 import org.hibernate.search.query.dsl.QueryBuilder;
 
 import io.github.mincongh.entity.Address;
+import io.github.mincongh.entity.Stock;
 
 /**
  * Search Session bean is used for searching target entities in the persistence
@@ -44,6 +45,14 @@ public class SearchSession {
         return entityManager
             .createQuery("SELECT a FROM Address a WHERE a.type = :type")
             .setParameter("type", "Rd")
+            .setMaxResults(1000)
+            .getResultList();
+    }
+    
+    @SuppressWarnings("unchecked")
+    public List<Stock> getStockes() {
+        return entityManager
+            .createNamedQuery("Stock.findAll")
             .setMaxResults(1000)
             .getResultList();
     }
