@@ -3,10 +3,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd"
     version="1.0">
-<!-- 
   <step id="loadId" next="purgeDecision">
- -->
-  <step id="loadId" next="optimizeAfterIndex">
     <batchlet ref="idProducerBatchlet">
       <properties>
         <!-- fetchSize - The number of rows returned in one chunk in criteria.
@@ -33,19 +30,9 @@
        -->
       <mapper ref="entityPartitionMapper">
         <properties>
-          <property name="rootEntitiesStr" value="#{jobParameters['rootEntitiesStr']}"/>
+          <property name="rootEntities" value="#{jobParameters['rootEntities']}"/>
         </properties>
       </mapper>
-<!-- 
-      <plan partitions="2">
-        <properties partition="0">
-          <property name="entityType" value="io.github.mincongh.entity.Address"/>
-        </properties>
-        <properties partition="1">
-          <property name="entityType" value="io.github.mincongh.entity.Stock"/>
-        </properties>
-      </plan>
- -->
     </partition>
   </step>
   <decision id="purgeDecision" ref="purgeDecider">
@@ -70,8 +57,16 @@
   </step>
   <step id="produceLuceneDoc" next="afterIndexDecision">
     <chunk item-count="3">
-      <reader ref="batchItemReader"/>
-      <processor ref="batchItemProcessor"/>
+      <reader ref="batchItemReader">
+        <properties>
+          <property name="entityType" value="#{partitionPlan['entityType']}"/>
+        </properties>
+      </reader>
+      <processor ref="batchItemProcessor">
+        <properties>
+          <property name="entityType" value="#{partitionPlan['entityType']}"/>
+        </properties>
+      </processor>
       <writer ref="batchItemWriter"/>
     </chunk>
     <partition>
@@ -79,6 +74,7 @@
         <properties>
           <property name="partitionCapacity" value="#{jobParameters['partitionCapacity']}?:1;"/>
           <property name="threads" value="#{jobParameters['threads']}?:2;"/>
+          <property name="rootEntities" value="#{jobParameters['rootEntities']}"/>
         </properties>
       </mapper>
       <collector ref="lucenePartitionCollector"/>

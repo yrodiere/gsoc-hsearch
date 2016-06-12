@@ -1,8 +1,6 @@
 package io.github.mincongh.batch;
 
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.api.partition.PartitionMapper;
@@ -14,7 +12,8 @@ import javax.inject.Named;
 @Named
 public class EntityPartitionMapper implements PartitionMapper {
 
-    @Inject @BatchProperty private String rootEntitiesStr;
+    @Inject @BatchProperty(name = "rootEntities")
+    private String rootEntitiesStr;
     
     @Override
     public PartitionPlan mapPartitions() throws Exception {
@@ -50,16 +49,18 @@ public class EntityPartitionMapper implements PartitionMapper {
     /**
      * Parse a set of entities in string into a set of entity-types.
      * 
-     * @param raw a set of entities concatenated in string, with "[]" on both
-     *          ends, separated by ",".
+     * @param raw a set of entities concatenated in string, separated by ","
+     *          and surrounded by "[]", e.g. "[com.xx.foo, com.xx.bar]".
      * @return a set of entity-types
      * @throws NullPointerException thrown if the entity-token is not found.
      */
     private String[] parse(String raw) throws NullPointerException {
-        
         if (raw == null) {
             throw new NullPointerException("Not any target entity to index");
         }
-        return raw.substring(1, raw.length() - 1).split(", ");
+        String[] rootEntities = raw
+                .substring(1, raw.length() - 1)
+                .split(", ");
+        return rootEntities;
     }
 }

@@ -2,6 +2,7 @@ package io.github.mincongh.batch;
 
 import java.io.Serializable;
 
+import javax.batch.api.BatchProperty;
 import javax.batch.api.chunk.ItemReader;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -23,6 +24,9 @@ import javax.inject.Named;
  */
 @Named
 public class BatchItemReader implements ItemReader {
+    
+    @Inject @BatchProperty
+    private String entityType;
     
     @Inject
     private IndexingContext indexingContext;
@@ -61,7 +65,7 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public void open(Serializable checkpoint) throws Exception {
-        System.out.println("BatchItemReader#open(...)");
+        System.out.printf("BatchItemReader#open(%s)...%n", entityType);
     }
 
     /**
@@ -72,6 +76,8 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public Object readItem() throws Exception {
-        return indexingContext.poll();
+        // TODO: change it to a generic type
+        // return indexingContext.poll(entityClazz);
+        return indexingContext.poll(Class.forName(entityType));
     }
 }

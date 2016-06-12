@@ -1,6 +1,7 @@
 package io.github.mincongh.batch;
 
 import java.io.Serializable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.inject.Named;
@@ -12,24 +13,37 @@ import org.hibernate.search.store.IndexShardingStrategy;
 @Singleton
 public class IndexingContext {
     
-    private ConcurrentLinkedQueue<Serializable[]> idChunkQueue;
+    private ConcurrentHashMap<Class<?>, ConcurrentLinkedQueue<Serializable[]>> idQueues;
     
     private IndexShardingStrategy indexShardingStrategy;
     
+    public void add(Serializable[] clazzIDs, Class<?> clazz) {
+        idQueues.get(clazz).add(clazzIDs);
+    }
+    
+    public Serializable[] poll(Class<?> clazz) {
+        return idQueues.get(clazz).poll();
+    }
+    
+    public int sizeOf(Class<?> clazz) {
+        return idQueues.get(clazz).size();
+    }
+    
+    public void createQueue(Class<?> clazz) {
+        idQueues.put(clazz, new ConcurrentLinkedQueue<>());
+    }
+    
     public IndexingContext() {
-        this.idChunkQueue = new ConcurrentLinkedQueue<>();
+        this.idQueues = new ConcurrentHashMap<>();
     }
     
-    public void add(Serializable[] idArray) {
-        idChunkQueue.add(idArray);
+    public ConcurrentHashMap<Class<?>, ConcurrentLinkedQueue<Serializable[]>> getIdQueues() {
+        return idQueues;
     }
     
-    public Serializable[] poll() {
-        return idChunkQueue.poll();
-    }
-    
-    public int size() {
-        return idChunkQueue.size();
+    // I don't think we need this method.
+    public void setIdQueues(ConcurrentHashMap<Class<?>, ConcurrentLinkedQueue<Serializable[]>> idQueues) {
+        this.idQueues = idQueues;
     }
     
     public IndexShardingStrategy getIndexShardingStrategy() {

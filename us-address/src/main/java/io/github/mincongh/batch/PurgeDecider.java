@@ -27,7 +27,8 @@ public class PurgeDecider implements Decider {
      * @param executions step executions.
      */
     @Override
-    public String decide(StepExecution[] executions) throws Exception {  
+    public String decide(StepExecution[] executions) throws Exception {
+        System.out.printf("PurgeDecider#decide: purgeAtStart=%s.%n", purgeAtStart);
         return String.valueOf(purgeAtStart);
     }
 }
