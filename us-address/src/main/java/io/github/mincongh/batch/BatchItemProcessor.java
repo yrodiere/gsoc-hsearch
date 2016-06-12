@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.batch.api.BatchProperty;
 import javax.batch.api.chunk.ItemProcessor;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
@@ -28,8 +29,6 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.spi.InstanceInitializer;
 import org.hibernate.search.store.IndexShardingStrategy;
-
-import io.github.mincongh.entity.Address;
 
 /**
  * Batch item processor loads entities using entity IDs, provided by batch item
@@ -77,6 +76,8 @@ public class BatchItemProcessor implements ItemProcessor {
     private IndexingContext indexingContext;
     @Inject
     private StepContext stepContext;
+    @Inject @BatchProperty
+    private String entityType;
     
     /**
      * Process an input item into an output item. Here, the input item is an 
@@ -91,19 +92,27 @@ public class BatchItemProcessor implements ItemProcessor {
     @Override
     public Object processItem(Object item) throws Exception {
         
+        Class<?> entityClazz = Class.forName(entityType);
+        
+        // TODO: change the id to generic type
+        // TODO: accept all entity type. For instance, only Address.class works
+        if (entityType.equals("io.github.mincongh.entity.Stock")) {
+            return null;
+        }
+        
         int[] ids = toIntArray((Serializable[]) item);
-        List<Address> addresses = null;
+        List<?> entities = null;
         List<AddLuceneWork> addWorks = null;
         
-        CriteriaQuery<Address> q = buildCriteriaQuery(Address.class, ids);
-        addresses = em
+        CriteriaQuery<?> q = buildCriteriaQuery(entityClazz, ids);
+        entities = em
                 .createQuery(q)
                 // don't insert into cache.
                 .setHint("javax.persistence.cache.storeMode", "BYPASS")
                 // get data directly from the database.
                 .setHint("javax.persistence.cache.retrieveMode", "BYPASS")
                 .getResultList();
-        addWorks = buildAddLuceneWorks(addresses, Address.class);
+        addWorks = buildAddLuceneWorks(entities, entityClazz);
         updateWorksCount(addWorks.size());
   
         return addWorks;
@@ -126,12 +135,12 @@ public class BatchItemProcessor implements ItemProcessor {
      * Build addLuceneWorks using entities. This method is inspired by the
      * current mass indexer implementation.
      * 
-     * @param entities entities obtained from JPA entity manager
-     * @param classOfEntity the class type of selected entities
+     * @param addresses entities obtained from JPA entity manager
+     * @param entityClazz the class type of selected entities
      * @return a list of addLuceneWorks
      */
-    private <T> List<AddLuceneWork> buildAddLuceneWorks(List<T> entities, 
-            Class<T> classOfEntity) {
+    private List<AddLuceneWork> buildAddLuceneWorks(List<?> addresses, 
+            Class<?> entityClazz) {
         
         List<AddLuceneWork> addWorks = new LinkedList<>();
         String tenantId = null;
@@ -140,7 +149,7 @@ public class BatchItemProcessor implements ItemProcessor {
         searchIntegrator = ContextHelper.getSearchintegrator(session);
         entityIndexBinding = searchIntegrator
                 .getIndexBindings()
-                .get(classOfEntity);
+                .get(entityClazz);
         shardingStrategy = entityIndexBinding.getSelectionStrategy();
         indexingContext.setIndexShardingStrategy(shardingStrategy);
         docBuilder = entityIndexBinding.getDocumentBuilder();
@@ -149,14 +158,14 @@ public class BatchItemProcessor implements ItemProcessor {
                 (SessionImplementor) session
         );
         
-        for (T entity: entities) {
+        for (Object entity: addresses) {
             Serializable id = session.getIdentifier(entity);
             TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
             conversionContext.pushProperty(docBuilder.getIdKeywordName());
             String idInString = null;
             try {
                 idInString = conversionContext
-                        .setClass(Address.class)
+                        .setClass(entityClazz)
                         .twoWayConversionContext(idBridge)
                         .objectToString(id);
             } finally {
