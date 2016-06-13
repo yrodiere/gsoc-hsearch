@@ -17,15 +17,12 @@ import org.hibernate.search.store.IndexShardingStrategy;
 
 /**
  * Batch item writer writes a list of items into Lucene documents. Here, items 
- * mean the entities processed by the item processor. These items will be used
- * to create {@code LuceneWork}. 
+ * mean the luceneWorks, given by the processor. These items will be executed
+ * using StreamingOperationExecutor.
  * <p>
  * <ul>
- * <li>{@code stepContext} TODO: add description here
+ * <li>{@code indexingContext} is used to store the shardingStrategy
  * 
- * <li>{@code stepContext} the JSR 352 specific step context, used for storing
- *      transient data during the step execution.
- *      
  * <li>{@code monitor} mass indexer progress monitor helps to follow the mass
  *      indexing progress and show it in the console.
  * </ul>
@@ -37,8 +34,11 @@ public class BatchItemWriter implements ItemWriter {
 
     @Inject
     private IndexingContext indexingContext;
-    private MassIndexerProgressMonitor monitor;
+    
     private final Boolean forceAsync = false;
+    
+    // TODO: The monitor is not used for instance. It should be used later.
+    private MassIndexerProgressMonitor monitor;
     
     /**
      * The checkpointInfo method returns the current checkpoint data for this 
@@ -74,22 +74,14 @@ public class BatchItemWriter implements ItemWriter {
     }
 
     /**
-     * Produce {@code LuceneWork} using the given entities (items).
+     * Execute {@code LuceneWork}
      * 
-     * @param items a list of entity-array, {@code List<Clazz[]>}. Each item is 
-     *          an array of entity.
+     * @param items a list of items, where each item is a list of Lucene works.
      * @throw Exception is thrown for any errors.
      */
     @Override
     @SuppressWarnings("unchecked")
     public void writeItems(List<Object> items) throws Exception {
-/*
-        if (items != null) {
-            System.out.printf("#writeItems(...): %d lucene work arrays written.%n", items.size());
-        } else {
-            System.out.printf("#writeItems(...): null.%n");
-        }
-*/
         IndexShardingStrategy shardingStrategy = 
                 indexingContext.getIndexShardingStrategy();
         for (Object item : items) {

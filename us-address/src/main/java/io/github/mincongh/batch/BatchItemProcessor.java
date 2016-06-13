@@ -31,9 +31,11 @@ import org.hibernate.search.spi.InstanceInitializer;
 import org.hibernate.search.store.IndexShardingStrategy;
 
 /**
- * Batch item processor loads entities using entity IDs, provided by batch item
- * reader. Please notice that the process runs under multiple partitions, which
- * means the input IDs are provided by the item reader in the same partition.
+ * Batch item processor loads entities using entity IDs, provided by the item
+ * reader. Please notice: this process is running under multiple partitions,
+ * so there're multiple processors running currently. The input IDs are not
+ * shared by different processors. And theses IDs are given by the item reader
+ * located in the same partition.
  * 
  * <p>
  * Several attributes are used in this class :
@@ -72,21 +74,21 @@ public class BatchItemProcessor implements ItemProcessor {
     private InstanceInitializer sessionInitializer;
     private ConversionContext conversionContext;
     private IndexShardingStrategy shardingStrategy;
-    @Inject
-    private IndexingContext indexingContext;
-    @Inject
-    private StepContext stepContext;
+    
+    @Inject private IndexingContext indexingContext;
+    @Inject private StepContext stepContext;
+    
     @Inject @BatchProperty
     private String entityType;
     
     /**
      * Process an input item into an output item. Here, the input item is an 
-     * array of IDs and the output item is a list of entities mapped to these 
-     * IDs. During the process, an injected entity manager is used to find out 
-     * the entities in the database.
+     * array of IDs and the output item is a list of Lucene works. During the
+     * process, entities are found by an injected entity manager, then they
+     * are used for building the correspondent Lucene works.
      * 
      * @param item the input item, an array of IDs
-     * @return a list of entities mapped to the input IDs
+     * @return a list of Lucene works
      * @throws Exception thrown for any errors.
      */
     @Override
@@ -97,6 +99,7 @@ public class BatchItemProcessor implements ItemProcessor {
         // TODO: change the id to generic type
         // TODO: accept all entity type. For instance, only Address.class works
         if (entityType.equals("io.github.mincongh.entity.Stock")) {
+            updateWorksCount(0);
             return null;
         }
         
@@ -105,8 +108,7 @@ public class BatchItemProcessor implements ItemProcessor {
         List<AddLuceneWork> addWorks = null;
         
         CriteriaQuery<?> q = buildCriteriaQuery(entityClazz, ids);
-        entities = em
-                .createQuery(q)
+        entities = em.createQuery(q)
                 // don't insert into cache.
                 .setHint("javax.persistence.cache.storeMode", "BYPASS")
                 // get data directly from the database.
@@ -135,11 +137,12 @@ public class BatchItemProcessor implements ItemProcessor {
      * Build addLuceneWorks using entities. This method is inspired by the
      * current mass indexer implementation.
      * 
-     * @param addresses entities obtained from JPA entity manager
+     * @param entities selected entities, obtained from JPA entity manager. 
+     *          They'll be used to build Lucene works.
      * @param entityClazz the class type of selected entities
      * @return a list of addLuceneWorks
      */
-    private List<AddLuceneWork> buildAddLuceneWorks(List<?> addresses, 
+    private List<AddLuceneWork> buildAddLuceneWorks(List<?> entities, 
             Class<?> entityClazz) {
         
         List<AddLuceneWork> addWorks = new LinkedList<>();
@@ -158,7 +161,7 @@ public class BatchItemProcessor implements ItemProcessor {
                 (SessionImplementor) session
         );
         
-        for (Object entity: addresses) {
+        for (Object entity: entities) {
             Serializable id = session.getIdentifier(entity);
             TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
             conversionContext.pushProperty(docBuilder.getIdKeywordName());

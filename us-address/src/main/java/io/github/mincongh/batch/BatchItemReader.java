@@ -65,7 +65,7 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public void open(Serializable checkpoint) throws Exception {
-        System.out.printf("BatchItemReader#open(%s)...%n", entityType);
+        System.out.printf("BatchItemReader#open(...): entityType = %s%n", entityType);
     }
 
     /**
@@ -76,8 +76,6 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public Object readItem() throws Exception {
-        // TODO: change it to a generic type
-        // return indexingContext.poll(entityClazz);
         return indexingContext.poll(Class.forName(entityType));
     }
 }
