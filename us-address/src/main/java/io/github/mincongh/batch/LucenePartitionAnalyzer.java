@@ -5,7 +5,6 @@ import java.io.Serializable;
 import javax.batch.api.BatchProperty;
 import javax.batch.api.partition.PartitionAnalyzer;
 import javax.batch.runtime.BatchStatus;
-import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -13,11 +12,13 @@ import javax.inject.Named;
 public class LucenePartitionAnalyzer implements PartitionAnalyzer {
 
     @Inject
-    private JobContext jobContext;
-    private int workCount = 0;
-    private float percentage = 0;
+    private IndexingContext indexingContext;
+    
     @Inject @BatchProperty
     private int maxResults;
+    
+    private int workCount = 0;
+    private float percentage = 0;
     
     /**
      * Analyze data obtained from different partition plans via partition data
@@ -37,8 +38,8 @@ public class LucenePartitionAnalyzer implements PartitionAnalyzer {
     @Override
     public void analyzeCollectorData(Serializable fromCollector) throws Exception {
         
-        long rowCount = (long) jobContext.getTransientUserData();
-        int entitiesLoaded = Math.min((int) rowCount, maxResults);
+        long entityCount = indexingContext.getEntityCount();
+        int entitiesLoaded = Math.min((int) entityCount, maxResults);
 
         workCount += (int) fromCollector;
         if (entitiesLoaded != 0) {
@@ -53,5 +54,4 @@ public class LucenePartitionAnalyzer implements PartitionAnalyzer {
             throws Exception {
         System.out.println("#analyzeStatus(...) called.");
     }
-
 }

@@ -62,7 +62,7 @@ public class IdProducerBatchlet implements Batchlet {
             .setCacheable(false)
             .uniqueResult();
         System.out.printf("entityType = %s (%d rows).%n", entityTypeStr, rowCount);
-        jobContext.setTransientUserData(rowCount);
+        indexingContext.addEntityCount(rowCount);
         
         // load ids and store in scrollable results
         ScrollableResults scrollableIds = session

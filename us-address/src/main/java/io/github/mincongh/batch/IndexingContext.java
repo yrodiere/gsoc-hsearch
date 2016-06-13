@@ -9,13 +9,25 @@ import javax.inject.Singleton;
 
 import org.hibernate.search.store.IndexShardingStrategy;
 
+/**
+ * Specific indexing context for mass indexer. Several attributes are used :
+ * <p>
+ * <ul>
+ * <li>entityCount: the total number of entities to be indexed in the job. The
+ *      number is summarized by partitioned step "loadId". Each 
+ *      IdProducerBatchlet (partiton) produces the number of entities linked to
+ *      its own target entity, then call the method #addEntityCount(long) to
+ *      summarize it with other partition(s).</li>
+ * </ul>
+ * @author Mincong HUANG
+ */
 @Named
 @Singleton
 public class IndexingContext {
     
     private ConcurrentHashMap<Class<?>, ConcurrentLinkedQueue<Serializable[]>> idQueues;
-    
     private IndexShardingStrategy indexShardingStrategy;
+    private long entityCount = 0;
     
     public void add(Serializable[] clazzIDs, Class<?> clazz) {
         idQueues.get(clazz).add(clazzIDs);
@@ -52,5 +64,13 @@ public class IndexingContext {
     
     public void setIndexShardingStrategy(IndexShardingStrategy indexShardingStrategy) {
         this.indexShardingStrategy = indexShardingStrategy;
+    }
+    
+    public void addEntityCount(long entityCount) {
+        this.entityCount += entityCount;
+    }
+    
+    public long getEntityCount() {
+        return entityCount;
     }
 }
