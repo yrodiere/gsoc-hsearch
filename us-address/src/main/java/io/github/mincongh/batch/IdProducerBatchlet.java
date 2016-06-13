@@ -5,7 +5,6 @@ import java.io.Serializable;
 import javax.batch.api.BatchProperty;
 import javax.batch.api.Batchlet;
 import javax.batch.runtime.BatchStatus;
-import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
@@ -26,16 +25,13 @@ import org.hibernate.criterion.Projections;
 @Named
 public class IdProducerBatchlet implements Batchlet {
 
+    @Inject
+    private IndexingContext indexingContext;
+    
     @Inject @BatchProperty private int arrayCapacity;
     @Inject @BatchProperty private int fetchSize;
     @Inject @BatchProperty private int maxResults;
-    @Inject @BatchProperty(name = "entityType") private String entityTypeStr;
-    
-    @Inject
-    private JobContext jobContext;
-    
-    @Inject
-    private IndexingContext indexingContext;
+    @Inject @BatchProperty private String entityType;
     
     @PersistenceContext(unitName = "us-address")
     private EntityManager em;
@@ -50,18 +46,18 @@ public class IdProducerBatchlet implements Batchlet {
     public String process() throws Exception {
         
         // get entity class type
-        Class<?> entityClazz = Class.forName(entityTypeStr);
+        Class<?> entityClazz = Class.forName(entityType);
         
         // unwrap session from entity manager
         session = em.unwrap(Session.class);
         
         // get total number of id
-        long rowCount = (long) session
+        final long rowCount = (long) session
             .createCriteria(entityClazz)
             .setProjection(Projections.rowCount())
             .setCacheable(false)
             .uniqueResult();
-        System.out.printf("entityType = %s (%d rows).%n", entityTypeStr, rowCount);
+        System.out.printf("entityType = %s (%d rows).%n", entityType, rowCount);
         indexingContext.addEntityCount(rowCount);
         
         // load ids and store in scrollable results
@@ -74,25 +70,26 @@ public class IdProducerBatchlet implements Batchlet {
             .scroll(ScrollMode.FORWARD_ONLY);
 
         Serializable[] entityIDs = new Serializable[arrayCapacity];
-        long row = 0;
+        long rowLoaded = 0;
         int i = 0;
         try {
-            // create (K, V) pair in the hash-map embedded
-            // indexing context
+            // Create a key-value pair for entity in the hash-map embedded in 
+            // indexingContext. The key is the entity class type and the value
+            // is an empty queue of IDs.
             indexingContext.createQueue(entityClazz);
             
-            while (scrollableIds.next() && row < rowCount) {
+            while (scrollableIds.next() && rowLoaded < rowCount) {
                 Serializable id = (Serializable) scrollableIds.get(0);
                 entityIDs[i++] = id;
+                rowLoaded++;
                 if (i == arrayCapacity) {
-                    // add array entityIDs into indexing context
-                    // (mapped to key K=entityClazz
+                    // add array entityIDs into indexing context's hash-map,
+                    // mapped to key K = entityClazz
                     indexingContext.add(entityIDs, entityClazz);
                     // reset id array and index
                     entityIDs = new Serializable[arrayCapacity];
                     i = 0;
                 }
-                row++;
             }
         } finally {
             scrollableIds.close();
