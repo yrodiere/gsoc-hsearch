@@ -34,7 +34,11 @@ public class IndexingContext {
     }
     
     public Serializable[] poll(Class<?> clazz) {
-        return idQueues.get(clazz).poll();
+        // TODO: this method is really slow
+        Serializable[] IDs = idQueues.get(clazz).poll();
+        String len = (IDs == null) ? "null" : String.valueOf(IDs.length);
+        System.out.printf("Polling %s IDs for %s.%n", len, clazz.getName());
+        return IDs;
     }
     
     public int sizeOf(Class<?> clazz) {

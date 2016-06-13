@@ -43,44 +43,47 @@ public class LucenePartitionMapper implements PartitionMapper {
     @Override
     public PartitionPlan mapPartitions() throws Exception {
 
-        String[] rootEntities = parse(rootEntitiesStr);
+        Class<?>[] rootEntities = parse(rootEntitiesStr);
         Queue<String> classQueue = new LinkedList<>();
         
-        int partSum = 0;
-        for (String rootEntity: rootEntities) {
-            int queueSize = indexingContext.sizeOf(Class.forName(rootEntity));
-            // TODO: handle queueSize is 0
-            int partCount = queueSize / partitionCapacity;
+        int totalPartitions = 0;
+        for (Class<?> rootEntity: rootEntities) {
+            
+            int queueSize = indexingContext.sizeOf(rootEntity);
+            int classPartitions = queueSize / partitionCapacity;  // TODO: handle queueSize is 0
             if (queueSize % partitionCapacity != 0) {
-                partCount++;
+                classPartitions++;
             }
-            partSum += partCount;
+            
             // enqueue entity type into classQueue, as much as the number of
-            // the partitions
-            for (int i = 0; i < partCount; i++) {
-                classQueue.add(rootEntity);
+            // the class partitions
+            for (int i = 0; i < classPartitions; i++) {
+                classQueue.add(rootEntity.getName());
             }
+            System.out.printf("%d partitions added to root entity \"%s\".%n",
+                    classPartitions, rootEntity);
+            
+            totalPartitions += classPartitions;
         }
-        final int partCountFinal = partSum;
+        final int TOTAL_PARTITIONS = totalPartitions;
         
         return new PartitionPlanImpl() {
 
             @Override
             public int getPartitions() {
-                System.out.printf("#mapPartitions(): %d partitions.%n", partCountFinal);
-                return partCountFinal;
+                System.out.printf("#mapPartitions(): %d partitions.%n", TOTAL_PARTITIONS);
+                return TOTAL_PARTITIONS;
             }
 
             @Override
             public int getThreads() {
-                System.out.printf("#getThreads(): %d threads.%n", Math.min(partCountFinal, threads));
-                return Math.min(partCountFinal, threads);
+                System.out.printf("#getThreads(): %d threads.%n", Math.min(TOTAL_PARTITIONS, threads));
+                return Math.min(TOTAL_PARTITIONS, threads);
             }
 
             @Override
             public Properties[] getPartitionProperties() {
-                
-                Properties[] props = new Properties[getPartitions()];
+                Properties[] props = new Properties[TOTAL_PARTITIONS];
                 for (int i = 0; i < props.length; i++) {
                     String entityType = classQueue.poll();
                     props[i] = new Properties();
@@ -98,14 +101,21 @@ public class LucenePartitionMapper implements PartitionMapper {
      *          and surrounded by "[]", e.g. "[com.xx.foo, com.xx.bar]".
      * @return a set of entity-types
      * @throws NullPointerException thrown if the entity-token is not found.
+     * @throws ClassNotFoundException thrown if the target string name is not
+     *          a valid class name.
      */
-    private String[] parse(String raw) throws NullPointerException {
+    private Class<?>[] parse(String raw) throws NullPointerException, 
+            ClassNotFoundException {
         if (raw == null) {
             throw new NullPointerException("Not any target entity to index");
         }
-        String[] rootEntities = raw
-                .substring(1, raw.length() - 1)
+        String[] names = raw
+                .substring(1, raw.length() - 1)  // removes '[' and ']'
                 .split(", ");
-        return rootEntities;
+        Class<?>[] classes = new Class<?>[names.length];
+        for (int i = 0; i < names.length; i++) {
+            classes[i] = Class.forName(names[i]);
+        }
+        return classes;
     }
 }
