@@ -6,6 +6,10 @@
   <packaging>war</packaging>
   <name>Hibernate Search - JSR352</name>
   <description>New implementation mass-indexer using JSR 352</description>
+  <properties>
+    <wildflyVersion>10.0.0.Final</wildflyVersion>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.hibernate</groupId>
@@ -53,7 +57,7 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>${artifactId}-${version}</finalName>
+    <finalName>${project.artifactId}-${project.version}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -70,6 +74,31 @@
           <source>1.8</source>
           <target>1.8</target>
         </configuration>
+      </plugin>
+      <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>unpack</id>
+              <phase>pre-integration-test</phase>
+              <goals>
+                <goal>unpack</goal>
+              </goals>
+              <configuration>
+                <artifactItems>
+                  <artifactItem>
+                    <groupId>org.wildfly</groupId>
+                    <artifactId>wildfly-dist</artifactId>
+                    <version>${wildflyVersion}</version>
+                    <type>zip</type>
+                    <overWrite>true</overWrite>
+                    <outputDirectory>${project.build.directory}/node1</outputDirectory>
+                  </artifactItem>
+                  <!-- TODO: add this project as a module -->
+                </artifactItems>
+              </configuration>
+            </execution>
+          </executions>
       </plugin>
     </plugins>
   </build>
