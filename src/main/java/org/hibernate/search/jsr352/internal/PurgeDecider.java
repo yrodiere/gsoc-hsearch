@@ -1,4 +1,4 @@
-package io.github.mincongh.batch;
+package org.hibernate.search.jsr352.internal;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.api.Decider;
