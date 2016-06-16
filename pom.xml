@@ -6,10 +6,26 @@
   <packaging>war</packaging>
   <name>Hibernate Search - JSR352</name>
   <description>New implementation mass-indexer using JSR 352</description>
+  
   <properties>
-    <wildflyVersion>10.0.0.Final</wildflyVersion>
+    <org.jboss.arquillian.version>1.1.1.Final</org.jboss.arquillian.version>
+    <org.wildfly>10.0.0.Final</org.wildfly>
+    <org.wildfly.arquillian>8.2.1.Final</org.wildfly.arquillian>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+  
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.jboss.arquillian</groupId>
+        <artifactId>arquillian-bom</artifactId>
+        <version>1.1.11.Final</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  
   <dependencies>
     <dependency>
       <groupId>org.hibernate</groupId>
@@ -55,7 +71,26 @@
       <artifactId>jstl</artifactId>
       <version>1.2</version>
     </dependency>
+    <!-- tests -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.arquillian.junit</groupId>
+      <artifactId>arquillian-junit-container</artifactId>
+    </dependency>
+    <!-- should be moved to embedded wilfly profile ? -->
+    <dependency>
+      <groupId>org.wildfly</groupId>
+      <artifactId>wildfly-arquillian-container-embedded</artifactId>
+      <version>${org.wildfly.arquillian}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+  
   <build>
     <finalName>${project.artifactId}-${project.version}</finalName>
     <plugins>
@@ -76,7 +111,11 @@
         </configuration>
       </plugin>
       <plugin>
-          <artifactId>maven-dependency-plugin</artifactId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.17</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
           <executions>
             <execution>
               <id>unpack</id>
@@ -89,12 +128,20 @@
                   <artifactItem>
                     <groupId>org.wildfly</groupId>
                     <artifactId>wildfly-dist</artifactId>
-                    <version>${wildflyVersion}</version>
+                    <version>${org.wildfly}</version>
                     <type>zip</type>
                     <overWrite>true</overWrite>
                     <outputDirectory>${project.build.directory}/node1</outputDirectory>
                   </artifactItem>
-                  <!-- TODO: add this project as a module -->
+                  <artifactItem>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-search-modules</artifactId>
+                    <version>${project.version}</version>
+                    <classifier>wildfly-10-dist</classifier>
+                    <type>zip</type>
+                    <overWrite>true</overWrite>
+                    <outputDirectory>${project.build.directory}/node1/wildfly-${org.wildfly}/modules</outputDirectory>
+                  </artifactItem>
                 </artifactItems>
               </configuration>
             </execution>

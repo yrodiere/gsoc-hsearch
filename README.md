@@ -83,6 +83,6 @@ private Query wildcardQuery(String searchString) {
 ```
 
 [wiki-ed]: https://en.wikipedia.org/wiki/Edit_distance
-[badge-build]: https://img.shields.io/badge/build-passing-brightgreen.svg
+[badge-build]: https://img.shields.io/badge/build-failed-red.svg
 [badge-license]: https://img.shields.io/badge/license-Apache2.0-brightgreen.svg
 [home]: https://github.com/mincong-h/gsoc-hsearch
