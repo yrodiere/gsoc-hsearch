@@ -15,7 +15,7 @@ public class DeploymentTest {
     @Deployment
     public static WebArchive createDeployment() {
         WebArchive war = ShrinkWrap.create(WebArchive.class)
-                .addPackages(true, "org.hibernate.search.jsr352")
+                .addPackages(false, "org.hibernate.search.jsr352")
                 .addAsWebInfResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"))
                 .addAsResource("META-INF/batch-jobs/mass-index.xml");
         System.out.println(war.toString(true));
