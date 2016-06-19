@@ -6,6 +6,8 @@ import javax.batch.runtime.StepExecution;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.jboss.logging.Logger;
+
 /**
  * Decider decides the next step-execution before the start of index chunk. If
  * user requires a index purge, then the next step should be a purge, else, 
@@ -21,6 +23,8 @@ public class AfterPurgeDecider implements Decider {
     @Inject @BatchProperty
     private Boolean optimizeAfterPurge;
     
+    private static final Logger logger = Logger.getLogger(AfterPurgeDecider.class);
+    
     /**
      * Decide the next step using the target batch property.
      * 
@@ -28,7 +32,7 @@ public class AfterPurgeDecider implements Decider {
      */
     @Override
     public String decide(StepExecution[] executions) throws Exception {
-        System.out.printf("AfterPurgeDecide#decide: %s%n", String.valueOf(optimizeAfterPurge));
+        logger.debugf("optimzeAfterPurge = %b%n", optimizeAfterPurge);
         return String.valueOf(optimizeAfterPurge);
     }
 }

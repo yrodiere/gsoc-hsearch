@@ -7,6 +7,8 @@ import javax.batch.api.chunk.ItemReader;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.jboss.logging.Logger;
+
 /**
  * Read entity IDs from {@code IndexingContext}. Each time, there's one array
  * being read. The number of IDs inside the array depends on the array capacity.
@@ -31,6 +33,8 @@ public class BatchItemReader implements ItemReader {
     @Inject
     private IndexingContext indexingContext;
     
+    private static final Logger logger = Logger.getLogger(BatchItemReader.class);
+    
     /**
      * The checkpointInfo method returns the current checkpoint data for this 
      * reader. It is called before a chunk checkpoint is committed.
@@ -40,7 +44,7 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public Serializable checkpointInfo() throws Exception {
-//      System.out.println("BatchItemReader#checkpointInfo()");
+        logger.debug("#checkpointInfo()");
         return null;
     }
 
@@ -51,7 +55,7 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public void close() throws Exception {
-        System.out.println("BatchItemReader#close()");
+        logger.debug("#close()");
     }
 
     /**
@@ -65,7 +69,7 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public void open(Serializable checkpoint) throws Exception {
-        System.out.printf("BatchItemReader#open(...): entityType = %s%n", entityType);
+        logger.debugf("#open(...): entityType = %s%n", entityType);
     }
 
     /**

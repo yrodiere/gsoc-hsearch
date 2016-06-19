@@ -8,6 +8,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.hibernate.search.store.IndexShardingStrategy;
+import org.jboss.logging.Logger;
 
 /**
  * Specific indexing context for mass indexer. Several attributes are used :
@@ -28,6 +29,7 @@ public class IndexingContext {
     private ConcurrentHashMap<Class<?>, ConcurrentLinkedQueue<Serializable[]>> idQueues;
     private IndexShardingStrategy indexShardingStrategy;
     private long entityCount = 0;
+    private static final Logger logger = Logger.getLogger(IndexingContext.class);
     
     public void add(Serializable[] clazzIDs, Class<?> clazz) {
         idQueues.get(clazz).add(clazzIDs);
@@ -37,7 +39,7 @@ public class IndexingContext {
         // TODO: this method is really slow
         Serializable[] IDs = idQueues.get(clazz).poll();
         String len = (IDs == null) ? "null" : String.valueOf(IDs.length);
-        System.out.printf("Polling %s IDs for %s.%n", len, clazz.getName());
+        logger.debugf("Polling %d IDs for %s%n", len, clazz.getName());
         return IDs;
     }
     

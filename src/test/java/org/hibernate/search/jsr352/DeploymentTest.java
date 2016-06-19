@@ -3,6 +3,7 @@ package org.hibernate.search.jsr352;
 import org.hibernate.search.store.IndexShardingStrategy;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.logging.Logger;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -23,6 +24,8 @@ public class DeploymentTest {
     private final int PARTITIONS = 4;
     private final int THREADS = 2;
     
+    private static final Logger logger = Logger.getLogger(DeploymentTest.class);
+    
     @Deployment
     public static WebArchive createDeployment() {
         WebArchive war = ShrinkWrap.create(WebArchive.class)
@@ -31,7 +34,7 @@ public class DeploymentTest {
                 .addPackages(true, "org.hibernate.search.jsr352")
                 .addAsWebInfResource(EmptyAsset.INSTANCE, ArchivePaths.create("beans.xml"))
                 .addAsResource("META-INF/batch-jobs/mass-index.xml");
-        System.out.println(war.toString(true));
+        logger.info(war.toString(true));
         return war;
     }
     

@@ -14,6 +14,7 @@ import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.criterion.Projections;
+import org.jboss.logging.Logger;
 
 /**
  * Read identifiers of entities via entity manager. The result is going to be
@@ -37,6 +38,8 @@ public class IdProducerBatchlet implements Batchlet {
     private EntityManager em;
     private Session session;
     
+    private static final Logger logger = Logger.getLogger(IdProducerBatchlet.class);
+    
     /**
      * Load id of all target entities using Hibernate Session. In order to 
      * follow the id loading progress, the total number will be additionally 
@@ -57,7 +60,7 @@ public class IdProducerBatchlet implements Batchlet {
             .setProjection(Projections.rowCount())
             .setCacheable(false)
             .uniqueResult();
-        System.out.printf("entityType = %s (%d rows).%n", entityType, rowCount);
+        logger.infof("entityType = %s (%D rows).%n", entityType, rowCount);
         indexingContext.addEntityCount(rowCount);
         
         // load ids and store in scrollable results

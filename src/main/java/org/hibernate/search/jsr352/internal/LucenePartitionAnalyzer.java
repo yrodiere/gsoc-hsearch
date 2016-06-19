@@ -8,6 +8,8 @@ import javax.batch.runtime.BatchStatus;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.jboss.logging.Logger;
+
 @Named
 public class LucenePartitionAnalyzer implements PartitionAnalyzer {
 
@@ -19,6 +21,8 @@ public class LucenePartitionAnalyzer implements PartitionAnalyzer {
     
     private int workCount = 0;
     private float percentage = 0;
+    
+    private static final Logger logger = Logger.getLogger(LucenePartitionAnalyzer.class);
     
     /**
      * Analyze data obtained from different partition plans via partition data
@@ -45,13 +49,13 @@ public class LucenePartitionAnalyzer implements PartitionAnalyzer {
         if (entitiesLoaded != 0) {
             percentage = workCount * 100f / entitiesLoaded;
         }
-        System.out.printf("#analyzeCollectorData(): %d works processed (%.1f%%).%n",
+        logger.infof("#analyzeCollectorData(): %d works processed (%.1f%%).%n",
                 workCount, percentage);
     }
 
     @Override
     public void analyzeStatus(BatchStatus batchStatus, String exitStatus)
             throws Exception {
-        System.out.println("#analyzeStatus(...) called.");
+        logger.debug("#analyzeStatus(...) called.");
     }
 }

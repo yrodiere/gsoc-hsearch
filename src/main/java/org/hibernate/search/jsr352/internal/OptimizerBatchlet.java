@@ -4,12 +4,16 @@ import javax.batch.api.Batchlet;
 import javax.batch.runtime.BatchStatus;
 import javax.inject.Named;
 
+import org.jboss.logging.Logger;
+
 @Named
 public class OptimizerBatchlet implements Batchlet {
 
+    private static final Logger logger = Logger.getLogger(OptimizerBatchlet.class);
+    
     @Override
     public String process() throws Exception {
-       System.out.println("Optimizing ...");
+        logger.info("Optimizing ...");
         return BatchStatus.COMPLETED.toString();
     }
 

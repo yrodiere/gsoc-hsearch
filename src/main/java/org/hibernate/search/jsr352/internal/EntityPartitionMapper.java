@@ -9,11 +9,15 @@ import javax.batch.api.partition.PartitionPlanImpl;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.jboss.logging.Logger;
+
 @Named
 public class EntityPartitionMapper implements PartitionMapper {
 
     @Inject @BatchProperty(name = "rootEntities")
     private String rootEntitiesStr;
+    
+    private static final Logger logger = Logger.getLogger(EntityPartitionMapper.class);
     
     @Override
     public PartitionPlan mapPartitions() throws Exception {
@@ -24,13 +28,13 @@ public class EntityPartitionMapper implements PartitionMapper {
 
             @Override
             public int getPartitions() {
-                System.out.printf("#mapPartitions(): %d partitions.%n", rootEntities.length);
+                logger.infof("%d partitions.%n", rootEntities.length);
                 return rootEntities.length;
             }
 
             @Override
             public int getThreads() {
-                System.out.printf("#getThreads(): %d threads.%n", getPartitions());
+                logger.infof("%d threads.%n", getPartitions());
                 return getPartitions();
             }
 

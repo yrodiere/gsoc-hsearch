@@ -11,6 +11,8 @@ import javax.batch.api.partition.PartitionPlanImpl;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.jboss.logging.Logger;
+
 /**
  * Lucene partition mapper provides a partition plan to the Lucene production 
  * step: "produceLuceneDoc". The partition plan is defined dynamically, 
@@ -40,6 +42,8 @@ public class LucenePartitionMapper implements PartitionMapper {
     @Inject @BatchProperty private int threads;
     @Inject @BatchProperty(name="rootEntities") private String rootEntitiesStr;
     
+    private static final Logger logger = Logger.getLogger(LucenePartitionMapper.class);
+    
     @Override
     public PartitionPlan mapPartitions() throws Exception {
 
@@ -60,7 +64,7 @@ public class LucenePartitionMapper implements PartitionMapper {
             for (int i = 0; i < classPartitions; i++) {
                 classQueue.add(rootEntity.getName());
             }
-            System.out.printf("%d partitions added to root entity \"%s\".%n",
+            logger.infof("%d partitions added to root entity \"%s\".%n",
                     classPartitions, rootEntity);
             
             totalPartitions += classPartitions;
@@ -71,13 +75,13 @@ public class LucenePartitionMapper implements PartitionMapper {
 
             @Override
             public int getPartitions() {
-                System.out.printf("#mapPartitions(): %d partitions.%n", TOTAL_PARTITIONS);
+                logger.infof("#mapPartitions(): %d partitions.%n", TOTAL_PARTITIONS);
                 return TOTAL_PARTITIONS;
             }
 
             @Override
             public int getThreads() {
-                System.out.printf("#getThreads(): %d threads.%n", Math.min(TOTAL_PARTITIONS, threads));
+                logger.infof("#getThreads(): %d threads.%n", Math.min(TOTAL_PARTITIONS, threads));
                 return Math.min(TOTAL_PARTITIONS, threads);
             }
 

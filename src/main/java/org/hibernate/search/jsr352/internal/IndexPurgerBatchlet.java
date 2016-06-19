@@ -4,13 +4,17 @@ import javax.batch.api.Batchlet;
 import javax.batch.runtime.BatchStatus;
 import javax.inject.Named;
 
+import org.jboss.logging.Logger;
+
 @Named
 public class IndexPurgerBatchlet implements Batchlet {
 
+    private static final Logger logger = Logger.getLogger(IndexPurgerBatchlet.class);
+    
     @Override
     public String process() throws Exception {
         
-        System.out.println("purging entities ...");
+        logger.info("purging entities ...");
         
         return BatchStatus.COMPLETED.toString();
     }
