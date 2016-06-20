@@ -12,9 +12,39 @@ database and rebuild the full-text index from these.
 
 ## Run
 
+### Create MySQL database
+
+Before running the project, you need to create a database in mysql server.
+
+```sql
+CREATE SCHEMA `gsoc` DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+```
+
+And import the example data. (_TODO: add data in Google Drive_)
+
+### Overwrite the data source (optional)
+
+The default user name and password of MySQL DS are described in WF configuration
+file, located in sub-system `urn:jboss:domain:datasources:4.0`.
+
+    ./src/wildflyConfig//standalone/configuration/standalone-full-testqueues.xml 
+
+Overwrite them if needed
+
+```xml
+<security>
+  <user-name>root</user-name>
+  <password>root</password>
+</security>
+```
+
+### install
+
+Now, you're ready to install the project:
+
     mvn clean install
 
 
-[badge-build]: https://img.shields.io/badge/build-failed-red.svg
+[badge-build]: https://img.shields.io/badge/build-success-brightgreen.svg
 [badge-license]: https://img.shields.io/badge/license-Apache2.0-brightgreen.svg
 [home]: https://github.com/mincong-h/gsoc-hsearch
