@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
-public class DeploymentTest {
+public class DeploymentIT {
 
     private final boolean OPTIMIZE_AFTER_PURGE = true;
     private final boolean OPTIMIZE_AT_END = true;
@@ -24,7 +24,7 @@ public class DeploymentTest {
     private final int PARTITIONS = 4;
     private final int THREADS = 2;
     
-    private static final Logger logger = Logger.getLogger(DeploymentTest.class);
+    private static final Logger logger = Logger.getLogger(DeploymentIT.class);
     
     @Deployment
     public static WebArchive createDeployment() {
