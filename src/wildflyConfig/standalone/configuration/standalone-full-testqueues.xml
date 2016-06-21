@@ -84,7 +84,7 @@
     <profile>
         <subsystem xmlns="urn:jboss:domain:logging:3.0">
             <console-handler name="CONSOLE">
-                <level name="INFO"/>
+                <level name="DEBUG"/>
                 <formatter>
                     <named-formatter name="COLOR-PATTERN"/>
                 </formatter>
@@ -109,11 +109,15 @@
             <logger category="org.hibernate.search">
                 <level name="DEBUG"/>
             </logger>
+            <!-- find out beans.xml error during load -->
+            <logger category="org.jboss.weld.ClassLoading">
+                <level name="DEBUG"/>
+            </logger>
             <logger category="sun.rmi">
                 <level name="WARN"/>
             </logger>
             <root-logger>
-                <level name="INFO"/>
+                <level name="DEBUG"/>
                 <handlers>
                     <handler name="CONSOLE"/>
                     <handler name="FILE"/>
