@@ -32,7 +32,7 @@ public class SearchSession {
     // @Stateful bean is created and destroyed when the @Stateful bean is
     // destroyed. Simply put, the data in the EntityManager is cached for the
     // lifetime of the @Stateful bean
-    @PersistenceContext(unitName = "us-address", type = PersistenceContextType.EXTENDED)
+    @PersistenceContext(unitName = "jsr352", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
     
     private FullTextEntityManager fullTextEntityManager;
