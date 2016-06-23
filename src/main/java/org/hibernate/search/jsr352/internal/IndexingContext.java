@@ -27,6 +27,7 @@ import org.jboss.logging.Logger;
 public class IndexingContext {
     
     private ConcurrentHashMap<Class<?>, ConcurrentLinkedQueue<Serializable[]>> idQueues;
+    private Class<?>[] rootEntities;
     private IndexShardingStrategy indexShardingStrategy;
     private long entityCount = 0;
     private static final Logger logger = Logger.getLogger(IndexingContext.class);
@@ -39,7 +40,7 @@ public class IndexingContext {
         // TODO: this method is really slow
         Serializable[] IDs = idQueues.get(clazz).poll();
         String len = (IDs == null) ? "null" : String.valueOf(IDs.length);
-        logger.debugf("Polling %d IDs for %s%n", len, clazz.getName());
+        logger.debugf("Polling %s IDs for %s%n", len, clazz.getName());
         return IDs;
     }
     
@@ -78,5 +79,13 @@ public class IndexingContext {
     
     public long getEntityCount() {
         return entityCount;
+    }
+    
+    public Class<?>[] getRootEntities() {
+        return rootEntities;
+    }
+    
+    public void setRootEntities(Class<?>[] rootEntities) {
+        this.rootEntities = rootEntities;
     }
 }

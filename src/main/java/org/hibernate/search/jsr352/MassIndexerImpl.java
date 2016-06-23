@@ -5,23 +5,26 @@ import java.util.Set;
 
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.CDI;
+
+import org.hibernate.search.jsr352.internal.IndexingContext;
 
 public class MassIndexerImpl implements MassIndexer {
 
     private boolean optimizeAfterPurge = false;
     private boolean optimizeAtEnd = false;
     private boolean purgeAtStart = false;
-    
     private int arrayCapacity = 1000;
     private int fetchSize = 200000;
     private int maxResults = 1000000;
     private int partitionCapacity = 250;
     private int partitions = 4;
     private int threads = 2;
+    private Set<Class<?>> rootEntities;
     
     private final String JOB_NAME = "mass-index";
-
-    private Set<Class<?>> rootEntities;
     
     MassIndexerImpl() {
         
@@ -29,6 +32,9 @@ public class MassIndexerImpl implements MassIndexer {
     
     @Override
     public long start() {
+        
+        registrerRootEntities(rootEntities);
+        
         Properties jobParams = new Properties();
         jobParams.setProperty("fetchSize", String.valueOf(fetchSize));
         jobParams.setProperty("arrayCapacity", String.valueOf(arrayCapacity));
@@ -177,5 +183,23 @@ public class MassIndexerImpl implements MassIndexer {
 
     public Set<Class<?>> getRootEntities() {
         return rootEntities;
+    }
+    
+    public void registrerRootEntities(Set<Class<?>> rootEntities) {
+        if (rootEntities == null) {
+            throw new NullPointerException("rootEntities cannot be NULL.");
+        } else if (rootEntities.isEmpty()) {
+            throw new NullPointerException("rootEntities must have at least 1 element.");
+        }
+        int s = rootEntities.size();
+        
+        BeanManager bm = CDI.current().getBeanManager();
+        Bean<IndexingContext> bean = (Bean<IndexingContext>) bm
+                .resolve(bm.getBeans(IndexingContext.class));
+        IndexingContext indexingContext = bm
+                .getContext(bean.getScope())
+                .get(bean, bm.createCreationalContext(bean));
+        Class<?>[] r = rootEntities.toArray(new Class<?>[s]);
+        indexingContext.setRootEntities(r);
     }
 }

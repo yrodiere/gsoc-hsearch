@@ -47,7 +47,8 @@ public class LucenePartitionMapper implements PartitionMapper {
     @Override
     public PartitionPlan mapPartitions() throws Exception {
 
-        Class<?>[] rootEntities = parse(rootEntitiesStr);
+//      Class<?>[] rootEntities = parse(rootEntitiesStr);
+        Class<?>[] rootEntities = indexingContext.getRootEntities();
         Queue<String> classQueue = new LinkedList<>();
         
         int totalPartitions = 0;
@@ -64,7 +65,7 @@ public class LucenePartitionMapper implements PartitionMapper {
             for (int i = 0; i < classPartitions; i++) {
                 classQueue.add(rootEntity.getName());
             }
-            logger.infof("%d partitions added to root entity \"%s\".%n",
+            logger.infof("%d partitions added to root entity \"%s\".",
                     classPartitions, rootEntity);
             
             totalPartitions += classPartitions;
@@ -75,13 +76,13 @@ public class LucenePartitionMapper implements PartitionMapper {
 
             @Override
             public int getPartitions() {
-                logger.infof("#mapPartitions(): %d partitions.%n", TOTAL_PARTITIONS);
+                logger.infof("#mapPartitions(): %d partitions.", TOTAL_PARTITIONS);
                 return TOTAL_PARTITIONS;
             }
 
             @Override
             public int getThreads() {
-                logger.infof("#getThreads(): %d threads.%n", Math.min(TOTAL_PARTITIONS, threads));
+                logger.infof("#getThreads(): %d threads.", Math.min(TOTAL_PARTITIONS, threads));
                 return Math.min(TOTAL_PARTITIONS, threads);
             }
 

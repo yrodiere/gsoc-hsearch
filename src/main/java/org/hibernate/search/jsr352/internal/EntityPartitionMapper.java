@@ -14,6 +14,9 @@ import org.jboss.logging.Logger;
 @Named
 public class EntityPartitionMapper implements PartitionMapper {
 
+    @Inject
+    private IndexingContext indexingContext;
+    
     @Inject @BatchProperty(name = "rootEntities")
     private String rootEntitiesStr;
     
@@ -22,19 +25,20 @@ public class EntityPartitionMapper implements PartitionMapper {
     @Override
     public PartitionPlan mapPartitions() throws Exception {
         
-        String[] rootEntities = parse(rootEntitiesStr);
+//      String[] rootEntities = parse(rootEntitiesStr);
+        Class<?>[] rootEntities = indexingContext.getRootEntities();
         
         return new PartitionPlanImpl() {
 
             @Override
             public int getPartitions() {
-                logger.infof("%d partitions.%n", rootEntities.length);
+                logger.infof("%d partitions.", rootEntities.length);
                 return rootEntities.length;
             }
 
             @Override
             public int getThreads() {
-                logger.infof("%d threads.%n", getPartitions());
+                logger.infof("%d threads.", getPartitions());
                 return getPartitions();
             }
 
@@ -43,7 +47,7 @@ public class EntityPartitionMapper implements PartitionMapper {
                 Properties[] props = new Properties[getPartitions()];
                 for (int i = 0; i < props.length; i++) {
                     props[i] = new Properties();
-                    props[i].setProperty("entityType", rootEntities[i]);
+                    props[i].setProperty("entityType", rootEntities[i].getName());
                 }
                 return props;
             }

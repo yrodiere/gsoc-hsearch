@@ -65,7 +65,7 @@ import org.hibernate.search.store.IndexShardingStrategy;
 @Named
 public class BatchItemProcessor implements ItemProcessor {
     
-    @PersistenceContext(unitName = "us-address")
+    @PersistenceContext(unitName = "jsr352")
     private EntityManager em;
     private Session session;
     private ExtendedSearchIntegrator searchIntegrator;
@@ -94,11 +94,12 @@ public class BatchItemProcessor implements ItemProcessor {
     @Override
     public Object processItem(Object item) throws Exception {
         
-        Class<?> entityClazz = Class.forName(entityType);
+//      Class<?> entityClazz = Class.forName(entityType);
+        Class<?> entityClazz = findClass(entityType);
         
         // TODO: change the id to generic type
         // TODO: accept all entity type. For instance, only Address.class works
-        if (entityType.equals("io.github.mincongh.entity.Stock")) {
+        if (entityType.equals("org.hibernate.search.jsr352.test.entity.Stock")) {
             updateWorksCount(0);
             return null;
         }
@@ -118,6 +119,16 @@ public class BatchItemProcessor implements ItemProcessor {
         updateWorksCount(addWorks.size());
   
         return addWorks;
+    }
+    
+    private Class<?> findClass(String entityType) throws ClassNotFoundException {
+        for (Class<?> clazz: indexingContext.getRootEntities()) {
+            if (clazz.getName().equals(entityType)) {
+                return clazz;
+            }
+        }
+        String msg = String.format("entityType %s not found.", entityType);
+        throw new ClassNotFoundException(msg);
     }
     
     /**
