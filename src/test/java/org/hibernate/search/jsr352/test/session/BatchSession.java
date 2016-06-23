@@ -1,4 +1,4 @@
-package io.github.mincongh.session;
+package org.hibernate.search.jsr352.test.session;
 
 import java.util.HashSet;
 import java.util.Properties;

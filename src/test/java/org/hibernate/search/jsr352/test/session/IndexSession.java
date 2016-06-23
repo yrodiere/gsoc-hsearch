@@ -1,4 +1,4 @@
-package io.github.mincongh.session;
+package org.hibernate.search.jsr352.test.session;
 
 import java.util.List;
 
@@ -11,8 +11,7 @@ import javax.persistence.PersistenceContextType;
 import org.hibernate.CacheMode;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
-
-import io.github.mincongh.entity.Address;
+import org.hibernate.search.jsr352.test.entity.Address;
 
 /**
  * Index Session bean is used for indexing all entities in the databases for

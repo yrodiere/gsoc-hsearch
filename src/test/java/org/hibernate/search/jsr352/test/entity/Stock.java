@@ -1,4 +1,4 @@
-package io.github.mincongh.entity;
+package org.hibernate.search.jsr352.test.entity;
 
 import java.io.Serializable;
 import javax.persistence.*;
@@ -11,6 +11,7 @@ import java.util.Date;
  */
 @Entity
 @NamedQuery(name="Stock.findAll", query="SELECT s FROM Stock s")
+@Table(name="stock", schema="gsoc")
 public class Stock implements Serializable {
 	private static final long serialVersionUID = 1L;
 

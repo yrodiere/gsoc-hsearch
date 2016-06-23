@@ -1,4 +1,4 @@
-package io.github.mincongh.session;
+package org.hibernate.search.jsr352.test.session;
 
 import java.util.List;
 
@@ -9,10 +9,9 @@ import javax.persistence.PersistenceContextType;
 
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
+import org.hibernate.search.jsr352.test.entity.Address;
+import org.hibernate.search.jsr352.test.entity.Stock;
 import org.hibernate.search.query.dsl.QueryBuilder;
-
-import io.github.mincongh.entity.Address;
-import io.github.mincongh.entity.Stock;
 
 /**
  * Search Session bean is used for searching target entities in the persistence

@@ -1,4 +1,4 @@
-package io.github.mincongh.entity;
+package org.hibernate.search.jsr352.test.entity;
 
 import java.io.Serializable;
 
@@ -17,7 +17,7 @@ import org.hibernate.search.annotations.Indexed;
 @Entity
 @Indexed
 @NamedQuery(name="Address.findAll", query="SELECT a FROM Address a")
-@Table(uniqueConstraints={@UniqueConstraint(columnNames={"id", "seq"})})
+@Table(name="address", schema="gsoc", uniqueConstraints={@UniqueConstraint(columnNames={"id", "seq"})})
 public class Address implements Serializable {
     
 	private static final long serialVersionUID = 1L;
