@@ -32,7 +32,7 @@ public class AfterPurgeDecider implements Decider {
      */
     @Override
     public String decide(StepExecution[] executions) throws Exception {
-        logger.debugf("optimzeAfterPurge = %b%n", optimizeAfterPurge);
+        logger.infof("optimzeAfterPurge = %b", optimizeAfterPurge);
         return String.valueOf(optimizeAfterPurge);
     }
 }

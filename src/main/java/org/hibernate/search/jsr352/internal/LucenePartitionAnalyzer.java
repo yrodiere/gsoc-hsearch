@@ -49,13 +49,13 @@ public class LucenePartitionAnalyzer implements PartitionAnalyzer {
         if (entitiesLoaded != 0) {
             percentage = workCount * 100f / entitiesLoaded;
         }
-        logger.infof("#analyzeCollectorData(): %d works processed (%.1f%%).%n",
+        logger.infof("%d works processed (%.1f%%).",
                 workCount, percentage);
     }
 
     @Override
     public void analyzeStatus(BatchStatus batchStatus, String exitStatus)
             throws Exception {
-        logger.debug("#analyzeStatus(...) called.");
+        logger.info("analyzeStatus called.");
     }
 }

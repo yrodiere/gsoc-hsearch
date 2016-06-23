@@ -32,7 +32,7 @@ public class PurgeDecider implements Decider {
      */
     @Override
     public String decide(StepExecution[] executions) throws Exception {
-        logger.infof("#decide: purgeAtStart=%s.%n", purgeAtStart);
+        logger.infof("purgeAtStart=%s.%n", purgeAtStart);
         return String.valueOf(purgeAtStart);
     }
 }

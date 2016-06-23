@@ -44,7 +44,7 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public Serializable checkpointInfo() throws Exception {
-        logger.debug("#checkpointInfo()");
+        logger.info("checkpointInfo");
         return null;
     }
 
@@ -55,7 +55,7 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public void close() throws Exception {
-        logger.debug("#close()");
+        logger.info("close");
     }
 
     /**
@@ -69,7 +69,7 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public void open(Serializable checkpoint) throws Exception {
-        logger.debugf("#open(...): entityType = %s%n", entityType);
+        logger.debugf("#open(...): entityType = %s", entityType);
     }
 
     /**

@@ -12,23 +12,23 @@ public class LucenePartitionReducer implements PartitionReducer {
     
     @Override
     public void beginPartitionedStep() throws Exception {
-        logger.debug("#beginPartitionedStep() called.");
+        logger.info("#beginPartitionedStep() called.");
     }
 
     @Override
     public void beforePartitionedStepCompletion() throws Exception {
-        logger.debug("#beforePartitionedStepCompletion() called.");
+        logger.info("#beforePartitionedStepCompletion() called.");
     }
 
     @Override
     public void rollbackPartitionedStep() throws Exception {
-        logger.debug("#rollbackPartitionedStep() called.");
+        logger.info("#rollbackPartitionedStep() called.");
     }
 
     @Override
     public void afterPartitionedStepCompletion(PartitionStatus status)
             throws Exception {
-        logger.debug("#afterPartitionedStepCompletion(...) called.");
+        logger.info("#afterPartitionedStepCompletion(...) called.");
     }
 
 }
