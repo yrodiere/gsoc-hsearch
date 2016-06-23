@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.search.jsr352.MassIndexer;
+import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.junit.Test;
 
 public class MassIndexerTest {

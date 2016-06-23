@@ -34,7 +34,7 @@ public class IdProducerBatchlet implements Batchlet {
     @Inject @BatchProperty private int maxResults;
     @Inject @BatchProperty private String entityType;
     
-    @PersistenceContext(unitName = "us-address")
+    @PersistenceContext(unitName = "jsr352")
     private EntityManager em;
     private Session session;
     
@@ -50,7 +50,7 @@ public class IdProducerBatchlet implements Batchlet {
         
         // get entity class type
         Class<?> entityClazz = Class.forName(entityType);
-        
+            
         // unwrap session from entity manager
         session = em.unwrap(Session.class);
         
@@ -60,7 +60,7 @@ public class IdProducerBatchlet implements Batchlet {
             .setProjection(Projections.rowCount())
             .setCacheable(false)
             .uniqueResult();
-        logger.infof("entityType = %s (%D rows).%n", entityType, rowCount);
+        logger.infof("entityType = %s (%d rows).", entityType, rowCount);
         indexingContext.addEntityCount(rowCount);
         
         // load ids and store in scrollable results
