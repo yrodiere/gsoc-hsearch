@@ -85,7 +85,7 @@ public class IdProducerBatchlet implements Batchlet {
                 Serializable id = (Serializable) scrollableIds.get(0);
                 entityIDs[i++] = id;
                 rowLoaded++;
-                if (i == arrayCapacity) {
+                if (i == arrayCapacity || scrollableIds.isLast()) {
                     // add array entityIDs into indexing context's hash-map,
                     // mapped to key K = entityClazz
                     indexingContext.add(entityIDs, entityClazz);
