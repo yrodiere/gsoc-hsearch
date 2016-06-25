@@ -83,15 +83,47 @@ public class DeploymentIT {
         // tests
         List<StepExecution> stepExecutions = jobOperator.getStepExecutions(executionId);
         for (StepExecution stepExecution: stepExecutions) {
+            BatchStatus batchStatus = stepExecution.getBatchStatus();
             switch (stepExecution.getStepName()) {
                 
                 case "loadId":
-                    assertEquals(DB_ADDRESS_ROWS + DB_STOCK_ROWS, indexingContext.getEntityCount());
+                    long expectedEntityCount = DB_ADDRESS_ROWS + DB_STOCK_ROWS;
+                    assertEquals(expectedEntityCount, indexingContext.getEntityCount());
+                    assertEquals(BatchStatus.COMPLETED, batchStatus);
+                    break;
+                
+                case "purgeDecision":
+                    assertEquals(BatchStatus.COMPLETED, batchStatus);
+                    break;
+                
+                case "purgeIndex":
+                    if (PURGE_AT_START) {
+                        assertEquals(BatchStatus.COMPLETED, batchStatus);
+                    }
                     break;
                     
+                case "afterPurgeDecision":
+                    assertEquals(BatchStatus.COMPLETED, batchStatus);
+                    break;
+                    
+                case "optimizeAfterPurge":
+                    if (OPTIMIZE_AFTER_PURGE) {
+                        assertEquals(BatchStatus.COMPLETED, batchStatus);
+                    }
+                    break;
+                
                 case "produceLuceneDoc":
                     Metric[] metrics = stepExecution.getMetrics();
                     testChunk(BatchTestHelper.getMetricsMap(metrics));
+                    assertEquals(BatchStatus.COMPLETED, batchStatus);
+                    break;
+                
+                case "afterIndexDecision":
+                    assertEquals(BatchStatus.COMPLETED, batchStatus);
+                    break;
+                
+                case "optimizeAfterIndex":
+                    assertEquals(BatchStatus.COMPLETED, batchStatus);
                     break;
                     
                 default:
