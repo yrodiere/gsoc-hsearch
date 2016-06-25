@@ -60,7 +60,6 @@ public class DeploymentIT {
                 .addPackages(true, "org.hibernate.search.jsr352")
                 .addPackages(true, "javax.persistence")
                 .addPackages(true, "org.hibernate.search.annotations")
-//              .addClasses(Address.class, Stock.class)
                 .addClass(Serializable.class)
                 .addClass(Date.class)
                 .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
@@ -91,11 +90,8 @@ public class DeploymentIT {
                     break;
                     
                 case "produceLuceneDoc":
-                    Map<Metric.MetricType, Long> metricsMap = BatchTestHelper.getMetricsMap(stepExecution.getMetrics());
-                    // The read count.
-                    long addressCount = (long) Math.ceil((double) DB_ADDRESS_ROWS_LOADED / ARRAY_CAPACITY);
-                    long stockCount = (long) Math.ceil((double) DB_STOCK_ROWS / ARRAY_CAPACITY);
-                    assertEquals(addressCount + stockCount, metricsMap.get(Metric.MetricType.READ_COUNT).longValue());
+                    Metric[] metrics = stepExecution.getMetrics();
+                    testChunk(BatchTestHelper.getMetricsMap(metrics));
                     break;
                     
                 default:
@@ -104,6 +100,21 @@ public class DeploymentIT {
         }
         assertEquals(jobExecution.getBatchStatus(), BatchStatus.COMPLETED);
         logger.info("Finished");
+    }
+    
+    private void testChunk(Map<Metric.MetricType, Long> metricsMap) {
+        long addressCount = (long) Math.ceil((double) DB_ADDRESS_ROWS_LOADED / ARRAY_CAPACITY);
+        long stockCount = (long) Math.ceil((double) DB_STOCK_ROWS / ARRAY_CAPACITY);
+        // The read count.
+        long expectedReadCount = addressCount + stockCount;
+        long actualReadCount = metricsMap.get(Metric.MetricType.READ_COUNT);
+        assertEquals(expectedReadCount, actualReadCount);
+        // The write count
+        // TODO: make BatchItemProcessor generic in order to process the 
+        // entity `stock` in the current implementation
+        long expectedWriteCount = addressCount + 0;
+        long actualWriteCount = metricsMap.get(Metric.MetricType.WRITE_COUNT);
+        assertEquals(expectedWriteCount, actualWriteCount);
     }
     
     private MassIndexer createAndInitJob() {
@@ -127,6 +138,4 @@ public class DeploymentIT {
         rootEntities.add(Stock.class);
         return rootEntities;
     }
-    
-    
 }
