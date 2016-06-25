@@ -17,6 +17,9 @@ hs_err_pid*
 /target/
 /build/
 
+########### Lucene ##########
+org.hibernate.search.jsr352.test.entity.*/*
+
 ########### OSX ###########
 
 *.DS_Store
