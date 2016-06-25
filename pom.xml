@@ -146,6 +146,7 @@
         <filtering>true</filtering>
         <directory>src/test/resources</directory>
         <includes>
+          <include>test-persistence.xml</include>
           <include>**/arquillian.xml</include>
           <include>**/arquillian.launch</include>
         </includes>

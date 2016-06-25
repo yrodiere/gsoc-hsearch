@@ -63,7 +63,7 @@ public class DeploymentIT {
                 .addClass(Serializable.class)
                 .addClass(Date.class)
                 .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                .addAsResource("META-INF/persistence.xml")
+                .addAsResource("test-persistence.xml", "META-INF/persistence.xml")
                 .addAsResource("META-INF/batch-jobs/mass-index.xml");
         return war;
     }
