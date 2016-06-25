@@ -1,19 +1,28 @@
 package org.hibernate.search.jsr352;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.JobExecution;
+import javax.batch.runtime.Metric;
+import javax.batch.runtime.StepExecution;
+import javax.inject.Inject;
 
 import org.hibernate.search.jsr352.MassIndexer;
 import org.hibernate.search.jsr352.MassIndexerImpl;
+import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.hibernate.search.jsr352.test.entity.Address;
 import org.hibernate.search.jsr352.test.entity.Stock;
+import org.hibernate.search.jsr352.test.util.BatchTestHelper;
 import org.hibernate.search.store.IndexShardingStrategy;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -37,6 +46,12 @@ public class DeploymentIT {
     private final int PARTITIONS = 4;
     private final int THREADS = 2;
     
+    private final long DB_ADDRESS_ROWS = 3221316;
+    private final long DB_ADDRESS_ROWS_LOADED = 1000000;
+    private final long DB_STOCK_ROWS = 4194;
+    
+    @Inject private IndexingContext indexingContext;
+
     private static final Logger logger = Logger.getLogger(DeploymentIT.class);
     
     @Deployment
@@ -55,8 +70,43 @@ public class DeploymentIT {
     }
     
     @Test
-    public void testJobStart() {
+    public void testJobStart() throws InterruptedException {
+        
         // start job
+        JobOperator jobOperator = BatchRuntime.getJobOperator();
+        MassIndexer massIndexer = createAndInitJob();
+        long executionId = massIndexer.start();
+        
+        // wait until job finishes
+        JobExecution jobExecution = jobOperator.getJobExecution(executionId);
+        jobExecution = BatchTestHelper.keepTestAlive(jobExecution);
+        
+        // tests
+        List<StepExecution> stepExecutions = jobOperator.getStepExecutions(executionId);
+        for (StepExecution stepExecution: stepExecutions) {
+            switch (stepExecution.getStepName()) {
+                
+                case "loadId":
+                    assertEquals(DB_ADDRESS_ROWS + DB_STOCK_ROWS, indexingContext.getEntityCount());
+                    break;
+                    
+                case "produceLuceneDoc":
+                    Map<Metric.MetricType, Long> metricsMap = BatchTestHelper.getMetricsMap(stepExecution.getMetrics());
+                    // The read count.
+                    long addressCount = (long) Math.ceil((double) DB_ADDRESS_ROWS_LOADED / ARRAY_CAPACITY);
+                    long stockCount = (long) Math.ceil((double) DB_STOCK_ROWS / ARRAY_CAPACITY);
+                    assertEquals(addressCount + stockCount, metricsMap.get(Metric.MetricType.READ_COUNT).longValue());
+                    break;
+                    
+                default:
+                    break;
+            }
+        }
+        assertEquals(jobExecution.getBatchStatus(), BatchStatus.COMPLETED);
+        logger.info("Finished");
+    }
+    
+    private MassIndexer createAndInitJob() {
         MassIndexer massIndexer = new MassIndexerImpl()
                 .arrayCapacity(ARRAY_CAPACITY)
                 .fetchSize(FETCH_SIZE)
@@ -68,22 +118,7 @@ public class DeploymentIT {
                 .purgeAtStart(PURGE_AT_START)
                 .threads(THREADS)
                 .rootEntities(getRootEntities());
-        long executionId = massIndexer.start();
-        
-        // calculate the performance
-        JobOperator jobOperator = BatchRuntime.getJobOperator();
-        JobExecution execution = jobOperator.getJobExecution(executionId);
-        int i = 0; 
-        while (!execution.getBatchStatus().equals(BatchStatus.COMPLETED) && i < 200) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            i++;
-        }
-        logger.info("Finished");
+        return massIndexer;
     }
     
     private Set<Class<?>> getRootEntities() {
