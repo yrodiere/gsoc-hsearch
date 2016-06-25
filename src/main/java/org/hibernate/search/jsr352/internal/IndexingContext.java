@@ -40,7 +40,7 @@ public class IndexingContext {
         // TODO: this method is really slow
         Serializable[] IDs = idQueues.get(clazz).poll();
         String len = (IDs == null) ? "null" : String.valueOf(IDs.length);
-        logger.debugf("Polling %s IDs for %s%n", len, clazz.getName());
+        logger.infof("Polling %s IDs for %s", len, clazz.getName());
         return IDs;
     }
     
