@@ -17,6 +17,7 @@
     <maven.compiler.target>1.7</maven.compiler.target>
     <maven.compiler.testSource>1.7</maven.compiler.testSource>
     <maven.compiler.testTarget>1.7</maven.compiler.testTarget>
+    <org.hibernate.hibernate-entitymanager>5.1.0.Final</org.hibernate.hibernate-entitymanager>
   </properties>
   
   <dependencies>
@@ -25,6 +26,12 @@
       <groupId>org.hibernate</groupId>
       <artifactId>hsearch-jsr352-core</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-entitymanager</artifactId>
+      <version>${org.hibernate.hibernate-entitymanager}</version>
+      <scope>test</scope>
     </dependency>
     <!-- JBeret minimal application dependencies -->
     <!-- https://jberet.gitbooks.io/jberet-user-guide/content/set_up_jberet/#minimal-application-dependencies -->
@@ -99,5 +106,30 @@
   
   <build>
     <finalName>hibernate-search-integrationtest-javase</finalName>
+    <testResources>
+      <testResource>
+        <filtering>true</filtering>
+        <directory>src/test/resources</directory>
+        <includes>
+          <include>META-INF/persistence.xml</include>
+        </includes>
+      </testResource>
+    </testResources>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.17</version>
+        <!-- enable execution to run an integration test -->
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 </project>
