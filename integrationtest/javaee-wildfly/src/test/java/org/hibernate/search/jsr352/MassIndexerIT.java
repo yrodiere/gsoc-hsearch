@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
-public class DeploymentIT {
+public class MassIndexerIT {
 
     private final boolean OPTIMIZE_AFTER_PURGE = true;
     private final boolean OPTIMIZE_AT_END = true;
@@ -52,7 +52,7 @@ public class DeploymentIT {
     
     @Inject private IndexingContext indexingContext;
 
-    private static final Logger logger = Logger.getLogger(DeploymentIT.class);
+    private static final Logger logger = Logger.getLogger(MassIndexerIT.class);
     
     @Deployment
     public static WebArchive createDeployment() {

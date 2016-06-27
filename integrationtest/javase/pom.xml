@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>hsearch-jsr352-integrationtest-javase</artifactId>
-  <name>Hibernate Search JSR352 - Integration Tests in Java SE</name>
+  <name>GSoC JSR352 - Integration Tests in Java SE</name>
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
