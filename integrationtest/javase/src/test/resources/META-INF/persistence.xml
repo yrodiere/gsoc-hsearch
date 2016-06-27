@@ -5,14 +5,14 @@
   <!-- GitHub Gist - mortezaadi/persistence.xml
        https://gist.github.com/mortezaadi/8619433 
        H2 database's persistence.xml template -->
-  <persistence-unit name="h2" transaction-type="RESOURCE_LOCAL">
+  <persistence-unit name="jsr352" transaction-type="RESOURCE_LOCAL">
     <!-- <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider> -->
     <provider>org.hibernate.ejb.HibernatePersistence</provider>
     <class>org.hibernate.search.jsr352.se.test.Player</class>
     <properties>
       <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect" />
       <property name="hibernate.connection.driver_class" value="org.h2.Driver" />
-      <property name="hibernate.connection.url" value="jdbc:h2:mem:player" />
+      <property name="hibernate.connection.url" value="jdbc:h2:mem:company" />
       <property name="hibernate.connection.user" value="sa" />
       <property name="hibernate.show_sql" value="false" />
       <property name="hibernate.flushMode" value="FLUSH_AUTO" />

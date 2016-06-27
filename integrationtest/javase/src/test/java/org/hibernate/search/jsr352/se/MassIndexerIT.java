@@ -2,7 +2,9 @@ package org.hibernate.search.jsr352.se;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -33,7 +35,7 @@ public class MassIndexerIT {
     @Before
     public void setupJPA() {
         
-        emf = Persistence.createEntityManagerFactory("h2");
+        emf = Persistence.createEntityManagerFactory("jsr352");
         em = emf.createEntityManager();
         
         em.getTransaction().begin();
@@ -53,17 +55,22 @@ public class MassIndexerIT {
         assertEquals(COMPANY_3.getName(), microsoft.getName());
     }
     
+    /**
+     * Index strategy should be set to "manual" in JPA configuration file
+     * persistence.xml
+     * 
+     */
     @Test
-    public void testSearchBeforeIndex() {
+    public void testSearch() {
+        
+        logger.infof("finding company called %s ...", "google");
         List<Company> companies = findCompanyByName("google");
-        if (companies.isEmpty()) {
-            logger.info("Company list is empty.");
-        } else {
-            for (Company company: companies) {
-                logger.infof("{id=%d, name=\"%s\"}", company.getId(), company.getName());
-            }
-        }
         assertEquals(0, companies.size());
+        
+        indexCompany();
+        
+        companies = findCompanyByName("google");
+        assertEquals(1, companies.size());
     }
     
     @After
@@ -81,5 +88,14 @@ public class MassIndexerIT {
         @SuppressWarnings("unchecked")
         List<Company> result = ftem.createFullTextQuery(luceneQuery).getResultList();
         return result;
+    }
+    
+    private void indexCompany() {
+        Set<Class<?>> rootEntities = new HashSet<>();
+        rootEntities.add(Company.class);
+        // org.hibernate.search.jsr352.MassIndexer
+       MassIndexer massIndexer = new MassIndexerImpl().rootEntities(rootEntities);
+        long executionId = massIndexer.start();
+        logger.infof("job execution id = %d", executionId);
     }
 }
