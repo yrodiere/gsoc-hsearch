@@ -153,7 +153,7 @@
                     </security>
                 </datasource>
                 <datasource jta="true" jndi-name="java:/MysqlDS" pool-name="MysqlDS" enabled="true" use-ccm="true">
-                    <connection-url>jdbc:mysql://176.31.114.109:3306/gsoc?useSSL=false</connection-url>
+                    <connection-url>jdbc:mysql://localhost:3306/gsoc?useSSL=false</connection-url>
                     <driver-class>com.mysql.jdbc.Driver</driver-class>
                     <driver>mysql</driver>
                     <security>

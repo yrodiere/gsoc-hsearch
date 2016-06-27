@@ -3,14 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.hibernate</groupId>
-    <artifactId>hs-jsr352-parent</artifactId>
+    <artifactId>hsearch-jsr352-parent</artifactId>
     <version>5.6.0-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>hibernate-search-integrationtest-javase</artifactId>
-
-  <name>Hibernate Search - Integration Tests in Java SE</name>
+  <artifactId>hsearch-jsr352-integrationtest-javase</artifactId>
+  <name>Hibernate Search JSR352 - Integration Tests in Java SE</name>
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -24,7 +23,7 @@
     <!-- This integration test refers to classes in his parent -->
     <dependency>
       <groupId>org.hibernate</groupId>
-      <artifactId>hs-jsr352-parent</artifactId>
+      <artifactId>hsearch-jsr352-core</artifactId>
       <version>${project.version}</version>
     </dependency>
     <!-- JBeret minimal application dependencies -->

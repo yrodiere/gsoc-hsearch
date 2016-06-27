@@ -1,10 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.hibernate</groupId>
-  <artifactId>hs-jsr352-parent</artifactId>
+  <artifactId>hsearch-jsr352-parent</artifactId>
   <version>5.6.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Hibernate Search - JSR352</name>
+  <name>Hibernate Search JSR352 - Aggregator</name>
   <description>New implementation mass-indexer using JSR 352</description>
   
   <properties>
@@ -19,6 +19,7 @@
   </properties>
   
   <modules>
+    <module>core</module>
     <module>integrationtest/javase</module>
   </modules>
   
@@ -141,55 +142,7 @@
   
   <build>
     <finalName>${project.artifactId}-${project.version}</finalName>
-    <!-- enable resources from arquillian configuration
-         otherwise, the maven variables are unreadable for arquillian.xml
-         ~~~
-         newbie variable expansion in pom.xml and arquillian.xml
-         https://developer.jboss.org/thread/230696?tstart=0
-     -->
-    <testResources>
-      <testResource>
-        <filtering>true</filtering>
-        <directory>src/test/resources</directory>
-        <includes>
-          <include>test-persistence.xml</include>
-          <include>**/arquillian.xml</include>
-          <include>**/arquillian.launch</include>
-        </includes>
-      </testResource>
-    </testResources>
     <plugins>
-      <plugin>
-        <!-- Allows to find the absolute path to dependencies -->
-        <groupId>org.bitstrings.maven.plugins</groupId>
-        <artifactId>dependencypath-maven-plugin</artifactId>
-        <version>1.1.1</version>
-        <executions>
-          <execution>
-            <id>set-all</id>
-            <goals>
-              <goal>set</goal>
-            </goals>
-            <configuration>
-            <propertySets>
-              <propertySet>
-                <includes>
-                  <include>org.jboss.byteman:byteman:jar</include>
-                </includes>
-              </propertySet>
-            </propertySets>
-          </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>2.6</version>
-        <configuration>
-          <failOnMissingWebXml>false</failOnMissingWebXml>
-        </configuration>
-      </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.3</version>
@@ -197,104 +150,6 @@
           <source>1.8</source>
           <target>1.8</target>
         </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.17</version>
-        <configuration>
-          <forkCount>1</forkCount>
-          <reuseForks>true</reuseForks>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <runOrder>alphabetical</runOrder>
-          <systemPropertyVariables>
-            <!-- See HSEARCH-1444 -->
-            <hibernate.service.allow_crawling>false</hibernate.service.allow_crawling>
-            <com.sun.management.jmxremote>true</com.sun.management.jmxremote>
-            <org.hibernate.search.enable_performance_tests>${org.hibernate.search.enable_performance_tests}</org.hibernate.search.enable_performance_tests>
-          </systemPropertyVariables>
-          <additionalClasspathElements>
-            <!-- Needed by Byteman to load the agent on demand -->
-            <additionalClasspathElement>${jdk-toolsjar}</additionalClasspathElement>
-          </additionalClasspathElements>
-        </configuration>
-      </plugin>      
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.17</version>
-        <!-- enable execution to run an integration test -->
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.6</version>
-        <executions>
-          <execution>
-            <id>unpack</id>
-            <phase>pre-integration-test</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.wildfly</groupId>
-                  <artifactId>wildfly-dist</artifactId>
-                  <version>${org.wildfly}</version>
-                  <type>zip</type>
-                  <overWrite>true</overWrite>
-                  <outputDirectory>${project.build.directory}/node1</outputDirectory>
-                </artifactItem>
-                <!-- Provide hibernate search modules to wildfly
-                     because the modules are not enabled by default ?
-                     or because we want to provide the current project
-                     as a new slot beside the built-in HSEARCH modules ? -->
-                <artifactItem>
-                  <groupId>org.hibernate</groupId>
-                  <artifactId>hibernate-search-modules</artifactId>
-                  <version>${project.version}</version>
-                  <classifier>wildfly-10-dist</classifier>
-                  <type>zip</type>
-                  <overWrite>true</overWrite>
-                  <outputDirectory>${project.build.directory}/node1/wildfly-${org.wildfly}/modules</outputDirectory>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.6</version>
-        <executions>
-          <!-- Copy the AS configuration files so we can use our custom configurations -->
-          <execution>
-            <id>configure-as-node-node1</id>
-            <!-- <phase>pre-integration-test</phase> -->
-            <!-- <phase>integration-test</phase> -->
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/node1/wildfly-${org.wildfly}</outputDirectory>
-              <overwrite>true</overwrite>
-              <resources>
-                <resource>
-                  <directory>${basedir}/src/wildflyConfig</directory>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

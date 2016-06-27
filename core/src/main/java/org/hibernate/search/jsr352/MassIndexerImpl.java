@@ -26,7 +26,7 @@ public class MassIndexerImpl implements MassIndexer {
     
     private final String JOB_NAME = "mass-index";
     
-    MassIndexerImpl() {
+    public MassIndexerImpl() {
         
     }
     
