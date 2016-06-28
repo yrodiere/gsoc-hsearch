@@ -5,7 +5,7 @@
   <!-- GitHub Gist - mortezaadi/persistence.xml
        https://gist.github.com/mortezaadi/8619433 
        H2 database's persistence.xml template -->
-  <persistence-unit name="jsr352" transaction-type="RESOURCE_LOCAL">
+  <persistence-unit name="h2" transaction-type="RESOURCE_LOCAL">
     <!-- <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider> -->
     <provider>org.hibernate.ejb.HibernatePersistence</provider>
     <class>org.hibernate.search.jsr352.se.test.Player</class>

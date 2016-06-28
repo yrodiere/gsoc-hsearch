@@ -6,25 +6,35 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.batch.operations.JobOperator;
+import javax.batch.runtime.BatchRuntime;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.Query;
+import org.hibernate.CacheMode;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.MassIndexer;
 import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.se.test.Company;
+import org.jberet.operations.JobOperatorImpl;
 import org.jboss.logging.Logger;
+import org.jboss.weld.environment.se.Weld;
+import org.jboss.weld.environment.se.WeldContainer;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class MassIndexerIT {
 
     private EntityManagerFactory emf;
     private EntityManager em;
+    
+    private JobOperator jobOperator = null;
     
     private final Company COMPANY_1 = new Company("Google");
     private final Company COMPANY_2 = new Company("Red Hat");
@@ -35,7 +45,11 @@ public class MassIndexerIT {
     @Before
     public void setupJPA() {
         
-        emf = Persistence.createEntityManagerFactory("jsr352");
+//      if (jobOperator == null) {
+//          jobOperator = (JobOperatorImpl) BatchRuntime.getJobOperator();
+//      }
+        
+        emf = Persistence.createEntityManagerFactory("h2");
         em = emf.createEntityManager();
         
         em.getTransaction().begin();
@@ -73,12 +87,6 @@ public class MassIndexerIT {
         assertEquals(1, companies.size());
     }
     
-    @After
-    public void destroyJPA() {
-        em.close();
-        emf.close();
-    }
-    
     private List<Company> findCompanyByName(String name) {
         FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
         Query luceneQuery = ftem.getSearchFactory().buildQueryBuilder()
@@ -91,11 +99,34 @@ public class MassIndexerIT {
     }
     
     private void indexCompany() {
-        Set<Class<?>> rootEntities = new HashSet<>();
-        rootEntities.add(Company.class);
-        // org.hibernate.search.jsr352.MassIndexer
-       MassIndexer massIndexer = new MassIndexerImpl().rootEntities(rootEntities);
-        long executionId = massIndexer.start();
-        logger.infof("job execution id = %d", executionId);
+//        issue #63
+//        java.util.ServiceConfigurationError: javax.batch.operations.JobOperator: Provider org.jberet.operations.JobOperatorImpl could not be instantiated
+//                at org.jboss.weld.environment.se.WeldContainer.initialize(WeldContainer.java:136)
+//                at org.jboss.weld.environment.se.Weld.initialize(Weld.java:589)
+//                ...
+//        Set<Class<?>> rootEntities = new HashSet<>();
+//        rootEntities.add(Company.class);
+//        // org.hibernate.search.jsr352.MassIndexer
+//        MassIndexer massIndexer = new MassIndexerImpl().rootEntities(rootEntities);
+//        long executionId = massIndexer.start();
+//        logger.infof("job execution id = %d", executionId);
+        try {
+            Search.getFullTextEntityManager( em )
+                .createIndexer()
+                .batchSizeToLoadObjects( 1 )
+                .threadsToLoadObjects( 1 )
+                .transactionTimeout( 10 )
+                .cacheMode( CacheMode.IGNORE )
+                .startAndWait();
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException( e );
+        }
+    }
+    
+    @After
+    public void shutdownJPA() {
+        em.close();
+        emf.close();
     }
 }
