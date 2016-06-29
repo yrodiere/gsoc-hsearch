@@ -47,28 +47,29 @@ public class LucenePartitionMapper implements PartitionMapper {
     @Override
     public PartitionPlan mapPartitions() throws Exception {
 
-//      Class<?>[] rootEntities = parse(rootEntitiesStr);
         Class<?>[] rootEntities = indexingContext.getRootEntities();
         Queue<String> classQueue = new LinkedList<>();
         
         int totalPartitions = 0;
         for (Class<?> rootEntity: rootEntities) {
             
-            int queueSize = indexingContext.sizeOf(rootEntity);
-            int classPartitions = queueSize / partitionCapacity;  // TODO: handle queueSize is 0
-            if (queueSize % partitionCapacity != 0) {
-                classPartitions++;
-            }
+            int _queueSize = indexingContext.sizeOf(rootEntity);
+            int _partitions = (int) Math.ceil((double) _queueSize / partitionCapacity);
+            
+            logger.infof("rootEntity=%s", rootEntity.toString());
+            logger.infof("_queueSize=%d", _queueSize);
+            logger.infof("partitionCapacity=%d", partitionCapacity);
+            logger.infof("_partitions=%d", _partitions);
             
             // enqueue entity type into classQueue, as much as the number of
             // the class partitions
-            for (int i = 0; i < classPartitions; i++) {
+            for (int i = 0; i < _partitions; i++) {
                 classQueue.add(rootEntity.getName());
             }
             logger.infof("%d partitions added to root entity \"%s\".",
-                    classPartitions, rootEntity);
+                    _partitions, rootEntity);
             
-            totalPartitions += classPartitions;
+            totalPartitions += _partitions;
         }
         final int TOTAL_PARTITIONS = totalPartitions;
         

@@ -14,6 +14,7 @@ import org.hibernate.search.backend.impl.StreamingOperationExecutorSelector;
 import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
 import org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor;
 import org.hibernate.search.store.IndexShardingStrategy;
+import org.jboss.logging.Logger;
 
 /**
  * Batch item writer writes a list of items into Lucene documents. Here, items 
@@ -40,6 +41,8 @@ public class BatchItemWriter implements ItemWriter {
     // TODO: The monitor is not used for instance. It should be used later.
     private MassIndexerProgressMonitor monitor;
     
+    private static final Logger logger = Logger.getLogger(BatchItemWriter.class);
+    
     /**
      * The checkpointInfo method returns the current checkpoint data for this 
      * writer. It is called before a chunk checkpoint is committed.
@@ -49,6 +52,7 @@ public class BatchItemWriter implements ItemWriter {
      */
     @Override
     public Serializable checkpointInfo() throws Exception {
+        logger.info("checkpoingInfo called");
         return null;
     }
     
@@ -60,7 +64,7 @@ public class BatchItemWriter implements ItemWriter {
      */
     @Override
     public void close() throws Exception {
-    
+        logger.info("close() called");
     }
 
     /**
@@ -70,6 +74,7 @@ public class BatchItemWriter implements ItemWriter {
      */
     @Override
     public void open(Serializable checkpoint) throws Exception {
+        logger.info("open(Seriliazable) called");
         monitor = new SimpleIndexingProgressMonitor();
     }
 

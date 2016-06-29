@@ -17,8 +17,8 @@ public class MassIndexerImpl implements MassIndexer {
     private boolean optimizeAtEnd = false;
     private boolean purgeAtStart = false;
     private int arrayCapacity = 1000;
-    private int fetchSize = 200000;
-    private int maxResults = 1000000;
+    private int fetchSize = 200 * 1000;
+    private int maxResults = 1000 * 1000;
     private int partitionCapacity = 250;
     private int partitions = 4;
     private int threads = 2;
@@ -30,6 +30,30 @@ public class MassIndexerImpl implements MassIndexer {
         
     }
     
+    /**
+     * Mass index the Address entity's.
+     * <p>Here're an example with parameters and expected results:
+     * <ul>
+     * <li><b>array capacity</b> = 500
+     * 
+     * <li><b>partition capacity</b> = 250
+     * 
+     * <li><b>max results</b> = 200 * 1000
+     * 
+     * <li><b>queue size</b>
+     *      = Math.ceil(max results / array capacity)
+     *      = Math.ceil(200 * 1000 / 500)
+     *      = Math.ceil(400)
+     *      = 400
+     * 
+     * <li><b>number of partitions</b>
+     *      = Math.ceil(queue size / partition capacity)
+     *      = Math.ceil(400 / 250)
+     *      = Math.ceil(1.6)
+     *      = 2
+     * 
+     * </ul>
+     */
     @Override
     public long start() {
         

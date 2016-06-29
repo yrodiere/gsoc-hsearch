@@ -16,7 +16,12 @@ import javax.batch.runtime.JobExecution;
 import javax.batch.runtime.Metric;
 import javax.batch.runtime.StepExecution;
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
+import org.apache.lucene.search.Query;
+import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.MassIndexer;
 import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.internal.IndexingContext;
@@ -41,18 +46,22 @@ public class MassIndexerIT {
     private final boolean PURGE_AT_START = true;
     private final int ARRAY_CAPACITY = 500;
     private final int FETCH_SIZE = 100000;
-    private final int MAX_RESULTS = 1000000;
-    private final int PARTITION_CAPACITY = 500;
+    private final int MAX_RESULTS = 200 * 1000;
+    private final int PARTITION_CAPACITY = 250;
     private final int PARTITIONS = 4;
     private final int THREADS = 2;
     
     private final long DB_ADDRESS_ROWS = 3221316;
-    private final long DB_ADDRESS_ROWS_LOADED = 1000000;
+    private final long DB_ADDRESS_ROWS_LOADED = 200000;
     private final long DB_STOCK_ROWS = 4194;
     
     @Inject private IndexingContext indexingContext;
-
+    
+    @PersistenceContext(name="jsr352")
+    private EntityManager em;
+    
     private static final Logger logger = Logger.getLogger(MassIndexerIT.class);
+    
     
     @Deployment
     public static WebArchive createDeployment() {
@@ -69,7 +78,11 @@ public class MassIndexerIT {
     }
     
     @Test
-    public void testJobStart() throws InterruptedException {
+    public void testJob() throws InterruptedException {
+        
+        final String keyword = "san francisco";
+        List<Address> addresses = findAddressByName(keyword);
+        assertEquals(0, addresses.size());
         
         // start job
         JobOperator jobOperator = BatchRuntime.getJobOperator();
@@ -131,7 +144,30 @@ public class MassIndexerIT {
             }
         }
         assertEquals(jobExecution.getBatchStatus(), BatchStatus.COMPLETED);
-        logger.info("Finished");
+        logger.info("Mass indexing finished");
+        
+        addresses = findAddressByName(keyword);
+        assertEquals(70, addresses.size());
+    }
+    
+    private List<Address> findAddressByName(String name) {
+        if (em == null) {
+            logger.info("em is null");
+        } else if (em.isOpen()) {
+            logger.info("em is opened");
+        } else {
+            logger.info("em is closed");
+        }
+        FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
+        Query luceneQuery = ftem.getSearchFactory().buildQueryBuilder()
+                .forEntity(Address.class).get()
+                    .keyword().onField("name").matching(name)
+                .createQuery();
+        @SuppressWarnings("unchecked")
+        List<Address> result = ftem
+                .createFullTextQuery(luceneQuery)
+                .getResultList();
+        return result;
     }
     
     private void testChunk(Map<Metric.MetricType, Long> metricsMap) {

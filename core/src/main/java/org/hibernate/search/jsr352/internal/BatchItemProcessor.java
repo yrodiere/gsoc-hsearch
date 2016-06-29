@@ -29,6 +29,7 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.spi.InstanceInitializer;
 import org.hibernate.search.store.IndexShardingStrategy;
+import org.jboss.logging.Logger;
 
 /**
  * Batch item processor loads entities using entity IDs, provided by the item
@@ -81,6 +82,8 @@ public class BatchItemProcessor implements ItemProcessor {
     @Inject @BatchProperty
     private String entityType;
     
+    private static final Logger logger = Logger.getLogger(BatchItemProcessor.class);
+    
     /**
      * Process an input item into an output item. Here, the input item is an 
      * array of IDs and the output item is a list of Lucene works. During the
@@ -94,7 +97,7 @@ public class BatchItemProcessor implements ItemProcessor {
     @Override
     public Object processItem(Object item) throws Exception {
         
-//      Class<?> entityClazz = Class.forName(entityType);
+        logger.debugf("processItem(Object) called. entityType=%s", entityType);
         Class<?> entityClazz = findClass(entityType);
         
         // TODO: change the id to generic type
