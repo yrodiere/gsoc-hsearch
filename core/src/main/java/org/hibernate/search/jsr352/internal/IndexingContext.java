@@ -73,7 +73,7 @@ public class IndexingContext {
         this.indexShardingStrategy = indexShardingStrategy;
     }
     
-    public void addEntityCount(long entityCount) {
+    public synchronized void addEntityCount(long entityCount) {
         this.entityCount += entityCount;
     }
     
