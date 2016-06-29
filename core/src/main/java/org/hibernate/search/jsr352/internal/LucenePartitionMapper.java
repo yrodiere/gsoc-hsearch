@@ -83,7 +83,7 @@ public class LucenePartitionMapper implements PartitionMapper {
 
             @Override
             public int getThreads() {
-                logger.infof("#getThreads(): %d threads.", Math.min(TOTAL_PARTITIONS, threads));
+                logger.infof("#getThreads(): %d threads.", TOTAL_PARTITIONS);//Math.min(TOTAL_PARTITIONS, threads));
                 return Math.min(TOTAL_PARTITIONS, threads);
             }
 

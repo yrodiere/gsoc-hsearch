@@ -52,8 +52,9 @@ public class MassIndexerIT {
     private final int THREADS = 2;
     
     private final long DB_ADDRESS_ROWS = 3221316;
-    private final long DB_ADDRESS_ROWS_LOADED = 200000;
+    private final long DB_ADDRESS_ROWS_LOADED = 200 * 1000;
     private final long DB_STOCK_ROWS = 4194;
+    private final long DB_STOCK_ROWS_LOADED = 4194;
     
     @Inject private IndexingContext indexingContext;
     
