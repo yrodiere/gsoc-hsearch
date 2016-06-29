@@ -56,6 +56,9 @@
     <batchlet ref="optimizerBatchlet"/>
   </step>
   <step id="produceLuceneDoc" next="afterIndexDecision">
+    <properties>
+      <property name="javax.transaction.global.timeout" value="300"/>
+    </properties>
     <chunk item-count="3">
       <reader ref="batchItemReader">
         <properties>
