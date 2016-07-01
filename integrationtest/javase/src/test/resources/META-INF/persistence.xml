@@ -18,7 +18,7 @@
       <property name="hibernate.flushMode" value="FLUSH_AUTO" />
       <property name="hibernate.format_sql" value="false" />
       <property name="hibernate.hbm2ddl.auto" value="create" />
-      <!-- disable hibernate search automatic indexing -->
+      <property name="hibernate.search.default.directory_provider" value="ram" />
       <property name="hibernate.search.indexing_strategy" value="manual" />
     </properties>
   </persistence-unit>

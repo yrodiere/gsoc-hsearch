@@ -3,6 +3,7 @@ package org.hibernate.search.jsr352;
 import static org.junit.Assert.assertEquals;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -17,15 +18,20 @@ import javax.batch.runtime.Metric;
 import javax.batch.runtime.StepExecution;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceContextType;
 
 import org.apache.lucene.search.Query;
+import org.hibernate.CacheMode;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.MassIndexer;
 import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.hibernate.search.jsr352.test.entity.Address;
+import org.hibernate.search.jsr352.test.entity.Company;
+import org.hibernate.search.jsr352.test.entity.CompanyManager;
 import org.hibernate.search.jsr352.test.entity.Stock;
 import org.hibernate.search.jsr352.test.util.BatchTestHelper;
 import org.hibernate.search.store.IndexShardingStrategy;
@@ -58,11 +64,13 @@ public class MassIndexerIT {
     
     @Inject private IndexingContext indexingContext;
     
-    @PersistenceContext(name="jsr352")
-    private EntityManager em;
-    
     private static final Logger logger = Logger.getLogger(MassIndexerIT.class);
     
+    @Inject
+    private CompanyManager companyManager;
+    private final Company COMPANY_1 = new Company("Google");
+    private final Company COMPANY_2 = new Company("Red Hat");
+    private final Company COMPANY_3 = new Company("Microsoft");
     
     @Deployment
     public static WebArchive createDeployment() {
@@ -73,11 +81,26 @@ public class MassIndexerIT {
                 .addClass(Serializable.class)
                 .addClass(Date.class)
                 .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                .addAsResource("test-persistence.xml", "META-INF/persistence.xml")
+                .addAsResource("persistence.xml", "META-INF/persistence.xml")
                 .addAsResource("META-INF/batch-jobs/mass-index.xml");
         return war;
     }
     
+    @Test
+    public void testSearch() throws InterruptedException {
+        
+        Company[] _companies = new Company[] {COMPANY_1, COMPANY_2, COMPANY_3};
+        companyManager.persist(Arrays.asList(_companies));
+        
+        List<Company> companies = companyManager.findCompanyByName("google");
+        assertEquals(0, companies.size());
+        
+        companyManager.indexCompany();
+        
+        companies = companyManager.findCompanyByName("google");
+        assertEquals(1, companies.size());
+    }
+/*    
     @Test
     public void testJob() throws InterruptedException {
         
@@ -164,6 +187,7 @@ public class MassIndexerIT {
                 .forEntity(Address.class).get()
                     .keyword().onField("name").matching(name)
                 .createQuery();
+        logger.infof("luceneQuery={%s}", luceneQuery.toString());
         @SuppressWarnings("unchecked")
         List<Address> result = ftem
                 .createFullTextQuery(luceneQuery)
@@ -185,7 +209,7 @@ public class MassIndexerIT {
         long actualWriteCount = metricsMap.get(Metric.MetricType.WRITE_COUNT);
         assertEquals(expectedWriteCount, actualWriteCount);
     }
-    
+
     private MassIndexer createAndInitJob() {
         MassIndexer massIndexer = new MassIndexerImpl()
                 .arrayCapacity(ARRAY_CAPACITY)
@@ -200,11 +224,12 @@ public class MassIndexerIT {
                 .rootEntities(getRootEntities());
         return massIndexer;
     }
-    
+       
     private Set<Class<?>> getRootEntities() {
         Set<Class<?>> rootEntities = new HashSet<>();
         rootEntities.add(Address.class);
         rootEntities.add(Stock.class);
         return rootEntities;
     }
+*/
 }

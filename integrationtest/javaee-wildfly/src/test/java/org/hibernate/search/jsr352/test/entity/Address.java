@@ -17,7 +17,7 @@ import org.hibernate.search.annotations.Indexed;
 @Entity
 @Indexed
 @NamedQuery(name="Address.findAll", query="SELECT a FROM Address a")
-@Table(name="address", schema="gsoc", uniqueConstraints={@UniqueConstraint(columnNames={"id", "seq"})})
+@Table(name="address", uniqueConstraints={@UniqueConstraint(columnNames={"id", "seq"})})
 public class Address implements Serializable {
     
 	private static final long serialVersionUID = 1L;
@@ -90,8 +90,8 @@ public class Address implements Serializable {
 
 	public Address() {
 	}
-
-	public int getAddressId() {
+	
+    public int getAddressId() {
 	    return this.addressId;
 	}
 	

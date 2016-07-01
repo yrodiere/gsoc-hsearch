@@ -11,7 +11,7 @@ import java.util.Date;
  */
 @Entity
 @NamedQuery(name="Stock.findAll", query="SELECT s FROM Stock s")
-@Table(name="stock", schema="gsoc")
+@Table(name="stock")
 public class Stock implements Serializable {
 	private static final long serialVersionUID = 1L;
 
