@@ -217,7 +217,7 @@ public class BatchItemProcessor implements ItemProcessor {
         CriteriaQuery<T> q = em.getCriteriaBuilder().createQuery(clazz);
         Root<T> root = q.from(clazz);
         // TODO: get attribute id in generic type
-        Path<Integer> attrId = root.get("addressId");
+        Path<Integer> attrId = root.get("id");
         In<Integer> inIds = em.getCriteriaBuilder().in(attrId);
         for (int id : ids) {
             inIds.value(id);

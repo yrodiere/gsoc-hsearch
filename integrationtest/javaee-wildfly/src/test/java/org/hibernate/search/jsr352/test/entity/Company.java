@@ -19,7 +19,7 @@ public class Company implements Serializable {
     @Id
     @GeneratedValue
     @DocumentId
-    private long id;
+    private int id;
 
     @Field
     private String name;
@@ -32,11 +32,11 @@ public class Company implements Serializable {
         this.name = name;
     }
     
-    public long getId() {
+    public int getId() {
         return id;
     }
     
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
     

@@ -1,6 +1,7 @@
 package org.hibernate.search.jsr352.internal;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.api.Batchlet;
@@ -85,13 +86,15 @@ public class IdProducerBatchlet implements Batchlet {
                 Serializable id = (Serializable) scrollableIds.get(0);
                 entityIDs[i++] = id;
                 rowLoaded++;
-                if (i == arrayCapacity || scrollableIds.isLast()) {
+                if (i == arrayCapacity) {
                     // add array entityIDs into indexing context's hash-map,
                     // mapped to key K = entityClazz
                     indexingContext.add(entityIDs, entityClazz);
                     // reset id array and index
                     entityIDs = new Serializable[arrayCapacity];
                     i = 0;
+                } else if (scrollableIds.isLast()) {
+                    indexingContext.add(Arrays.copyOf(entityIDs, i), entityClazz);
                 }
             }
         } finally {

@@ -54,23 +54,26 @@ public class MassIndexerIT {
     private final int FETCH_SIZE = 100000;
     private final int MAX_RESULTS = 200 * 1000;
     private final int PARTITION_CAPACITY = 250;
-    private final int PARTITIONS = 4;
-    private final int THREADS = 2;
+    private final int PARTITIONS = 1;
+    private final int THREADS = 1;
     
-    private final long DB_ADDRESS_ROWS = 3221316;
-    private final long DB_ADDRESS_ROWS_LOADED = 200 * 1000;
-    private final long DB_STOCK_ROWS = 4194;
-    private final long DB_STOCK_ROWS_LOADED = 4194;
-    
-    @Inject private IndexingContext indexingContext;
-    
-    private static final Logger logger = Logger.getLogger(MassIndexerIT.class);
+    private final long DB_COMP_ROWS = 3;
+    private final long DB_COMP_ROWS_LOADED = 3;
+//    private final long DB_ADDRESS_ROWS = 3221316;
+//    private final long DB_ADDRESS_ROWS_LOADED = 200 * 1000;
+//    private final long DB_STOCK_ROWS = 4194;
+//    private final long DB_STOCK_ROWS_LOADED = 4194;
     
     @Inject
     private CompanyManager companyManager;
     private final Company COMPANY_1 = new Company("Google");
     private final Company COMPANY_2 = new Company("Red Hat");
     private final Company COMPANY_3 = new Company("Microsoft");
+    
+    @Inject
+    private IndexingContext indexingContext;
+    
+    private static final Logger logger = Logger.getLogger(MassIndexerIT.class);
     
     @Deployment
     public static WebArchive createDeployment() {
@@ -86,126 +89,118 @@ public class MassIndexerIT {
         return war;
     }
     
-    @Test
-    public void testSearch() throws InterruptedException {
-        
-        Company[] _companies = new Company[] {COMPANY_1, COMPANY_2, COMPANY_3};
-        companyManager.persist(Arrays.asList(_companies));
-        
-        List<Company> companies = companyManager.findCompanyByName("google");
-        assertEquals(0, companies.size());
-        
-        companyManager.indexCompany();
-        
-        companies = companyManager.findCompanyByName("google");
-        assertEquals(1, companies.size());
-    }
-/*    
+//    @Test
+//    public void testSearch() throws InterruptedException {
+//        
+//        Company[] _companies = new Company[] {COMPANY_1, COMPANY_2, COMPANY_3};
+//        companyManager.persist(Arrays.asList(_companies));
+//        
+//        List<Company> companies = companyManager.findCompanyByName("google");
+//        assertEquals(0, companies.size());
+//        
+//        jobOperator = BatchRuntime.getJobOperator();
+//        companyManager.indexCompany();
+//        
+//        companies = companyManager.findCompanyByName("google");
+//        assertEquals(1, companies.size());
+//    }
+    
     @Test
     public void testJob() throws InterruptedException {
         
-        final String keyword = "san francisco";
-        List<Address> addresses = findAddressByName(keyword);
-        assertEquals(0, addresses.size());
+        //
+        // Before the job start, insert data and 
+        // make sure search result is empty without index
+        //
+        Company[] _companies = new Company[] {COMPANY_1, COMPANY_2, COMPANY_3};
+        companyManager.persist(Arrays.asList(_companies));
+        final String keyword = "google";
+        List<Company> companies = companyManager.findCompanyByName(keyword);
+        assertEquals(0, companies.size());
         
-        // start job
+        //
+        // start job and test it
+        // with different metrics obtained
+        //
         JobOperator jobOperator = BatchRuntime.getJobOperator();
         MassIndexer massIndexer = createAndInitJob();
         long executionId = massIndexer.start();
         
-        // wait until job finishes
         JobExecution jobExecution = jobOperator.getJobExecution(executionId);
         jobExecution = BatchTestHelper.keepTestAlive(jobExecution);
         
-        // tests
         List<StepExecution> stepExecutions = jobOperator.getStepExecutions(executionId);
         for (StepExecution stepExecution: stepExecutions) {
-            BatchStatus batchStatus = stepExecution.getBatchStatus();
-            switch (stepExecution.getStepName()) {
-                
-                case "loadId":
-                    long expectedEntityCount = DB_ADDRESS_ROWS + DB_STOCK_ROWS;
-                    assertEquals(expectedEntityCount, indexingContext.getEntityCount());
-                    assertEquals(BatchStatus.COMPLETED, batchStatus);
-                    break;
-                
-                case "purgeDecision":
-                    assertEquals(BatchStatus.COMPLETED, batchStatus);
-                    break;
-                
-                case "purgeIndex":
-                    if (PURGE_AT_START) {
-                        assertEquals(BatchStatus.COMPLETED, batchStatus);
-                    }
-                    break;
-                    
-                case "afterPurgeDecision":
-                    assertEquals(BatchStatus.COMPLETED, batchStatus);
-                    break;
-                    
-                case "optimizeAfterPurge":
-                    if (OPTIMIZE_AFTER_PURGE) {
-                        assertEquals(BatchStatus.COMPLETED, batchStatus);
-                    }
-                    break;
-                
-                case "produceLuceneDoc":
-                    Metric[] metrics = stepExecution.getMetrics();
-                    testChunk(BatchTestHelper.getMetricsMap(metrics));
-                    assertEquals(BatchStatus.COMPLETED, batchStatus);
-                    break;
-                
-                case "afterIndexDecision":
-                    assertEquals(BatchStatus.COMPLETED, batchStatus);
-                    break;
-                
-                case "optimizeAfterIndex":
-                    assertEquals(BatchStatus.COMPLETED, batchStatus);
-                    break;
-                    
-                default:
-                    break;
-            }
+            testBatchStatus(stepExecution);
         }
         assertEquals(jobExecution.getBatchStatus(), BatchStatus.COMPLETED);
         logger.info("Mass indexing finished");
         
-        addresses = findAddressByName(keyword);
-        assertEquals(70, addresses.size());
+        //
+        // Test again after index, target entities
+        // should be found this time
+        //
+        companies = companyManager.findCompanyByName(keyword);
+        assertEquals(1, companies.size());
     }
     
-    private List<Address> findAddressByName(String name) {
-        if (em == null) {
-            logger.info("em is null");
-        } else if (em.isOpen()) {
-            logger.info("em is opened");
-        } else {
-            logger.info("em is closed");
+    private void testBatchStatus(StepExecution stepExecution) {
+        BatchStatus batchStatus = stepExecution.getBatchStatus();
+        switch (stepExecution.getStepName()) {
+            
+            case "loadId":
+                long expectedEntityCount = DB_COMP_ROWS;
+                assertEquals(expectedEntityCount, indexingContext.getEntityCount());
+                assertEquals(BatchStatus.COMPLETED, batchStatus);
+                break;
+            
+            case "purgeDecision":
+                assertEquals(BatchStatus.COMPLETED, batchStatus);
+                break;
+            
+            case "purgeIndex":
+                if (PURGE_AT_START) {
+                    assertEquals(BatchStatus.COMPLETED, batchStatus);
+                }
+                break;
+                
+            case "afterPurgeDecision":
+                assertEquals(BatchStatus.COMPLETED, batchStatus);
+                break;
+                
+            case "optimizeAfterPurge":
+                if (OPTIMIZE_AFTER_PURGE) {
+                    assertEquals(BatchStatus.COMPLETED, batchStatus);
+                }
+                break;
+            
+            case "produceLuceneDoc":
+                Metric[] metrics = stepExecution.getMetrics();
+                testChunk(BatchTestHelper.getMetricsMap(metrics));
+                assertEquals(BatchStatus.COMPLETED, batchStatus);
+                break;
+            
+            case "afterIndexDecision":
+                assertEquals(BatchStatus.COMPLETED, batchStatus);
+                break;
+            
+            case "optimizeAfterIndex":
+                assertEquals(BatchStatus.COMPLETED, batchStatus);
+                break;
+                
+            default:
+                break;
         }
-        FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
-        Query luceneQuery = ftem.getSearchFactory().buildQueryBuilder()
-                .forEntity(Address.class).get()
-                    .keyword().onField("name").matching(name)
-                .createQuery();
-        logger.infof("luceneQuery={%s}", luceneQuery.toString());
-        @SuppressWarnings("unchecked")
-        List<Address> result = ftem
-                .createFullTextQuery(luceneQuery)
-                .getResultList();
-        return result;
     }
     
     private void testChunk(Map<Metric.MetricType, Long> metricsMap) {
-        long addressCount = (long) Math.ceil((double) DB_ADDRESS_ROWS_LOADED / ARRAY_CAPACITY);
-        long stockCount = (long) Math.ceil((double) DB_STOCK_ROWS / ARRAY_CAPACITY);
+        long companyCount = (long) Math.ceil((double) DB_COMP_ROWS_LOADED / ARRAY_CAPACITY);
         // The read count.
-        long expectedReadCount = addressCount + stockCount;
+        long expectedReadCount = companyCount;
         long actualReadCount = metricsMap.get(Metric.MetricType.READ_COUNT);
         assertEquals(expectedReadCount, actualReadCount);
         // The write count
-        // TODO: make BatchItemProcessor generic in order to process the 
-        // entity `stock` in the current implementation
-        long expectedWriteCount = addressCount + 0;
+        long expectedWriteCount = companyCount;
         long actualWriteCount = metricsMap.get(Metric.MetricType.WRITE_COUNT);
         assertEquals(expectedWriteCount, actualWriteCount);
     }
@@ -227,9 +222,9 @@ public class MassIndexerIT {
        
     private Set<Class<?>> getRootEntities() {
         Set<Class<?>> rootEntities = new HashSet<>();
-        rootEntities.add(Address.class);
-        rootEntities.add(Stock.class);
+        rootEntities.add(Company.class);
+//        rootEntities.add(Address.class);
+//        rootEntities.add(Stock.class);
         return rootEntities;
     }
-*/
 }
