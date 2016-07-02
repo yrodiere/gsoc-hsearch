@@ -36,7 +36,7 @@ public class BatchItemWriter implements ItemWriter {
     @Inject
     private IndexingContext indexingContext;
     
-    private final Boolean forceAsync = false;
+    private final Boolean forceAsync = true;
     
     // TODO: The monitor is not used for instance. It should be used later.
     private MassIndexerProgressMonitor monitor;
@@ -87,6 +87,8 @@ public class BatchItemWriter implements ItemWriter {
     @Override
     @SuppressWarnings("unchecked")
     public void writeItems(List<Object> items) throws Exception {
+        
+        // TODO: is the sharding strategy used suitable for the situation ?
         IndexShardingStrategy shardingStrategy = 
                 indexingContext.getIndexShardingStrategy();
         for (Object item : items) {
