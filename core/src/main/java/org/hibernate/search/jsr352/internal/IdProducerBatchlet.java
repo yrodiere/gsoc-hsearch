@@ -9,7 +9,6 @@ import javax.batch.runtime.BatchStatus;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
@@ -35,7 +34,6 @@ public class IdProducerBatchlet implements Batchlet {
     @Inject @BatchProperty private int maxResults;
     @Inject @BatchProperty private String entityType;
     
-    @PersistenceContext(unitName = "jsr352")
     private EntityManager em;
     private Session session;
     
@@ -51,7 +49,10 @@ public class IdProducerBatchlet implements Batchlet {
         
         // get entity class type
         Class<?> entityClazz = Class.forName(entityType);
-            
+        
+        if (em == null) {
+            em = indexingContext.getEntityManager();
+        }
         // unwrap session from entity manager
         session = em.unwrap(Session.class);
         

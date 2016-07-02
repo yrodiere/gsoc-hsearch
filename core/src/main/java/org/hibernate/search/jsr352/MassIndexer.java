@@ -2,6 +2,8 @@ package org.hibernate.search.jsr352;
 
 import java.util.Set;
 
+import javax.persistence.EntityManager;
+
 public interface MassIndexer {
     
     public long start();
@@ -17,6 +19,8 @@ public interface MassIndexer {
     public MassIndexer purgeAtStart(boolean purgeAtStart);
     public MassIndexer rootEntities(Set<Class<?>> rootEntities);
     public MassIndexer threads(int threads);
+    // TODO: should be reviewed
+    public MassIndexer entityManager(EntityManager entityManager);
     
     public int getArrayCapacity();
     public int getFetchSize();
@@ -28,4 +32,5 @@ public interface MassIndexer {
     public boolean isPurgeAtStart();
     public Set<Class<?>> getRootEntities();
     public int getThreads();
+    public EntityManager getEntityManager();
 }

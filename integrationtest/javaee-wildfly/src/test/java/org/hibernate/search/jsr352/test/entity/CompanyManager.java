@@ -16,7 +16,7 @@ import org.jboss.ejb3.annotation.TransactionTimeout;
 @Stateless
 public class CompanyManager {
 
-    @PersistenceContext(name="jsr352")
+    @PersistenceContext(name="h2")
     private EntityManager em;
     
     @TransactionTimeout(value=5, unit=TimeUnit.MINUTES)
@@ -44,17 +44,21 @@ public class CompanyManager {
 //      MassIndexer massIndexer = new MassIndexerImpl().rootEntities(rootEntities);
 //      long executionId = massIndexer.start();
 //      logger.infof("job execution id = %d", executionId);
-      try {
-          Search.getFullTextEntityManager( em )
-              .createIndexer()
-              .batchSizeToLoadObjects( 1 )
-              .threadsToLoadObjects( 1 )
-              .transactionTimeout( 10 )
-              .cacheMode( CacheMode.IGNORE )
-              .startAndWait();
-      }
-      catch (InterruptedException e) {
-          throw new RuntimeException( e );
-      }
-  }
+        try {
+            Search.getFullTextEntityManager( em )
+                .createIndexer()
+                .batchSizeToLoadObjects( 1 )
+                .threadsToLoadObjects( 1 )
+                .transactionTimeout( 10 )
+                .cacheMode( CacheMode.IGNORE )
+                .startAndWait();
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException( e );
+        }
+    }
+    
+    public EntityManager getEntityManager() {
+        return em;
+    }
 }

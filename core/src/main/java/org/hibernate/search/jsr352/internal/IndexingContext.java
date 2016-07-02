@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.persistence.EntityManager;
 
 import org.hibernate.search.store.IndexShardingStrategy;
 import org.jboss.logging.Logger;
@@ -30,6 +31,8 @@ public class IndexingContext {
     private Class<?>[] rootEntities;
     private IndexShardingStrategy indexShardingStrategy;
     private long entityCount = 0;
+    private EntityManager entityManager;
+    
     private static final Logger logger = Logger.getLogger(IndexingContext.class);
     
     public void add(Serializable[] clazzIDs, Class<?> clazz) {
@@ -87,5 +90,13 @@ public class IndexingContext {
     
     public void setRootEntities(Class<?>[] rootEntities) {
         this.rootEntities = rootEntities;
+    }
+    
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    public EntityManager getEntityManager() {
+        return entityManager;
     }
 }

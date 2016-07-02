@@ -8,6 +8,7 @@ import javax.batch.runtime.BatchRuntime;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
+import javax.persistence.EntityManager;
 
 import org.hibernate.search.jsr352.internal.IndexingContext;
 
@@ -23,6 +24,7 @@ public class MassIndexerImpl implements MassIndexer {
     private int partitions = 4;
     private int threads = 2;
     private Set<Class<?>> rootEntities;
+    private EntityManager entityManager;
     
     private final String JOB_NAME = "mass-index";
     
@@ -58,6 +60,7 @@ public class MassIndexerImpl implements MassIndexer {
     public long start() {
         
         registrerRootEntities(rootEntities);
+        registrerEntityManager(entityManager);
         
         Properties jobParams = new Properties();
         jobParams.setProperty("fetchSize", String.valueOf(fetchSize));
@@ -165,6 +168,12 @@ public class MassIndexerImpl implements MassIndexer {
     }
 
     @Override
+    public MassIndexer entityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+        return this;
+    }
+
+    @Override
     public boolean isOptimizeAfterPurge() {
         return optimizeAfterPurge;
     }
@@ -225,5 +234,20 @@ public class MassIndexerImpl implements MassIndexer {
                 .get(bean, bm.createCreationalContext(bean));
         Class<?>[] r = rootEntities.toArray(new Class<?>[s]);
         indexingContext.setRootEntities(r);
+    }
+    
+    private void registrerEntityManager(EntityManager entityManager) {
+        BeanManager bm = CDI.current().getBeanManager();
+        Bean<IndexingContext> bean = (Bean<IndexingContext>) bm
+            .resolve(bm.getBeans(IndexingContext.class));
+        IndexingContext indexingContext = bm
+                .getContext(bean.getScope())
+                .get(bean, bm.createCreationalContext(bean));
+        indexingContext.setEntityManager(entityManager);
+    }
+
+    @Override
+    public EntityManager getEntityManager() {
+        return entityManager;
     }
 }

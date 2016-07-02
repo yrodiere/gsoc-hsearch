@@ -137,8 +137,27 @@ public class MassIndexerIT {
         logger.info("Mass indexing finished");
         
         //
-        // Test again after index, target entities
-        // should be found this time
+        // Target entities should be found after index
+        // ---
+        // TODO: but it doesn't work. We need to launch the integration test
+        // again to make it work. issue #78
+        //
+        // TODO: 
+        // Q: Problem may come from the utility class, used in CompanyManager.
+        //    org.hibernate.search.jpa.Search creates 2 instances of full text 
+        //    entity manager, once per search (the first one is the search 
+        //    before indexing and the second one is the search after indexing)
+        // A: But my code for method #findCompanyByName(String) is exactly the
+        //    copy of Gunnar's.
+        //
+        // TODO:
+        // Q: Problem may come from EntityManager. The Hibernate Search mass
+        //    indexer uses an existing EntityManger, provided in input param.
+        //    But my implementation uses the CDI through @PersistenContext 
+        //    during the mass indexing. This entity manager might be another 
+        //    instance. So the indexed information are not shared in the same
+        //    session. issue #73
+        // A: This should be changed now. But still having the same failure.
         //
         companies = companyManager.findCompanyByName(keyword);
         assertEquals(1, companies.size());
@@ -216,6 +235,7 @@ public class MassIndexerIT {
                 .partitions(PARTITIONS)
                 .purgeAtStart(PURGE_AT_START)
                 .threads(THREADS)
+                .entityManager(companyManager.getEntityManager())
                 .rootEntities(getRootEntities());
         return massIndexer;
     }

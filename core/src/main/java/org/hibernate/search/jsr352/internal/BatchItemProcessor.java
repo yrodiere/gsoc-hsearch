@@ -10,7 +10,6 @@ import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder.In;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
@@ -66,15 +65,10 @@ import org.jboss.logging.Logger;
 @Named
 public class BatchItemProcessor implements ItemProcessor {
     
-    @PersistenceContext(unitName = "jsr352")
     private EntityManager em;
     private Session session;
     private ExtendedSearchIntegrator searchIntegrator;
-    private DocumentBuilderIndexedEntity docBuilder;
     private EntityIndexBinding entityIndexBinding;
-    private InstanceInitializer sessionInitializer;
-    private ConversionContext conversionContext;
-    private IndexShardingStrategy shardingStrategy;
     
     @Inject private IndexingContext indexingContext;
     @Inject private StepContext stepContext;
@@ -97,16 +91,14 @@ public class BatchItemProcessor implements ItemProcessor {
     @Override
     public Object processItem(Object item) throws Exception {
         
+        if (em == null) {
+            em = indexingContext.getEntityManager();
+        }
+        
         logger.debugf("processItem(Object) called. entityType=%s", entityType);
         Class<?> entityClazz = findClass(entityType);
         
-        // TODO: change the id to generic type
-        // TODO: accept all entity type. For instance, only Address.class works
-        if (entityType.equals("org.hibernate.search.jsr352.test.entity.Stock")) {
-            updateWorksCount(0);
-            return null;
-        }
-        
+        // TODO: should keep item as "Serializable[]" and not cast to "int[]"
         int[] ids = toIntArray((Serializable[]) item);
         List<?> entities = null;
         List<AddLuceneWork> addWorks = null;
@@ -160,6 +152,10 @@ public class BatchItemProcessor implements ItemProcessor {
             Class<?> entityClazz) {
         
         List<AddLuceneWork> addWorks = new LinkedList<>();
+        // TODO: tenant ID should not be null
+        // Or may it be fine to be null? Gunnar's integration test in Hibernate 
+        // Search: MassIndexingTimeoutIT does not mention the tenant ID neither
+        // (The tenant ID is not included mass indexer setup in the ConcertManager) 
         String tenantId = null;
         
         session = em.unwrap(Session.class);
@@ -167,11 +163,14 @@ public class BatchItemProcessor implements ItemProcessor {
         entityIndexBinding = searchIntegrator
                 .getIndexBindings()
                 .get(entityClazz);
-        shardingStrategy = entityIndexBinding.getSelectionStrategy();
+
+        DocumentBuilderIndexedEntity docBuilder = entityIndexBinding.getDocumentBuilder();
+        // NotSharedStrategy
+        IndexShardingStrategy shardingStrategy = entityIndexBinding.getSelectionStrategy();
+        logger.infof("indexShardingStrategy=%s", shardingStrategy.toString());
         indexingContext.setIndexShardingStrategy(shardingStrategy);
-        docBuilder = entityIndexBinding.getDocumentBuilder();
-        conversionContext = new ContextualExceptionBridgeHelper();
-        sessionInitializer = new HibernateSessionLoadingInitializer(
+        ConversionContext conversionContext = new ContextualExceptionBridgeHelper();
+        final InstanceInitializer sessionInitializer = new HibernateSessionLoadingInitializer(
                 (SessionImplementor) session
         );
         
@@ -185,6 +184,7 @@ public class BatchItemProcessor implements ItemProcessor {
                         .setClass(entityClazz)
                         .twoWayConversionContext(idBridge)
                         .objectToString(id);
+                logger.infof("idInString=%s", idInString);
             } finally {
                 conversionContext.popProperty();
             }
