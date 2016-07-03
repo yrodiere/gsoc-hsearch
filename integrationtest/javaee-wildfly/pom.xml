@@ -10,15 +10,7 @@
 
   <artifactId>hsearch-jsr352-integrationtest-wildfly</artifactId>
   <name>GSoC JSR352 - Integration Tests in WildFly</name>
-  
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
-    <maven.compiler.testSource>1.7</maven.compiler.testSource>
-    <maven.compiler.testTarget>1.7</maven.compiler.testTarget>
-  </properties>
-  
+
   <dependencies>
     <!-- This integration test refers to classes in his parent -->
     <dependency>
@@ -83,18 +75,6 @@
       <artifactId>guava</artifactId>
       <version>19.0</version>
     </dependency>
-    <!-- Additional dependencies for Java SE batch applications -->
-    <!-- https://jberet.gitbooks.io/jberet-user-guide/content/set_up_jberet/#additional-dependencies-for-java-se-batch-applications -->
-    <dependency>
-      <groupId>org.jberet</groupId>
-      <artifactId>jberet-se</artifactId>
-      <version>${org.jberet}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.weld.se</groupId>
-      <artifactId>weld-se</artifactId>
-      <version>2.3.4.Final</version>
-    </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
@@ -105,7 +85,7 @@
     <!-- ======================================== -->
     
     <!-- ======================================== -->
-    <!-- This is copied from hsearch-jsr352-core  -->
+    <!-- These dependencies are copied from hsearch-jsr352-core  -->
     <!-- TODO: should be simplified -->
     
     <!-- tests -->
@@ -150,9 +130,9 @@
         </exclusion>
       </exclusions>
     </dependency>
-    
-    <!-- This is copied from hsearch-jsr352-core  -->
+    <!-- These dependencies are copied from hsearch-jsr352-core  -->
     <!-- ======================================== -->
+    
     <dependency>
       <groupId>org.jboss.ejb3</groupId>
       <artifactId>jboss-ejb3-ext-api</artifactId>
@@ -169,44 +149,13 @@
         <filtering>true</filtering>
         <directory>src/test/resources</directory>
         <includes>
-          <include>persistence.xml</include>
+          <include>**/persistence.xml</include>
           <include>**/arquillian.xml</include>
           <include>**/arquillian.launch</include>
         </includes>
       </testResource>
     </testResources>
     <plugins>
-      <plugin>
-        <!-- Allows to find the absolute path to dependencies -->
-        <groupId>org.bitstrings.maven.plugins</groupId>
-        <artifactId>dependencypath-maven-plugin</artifactId>
-        <version>1.1.1</version>
-        <executions>
-          <execution>
-            <id>set-all</id>
-            <goals>
-              <goal>set</goal>
-            </goals>
-            <configuration>
-            <propertySets>
-              <propertySet>
-                <includes>
-                  <include>org.jboss.byteman:byteman:jar</include>
-                </includes>
-              </propertySet>
-            </propertySets>
-          </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>2.6</version>
-        <configuration>
-          <failOnMissingWebXml>false</failOnMissingWebXml>
-        </configuration>
-      </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.3</version>
@@ -215,26 +164,6 @@
           <target>1.8</target>
         </configuration>
       </plugin>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.17</version>
-        <configuration>
-          <forkCount>1</forkCount>
-          <reuseForks>true</reuseForks>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <runOrder>alphabetical</runOrder>
-          <systemPropertyVariables>
-            <!-- See HSEARCH-1444 -->
-            <hibernate.service.allow_crawling>false</hibernate.service.allow_crawling>
-            <com.sun.management.jmxremote>true</com.sun.management.jmxremote>
-            <org.hibernate.search.enable_performance_tests>${org.hibernate.search.enable_performance_tests}</org.hibernate.search.enable_performance_tests>
-          </systemPropertyVariables>
-          <additionalClasspathElements>
-            <!-- Needed by Byteman to load the agent on demand -->
-            <additionalClasspathElement>${jdk-toolsjar}</additionalClasspathElement>
-          </additionalClasspathElements>
-        </configuration>
-      </plugin>      
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
