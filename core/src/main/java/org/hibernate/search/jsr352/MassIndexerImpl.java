@@ -25,6 +25,7 @@ public class MassIndexerImpl implements MassIndexer {
     private int threads = 2;
     private Set<Class<?>> rootEntities;
     private EntityManager entityManager;
+    private JobOperator jobOperator;
     
     private final String JOB_NAME = "mass-index";
     
@@ -73,7 +74,7 @@ public class MassIndexerImpl implements MassIndexer {
         jobParams.setProperty("optimizeAfterPurge", String.valueOf(optimizeAfterPurge));
         jobParams.setProperty("optimizeAtEnd", String.valueOf(optimizeAtEnd));
         jobParams.setProperty("rootEntities", String.valueOf(rootEntities));
-        JobOperator jobOperator = BatchRuntime.getJobOperator();
+//      JobOperator jobOperator = BatchRuntime.getJobOperator();
         Long executionId = jobOperator.start(JOB_NAME, jobParams);
         return executionId;
     }
@@ -172,6 +173,12 @@ public class MassIndexerImpl implements MassIndexer {
         this.entityManager = entityManager;
         return this;
     }
+    
+    @Override
+    public MassIndexer jobOperator(JobOperator jobOperator) {
+        this.jobOperator = jobOperator;
+        return this;
+    }
 
     @Override
     public boolean isOptimizeAfterPurge() {
@@ -249,5 +256,10 @@ public class MassIndexerImpl implements MassIndexer {
     @Override
     public EntityManager getEntityManager() {
         return entityManager;
+    }
+    
+    @Override
+    public JobOperator getJobOperator() {
+        return jobOperator;
     }
 }

@@ -2,6 +2,7 @@ package org.hibernate.search.jsr352;
 
 import java.util.Set;
 
+import javax.batch.operations.JobOperator;
 import javax.persistence.EntityManager;
 
 public interface MassIndexer {
@@ -21,6 +22,7 @@ public interface MassIndexer {
     public MassIndexer threads(int threads);
     // TODO: should be reviewed
     public MassIndexer entityManager(EntityManager entityManager);
+    public MassIndexer jobOperator(JobOperator jobOperator);
     
     public int getArrayCapacity();
     public int getFetchSize();
@@ -33,4 +35,5 @@ public interface MassIndexer {
     public Set<Class<?>> getRootEntities();
     public int getThreads();
     public EntityManager getEntityManager();
+    public JobOperator getJobOperator();
 }
