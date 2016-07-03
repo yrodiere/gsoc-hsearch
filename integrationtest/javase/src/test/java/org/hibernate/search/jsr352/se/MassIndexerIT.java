@@ -16,17 +16,10 @@ import org.apache.lucene.search.Query;
 import org.hibernate.CacheMode;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
-import org.hibernate.search.jsr352.MassIndexer;
-import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.se.test.Company;
-import org.jberet.operations.JobOperatorImpl;
 import org.jboss.logging.Logger;
-import org.jboss.weld.environment.se.Weld;
-import org.jboss.weld.environment.se.WeldContainer;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class MassIndexerIT {
@@ -34,7 +27,7 @@ public class MassIndexerIT {
     private EntityManagerFactory emf;
     private EntityManager em;
     
-    private JobOperator jobOperator = null;
+    private JobOperator jobOperator;
     
     private final Company COMPANY_1 = new Company("Google");
     private final Company COMPANY_2 = new Company("Red Hat");
@@ -43,12 +36,9 @@ public class MassIndexerIT {
     private static final Logger logger = Logger.getLogger(MassIndexerIT.class);
     
     @Before
-    public void setupJPA() {
+    public void setup() {
         
-//      if (jobOperator == null) {
-//          jobOperator = (JobOperatorImpl) BatchRuntime.getJobOperator();
-//      }
-        
+        jobOperator = BatchRuntime.getJobOperator();
         emf = Persistence.createEntityManagerFactory("h2");
         em = emf.createEntityManager();
         
@@ -58,24 +48,9 @@ public class MassIndexerIT {
         em.persist(COMPANY_3);
         em.getTransaction().commit();
     }
-
-    @Test
-    public void testJPA() {
-        Company google = em.find(Company.class, 1L);
-        Company redhat = em.find(Company.class, 2L);
-        Company microsoft = em.find(Company.class, 3L);
-        assertEquals(COMPANY_1.getName(), google.getName());
-        assertEquals(COMPANY_2.getName(), redhat.getName());
-        assertEquals(COMPANY_3.getName(), microsoft.getName());
-    }
     
-    /**
-     * Index strategy should be set to "manual" in JPA configuration file
-     * persistence.xml
-     * 
-     */
     @Test
-    public void testSearch() {
+    public void testMassIndexer() {
         
         logger.infof("finding company called %s ...", "google");
         List<Company> companies = findCompanyByName("google");
@@ -97,7 +72,7 @@ public class MassIndexerIT {
         List<Company> result = ftem.createFullTextQuery(luceneQuery).getResultList();
         return result;
     }
-    
+
     private void indexCompany() {
 //        issue #63
 //        java.util.ServiceConfigurationError: javax.batch.operations.JobOperator: Provider org.jberet.operations.JobOperatorImpl could not be instantiated
