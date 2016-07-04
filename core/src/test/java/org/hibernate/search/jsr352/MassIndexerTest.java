@@ -60,7 +60,7 @@ public class MassIndexerTest {
         rootEntities.add(String.class);
         rootEntities.add(Integer.class);
         
-        MassIndexer massIndexer = new MassIndexerImpl().rootEntities(rootEntities);
+        MassIndexer massIndexer = new MassIndexerImpl().addRootEntities(rootEntities);
         Set<Class<?>> _rootEntities = massIndexer.getRootEntities();
         
         assertTrue(_rootEntities.contains(String.class));
@@ -68,12 +68,7 @@ public class MassIndexerTest {
     }
     
     @Test(expected=NullPointerException.class)
-    public void testRootEntities_null() {
-        new MassIndexerImpl().rootEntities(null);
-    }
-    
-    @Test(expected=NullPointerException.class)
     public void testRootEntities_empty() {
-        new MassIndexerImpl().rootEntities(new HashSet<Class<?>>());
+        new MassIndexerImpl().addRootEntities(new HashSet<Class<?>>());
     }
 }
