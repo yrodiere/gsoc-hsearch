@@ -1,5 +1,7 @@
 package org.hibernate.search.jsr352;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
@@ -23,7 +25,7 @@ public class MassIndexerImpl implements MassIndexer {
     private int partitionCapacity = 250;
     private int partitions = 4;
     private int threads = 2;
-    private Set<Class<?>> rootEntities;
+    private Set<Class<?>> rootEntities = new HashSet<>();
     private EntityManager entityManager;
     private JobOperator jobOperator;
     
@@ -158,13 +160,19 @@ public class MassIndexerImpl implements MassIndexer {
     }
 
     @Override
-    public MassIndexer rootEntities(Set<Class<?>> rootEntities) {
+    public MassIndexer addRootEntities(Set<Class<?>> rootEntities) {
         if (rootEntities == null) {
             throw new NullPointerException("rootEntities cannot be NULL.");
         } else if (rootEntities.isEmpty()) {
             throw new NullPointerException("rootEntities must have at least 1 element.");
         }
-        this.rootEntities = rootEntities;
+        this.rootEntities.addAll(rootEntities);
+        return this;
+    }
+    
+    @Override
+    public MassIndexer addRootEntities(Class<?>... rootEntities) {
+        this.rootEntities.addAll(Arrays.asList(rootEntities));
         return this;
     }
 

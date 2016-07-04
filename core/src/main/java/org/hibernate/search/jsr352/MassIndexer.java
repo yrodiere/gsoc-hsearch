@@ -18,7 +18,8 @@ public interface MassIndexer {
     public MassIndexer partitionCapacity(int partitionCapacity);
     public MassIndexer partitions(int partitions);
     public MassIndexer purgeAtStart(boolean purgeAtStart);
-    public MassIndexer rootEntities(Set<Class<?>> rootEntities);
+    public MassIndexer addRootEntities(Set<Class<?>> rootEntities);
+    public MassIndexer addRootEntities(Class<?>... rootEntities);
     public MassIndexer threads(int threads);
     // TODO: should be reviewed
     public MassIndexer entityManager(EntityManager entityManager);

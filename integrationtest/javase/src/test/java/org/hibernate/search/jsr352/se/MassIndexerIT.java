@@ -3,10 +3,8 @@ package org.hibernate.search.jsr352.se;
 import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
@@ -107,11 +105,9 @@ public class MassIndexerIT {
     }
 
     private long indexCompany() throws InterruptedException {
-        Set<Class<?>> rootEntities = new HashSet<>();
-        rootEntities.add(Company.class);
         // org.hibernate.search.jsr352.MassIndexer
         MassIndexer massIndexer = new MassIndexerImpl()
-                .rootEntities(rootEntities)
+                .addRootEntities(Company.class)
                 .entityManager(em)
                 .jobOperator(jobOperator);
         long executionId = massIndexer.start();

@@ -5,10 +5,8 @@ import static org.junit.Assert.assertEquals;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
@@ -239,15 +237,7 @@ public class MassIndexerIT {
                 .threads(THREADS)
                 .entityManager(companyManager.getEntityManager())
                 .jobOperator(jobOperator)
-                .rootEntities(getRootEntities());
+                .addRootEntities(Company.class);
         return massIndexer;
-    }
-       
-    private Set<Class<?>> getRootEntities() {
-        Set<Class<?>> rootEntities = new HashSet<>();
-        rootEntities.add(Company.class);
-//        rootEntities.add(Address.class);
-//        rootEntities.add(Stock.class);
-        return rootEntities;
     }
 }
