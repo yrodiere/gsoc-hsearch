@@ -52,7 +52,7 @@ public class BatchItemWriter implements ItemWriter {
      */
     @Override
     public Serializable checkpointInfo() throws Exception {
-        logger.info("checkpoingInfo called");
+        logger.info("checkpointInfo called");
         return null;
     }
     
