@@ -18,9 +18,9 @@ import org.jboss.logging.Logger;
 
 /**
  * Read identifiers of entities via entity manager. The result is going to be
- * stored in {@code IndexingContext}, then be used for Lucene document 
+ * stored in {@code IndexingContext}, then be used for Lucene document
  * production in the next step.
- * 
+ *
  * @author Mincong HUANG
  */
 @Named
@@ -28,34 +28,34 @@ public class IdProducerBatchlet implements Batchlet {
 
     @Inject
     private IndexingContext indexingContext;
-    
+
     @Inject @BatchProperty private int arrayCapacity;
     @Inject @BatchProperty private int fetchSize;
     @Inject @BatchProperty private int maxResults;
     @Inject @BatchProperty private String entityType;
-    
+
     private EntityManager em;
     private Session session;
-    
+
     private static final Logger logger = Logger.getLogger(IdProducerBatchlet.class);
-    
+
     /**
-     * Load id of all target entities using Hibernate Session. In order to 
-     * follow the id loading progress, the total number will be additionally 
+     * Load id of all target entities using Hibernate Session. In order to
+     * follow the id loading progress, the total number will be additionally
      * computed as well.
      */
     @Override
     public String process() throws Exception {
-        
+
         // get entity class type
-        Class<?> entityClazz = Class.forName(entityType);
-        
+        Class<?> entityClazz = indexingContext.getIndexedType( entityType );
+
         if (em == null) {
             em = indexingContext.getEntityManager();
         }
         // unwrap session from entity manager
         session = em.unwrap(Session.class);
-        
+
         // get total number of id
         final long rowCount = (long) session
             .createCriteria(entityClazz)
@@ -64,7 +64,7 @@ public class IdProducerBatchlet implements Batchlet {
             .uniqueResult();
         logger.infof("entityType = %s (%d rows).", entityType, rowCount);
         indexingContext.addEntityCount(rowCount);
-        
+
         // load ids and store in scrollable results
         ScrollableResults scrollableIds = session
             .createCriteria(entityClazz)
@@ -78,11 +78,11 @@ public class IdProducerBatchlet implements Batchlet {
         long rowLoaded = 0;
         int i = 0;
         try {
-            // Create a key-value pair for entity in the hash-map embedded in 
+            // Create a key-value pair for entity in the hash-map embedded in
             // indexingContext. The key is the entity class type and the value
             // is an empty queue of IDs.
             indexingContext.createQueue(entityClazz);
-            
+
             while (scrollableIds.next() && rowLoaded < rowCount) {
                 Serializable id = (Serializable) scrollableIds.get(0);
                 entityIDs[i++] = id;
@@ -103,7 +103,7 @@ public class IdProducerBatchlet implements Batchlet {
         }
         return BatchStatus.COMPLETED.toString();
     }
-    
+
     @Override
     public void stop() throws Exception {
         if (session.isOpen()) {
