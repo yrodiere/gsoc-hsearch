@@ -27,7 +27,6 @@ import org.jboss.logging.Logger;
 public class IndexingContext {
 
     private ConcurrentHashMap<Class<?>, ConcurrentLinkedQueue<Serializable[]>> idQueues;
-    private Class<?>[] rootEntities;
     private long entityCount = 0;
     private EntityManager entityManager;
 
@@ -74,14 +73,6 @@ public class IndexingContext {
         return entityCount;
     }
 
-    public Class<?>[] getRootEntities() {
-        return rootEntities;
-    }
-
-    public void setRootEntities(Class<?>[] rootEntities) {
-        this.rootEntities = rootEntities;
-    }
-
     public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
@@ -89,15 +80,4 @@ public class IndexingContext {
     public EntityManager getEntityManager() {
         return entityManager;
     }
-
-	public Class<?> getIndexedType(String entityType) throws ClassNotFoundException {
-		for ( Class<?> clazz : getRootEntities() ) {
-			if ( clazz.getName().equals( entityType ) ) {
-				return clazz;
-			}
-		}
-
-		String msg = String.format( "entityType %s not found.", entityType );
-		throw new ClassNotFoundException( msg );
-	}
 }

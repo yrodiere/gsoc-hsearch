@@ -6,6 +6,7 @@ import java.util.Arrays;
 import javax.batch.api.BatchProperty;
 import javax.batch.api.Batchlet;
 import javax.batch.runtime.BatchStatus;
+import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
@@ -26,8 +27,10 @@ import org.jboss.logging.Logger;
 @Named
 public class IdProducerBatchlet implements Batchlet {
 
-    @Inject
-    private IndexingContext indexingContext;
+	private static final Logger logger = Logger.getLogger(IdProducerBatchlet.class);
+
+	private final JobContext jobContext;
+    private final IndexingContext indexingContext;
 
     @Inject @BatchProperty private int arrayCapacity;
     @Inject @BatchProperty private int fetchSize;
@@ -37,9 +40,13 @@ public class IdProducerBatchlet implements Batchlet {
     private EntityManager em;
     private Session session;
 
-    private static final Logger logger = Logger.getLogger(IdProducerBatchlet.class);
+    @Inject
+    public IdProducerBatchlet(JobContext jobContext, IndexingContext indexingContext) {
+		this.jobContext = jobContext;
+		this.indexingContext = indexingContext;
+	}
 
-    /**
+	/**
      * Load id of all target entities using Hibernate Session. In order to
      * follow the id loading progress, the total number will be additionally
      * computed as well.
@@ -48,7 +55,7 @@ public class IdProducerBatchlet implements Batchlet {
     public String process() throws Exception {
 
         // get entity class type
-        Class<?> entityClazz = indexingContext.getIndexedType( entityType );
+        Class<?> entityClazz = ( (BatchContextData) jobContext.getTransientUserData() ).getIndexedType( entityType );
 
         if (em == null) {
             em = indexingContext.getEntityManager();

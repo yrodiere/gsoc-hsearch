@@ -3,11 +3,13 @@ package org.hibernate.search.jsr352.internal;
 import java.util.LinkedList;
 import java.util.Properties;
 import java.util.Queue;
+import java.util.Set;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.api.partition.PartitionMapper;
 import javax.batch.api.partition.PartitionPlan;
 import javax.batch.api.partition.PartitionPlanImpl;
+import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -35,19 +37,24 @@ import org.jboss.logging.Logger;
 @Named
 public class LucenePartitionMapper implements PartitionMapper {
 
-    @Inject
-    private IndexingContext indexingContext;
+	private static final Logger logger = Logger.getLogger(LucenePartitionMapper.class);
+
+	private final JobContext jobContext;
+    private final IndexingContext indexingContext;
 
     @Inject @BatchProperty private int partitionCapacity;
     @Inject @BatchProperty private int threads;
-    @Inject @BatchProperty(name="rootEntities") private String rootEntitiesStr;
 
-    private static final Logger logger = Logger.getLogger(LucenePartitionMapper.class);
+    @Inject
+    public LucenePartitionMapper(JobContext jobContext, IndexingContext indexingContext) {
+		this.jobContext = jobContext;
+		this.indexingContext = indexingContext;
+	}
 
-    @Override
+	@Override
     public PartitionPlan mapPartitions() throws Exception {
 
-        Class<?>[] rootEntities = indexingContext.getRootEntities();
+        Set<Class<?>> rootEntities = ( ( BatchContextData )jobContext.getTransientUserData() ).getEntityTypesToIndex();
         Queue<String> classQueue = new LinkedList<>();
 
         int totalPartitions = 0;

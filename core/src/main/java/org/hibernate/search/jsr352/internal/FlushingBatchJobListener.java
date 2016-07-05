@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import javax.batch.api.listener.AbstractJobListener;
+import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -21,26 +22,29 @@ import org.hibernate.search.spi.SearchIntegrator;
 @Named
 public class FlushingBatchJobListener extends AbstractJobListener {
 
+	private final JobContext jobContext;
+
 	private final IndexingContext indexingContext;
 
 	@Inject
-	public FlushingBatchJobListener(IndexingContext indexingContext) {
+	public FlushingBatchJobListener(JobContext jobContext, IndexingContext indexingContext) {
+		this.jobContext = jobContext;
 		this.indexingContext = indexingContext;
 	}
 
 	@Override
 	public void afterJob() throws Exception {
-		flush( indexingContext.getRootEntities() );
+		flush( ( ( BatchContextData )jobContext.getTransientUserData() ).getEntityTypesToIndex() );
 	}
 
-	private void flush(Class<?>[] entityTypes) {
+	private void flush(Iterable<Class<?>> entityTypes) {
 		Collection<IndexManager> uniqueIndexManagers = uniqueIndexManagerForTypes( entityTypes );
 		for ( IndexManager indexManager : uniqueIndexManagers ) {
 			indexManager.performStreamOperation( FlushLuceneWork.INSTANCE, null, false );
 		}
 	}
 
-	private Collection<IndexManager> uniqueIndexManagerForTypes(Class<?>[] entityTypes) {
+	private Collection<IndexManager> uniqueIndexManagerForTypes(Iterable<Class<?>> entityTypes) {
 		HashMap<String, IndexManager> uniqueBackends = new HashMap<>();
 
 		for ( Class<?> type : entityTypes ) {

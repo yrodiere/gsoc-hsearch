@@ -5,6 +5,11 @@
     version="1.0">
 
     <listeners>
+        <listener ref="batchJobContextSetupListener">
+        <properties>
+            <property name="rootEntities" value="#{jobParameters['rootEntities']}"/>
+        </properties>
+        </listener>
         <listener ref="flushingBatchJobListener"/>
     </listeners>
 
@@ -34,9 +39,6 @@
            the optimization directly.
        -->
       <mapper ref="entityPartitionMapper">
-        <properties>
-          <property name="rootEntities" value="#{jobParameters['rootEntities']}"/>
-        </properties>
       </mapper>
     </partition>
   </step>
@@ -86,7 +88,6 @@
         <properties>
           <property name="partitionCapacity" value="#{jobParameters['partitionCapacity']}?:1;"/>
           <property name="threads" value="#{jobParameters['threads']}?:2;"/>
-          <property name="rootEntities" value="#{jobParameters['rootEntities']}"/>
         </properties>
       </mapper>
       <collector ref="lucenePartitionCollector"/>
