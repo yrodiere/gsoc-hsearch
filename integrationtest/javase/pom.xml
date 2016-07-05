@@ -159,8 +159,6 @@
         <filtering>true</filtering>
         <directory>src/test/resources</directory>
         <includes>
-          <include>META-INF/batch-jobs/mass-index.xml</include>
-          <include>META-INF/beans.xml</include>
           <include>META-INF/persistence.xml</include>
         </includes>
       </testResource>

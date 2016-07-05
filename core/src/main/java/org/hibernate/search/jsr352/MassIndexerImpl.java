@@ -23,8 +23,8 @@ public class MassIndexerImpl implements MassIndexer {
     private int fetchSize = 200 * 1000;
     private int maxResults = 1000 * 1000;
     private int partitionCapacity = 250;
-    private int partitions = 4;
-    private int threads = 2;
+    private int partitions = 1;
+    private int threads = 1;
     private Set<Class<?>> rootEntities = new HashSet<>();
     private EntityManager entityManager;
     private JobOperator jobOperator;
@@ -233,6 +233,7 @@ public class MassIndexerImpl implements MassIndexer {
         return rootEntities;
     }
     
+    @SuppressWarnings("unchecked")
     public void registrerRootEntities(Set<Class<?>> rootEntities) {
         if (rootEntities == null) {
             throw new NullPointerException("rootEntities cannot be NULL.");
@@ -251,6 +252,7 @@ public class MassIndexerImpl implements MassIndexer {
         indexingContext.setRootEntities(r);
     }
     
+    @SuppressWarnings("unchecked")
     private void registrerEntityManager(EntityManager entityManager) {
         BeanManager bm = CDI.current().getBeanManager();
         Bean<IndexingContext> bean = (Bean<IndexingContext>) bm

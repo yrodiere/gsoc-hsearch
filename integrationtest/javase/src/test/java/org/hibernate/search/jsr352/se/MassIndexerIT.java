@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.batch.operations.JobOperator;
-import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.JobExecution;
 import javax.batch.runtime.Metric;
@@ -61,7 +60,7 @@ public class MassIndexerIT {
     @Before
     public void setup() {
         
-        jobOperator = BatchRuntime.getJobOperator();
+        jobOperator = JobFactory.getJobOperator();
         emf = Persistence.createEntityManagerFactory("h2");
         em = emf.createEntityManager();
         

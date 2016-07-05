@@ -1,6 +1,8 @@
 package org.hibernate.search.jsr352.internal;
 
 import java.io.Serializable;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.api.chunk.ItemReader;
@@ -33,6 +35,14 @@ public class BatchItemReader implements ItemReader {
     @Inject
     private IndexingContext indexingContext;
     
+    // TODO: I think this can be done with StepContext
+    private boolean isRestarted;
+    private boolean hasReadTempIDs;
+    
+    // TODO: this array should be defined dynamically by the item-count value
+    // defined by the batch job. But for instance, just use a static value
+    private Queue<Serializable[]> tempIDs;
+    
     private static final Logger logger = Logger.getLogger(BatchItemReader.class);
     
     /**
@@ -44,8 +54,10 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public Serializable checkpointInfo() throws Exception {
-        logger.info("checkpointInfo");
-        return null;
+        logger.info("checkpointInfo() called. Saving temporary IDs to batch runtime...");
+        Queue<Serializable[]> checkpoint = new LinkedList<>(tempIDs);
+        tempIDs.clear();
+        return (Serializable) checkpoint;
     }
 
     /**
@@ -61,25 +73,44 @@ public class BatchItemReader implements ItemReader {
     /**
      * Initialize the environment. If checkpoint does not exist, then it should 
      * be the first open. If checkpoint exist, then it isn't the first open,
-     * provide another open scenario. This mechanism is not used in this demo.
+     * save the input object "checkpoint" into "tempIDs".
      * 
      * @param checkpoint The last checkpoint info saved in the batch runtime, 
      *          previously given by checkpointInfo().
      * @throws Exception thrown for any errors.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void open(Serializable checkpoint) throws Exception {
-        logger.debugf("#open(...): entityType = %s", entityType);
+        logger.infof("#open(...): entityType = %s", entityType);
+        if (checkpoint == null) {
+            tempIDs = new LinkedList<>();
+            isRestarted = false;
+        } else {
+            tempIDs = (Queue<Serializable[]>) checkpoint;
+            isRestarted = true;
+        }
     }
 
     /**
      * Read item from the {@code IndexingContext}. Here, item means an array of
      * IDs previously produced by the {@code IdProducerBatchlet}.
      * 
+     * If this is a restart job, then the temporary IDs restored from checkpoint
+     * will be read at first.
+     * 
      * @throws Exception thrown for any errors.
      */
     @Override
     public Object readItem() throws Exception {
-        return indexingContext.poll(Class.forName(entityType));
+        Serializable[] IDs = null;
+        if (isRestarted && !hasReadTempIDs && !tempIDs.isEmpty()) {
+            IDs = tempIDs.poll();
+            hasReadTempIDs = tempIDs.isEmpty();
+        } else {
+            IDs = indexingContext.poll(Class.forName(entityType));
+            tempIDs.add(IDs);
+        }
+        return IDs;
     }
 }
