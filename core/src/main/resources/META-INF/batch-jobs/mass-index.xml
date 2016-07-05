@@ -40,6 +40,7 @@
       </mapper>
     </partition>
   </step>
+
   <decision id="purgeDecision" ref="purgeDecider">
     <properties>
       <property name="purgeAtStart" value="#{jobParameters['purgeAtStart']}?:false;"/>
@@ -47,9 +48,11 @@
     <next on="true" to="purgeIndex"/>
     <next on="false" to="produceLuceneDoc"/>
   </decision>
+
   <step id="purgeIndex" next="afterPurgeDecision">
     <batchlet ref="indexPurgerBatchlet"/>
   </step>
+
   <decision id="afterPurgeDecision" ref="afterPurgeDecider">
     <properties>
       <property name="optimizeAfterPurge" value="#{jobParameters['optimizeAfterPurge']}?:false;"/>
@@ -57,24 +60,25 @@
     <next on="true" to="optimizeAfterPurge"/>
     <next on="false" to="produceLuceneDoc"/>
   </decision>
+
   <step id="optimizeAfterPurge" next="produceLuceneDoc">
     <batchlet ref="optimizerBatchlet"/>
   </step>
+
   <step id="produceLuceneDoc" next="afterIndexDecision">
     <properties>
       <property name="javax.transaction.global.timeout" value="300"/>
     </properties>
+    <listeners>
+      <listener ref="entityIndexingStepContextSetupListener">
+        <properties>
+          <property name="entityType" value="#{partitionPlan['entityType']}"/>
+        </properties>
+      </listener>
+    </listeners>
     <chunk item-count="3">
-      <reader ref="batchItemReader">
-        <properties>
-          <property name="entityType" value="#{partitionPlan['entityType']}"/>
-        </properties>
-      </reader>
-      <processor ref="batchItemProcessor">
-        <properties>
-          <property name="entityType" value="#{partitionPlan['entityType']}"/>
-        </properties>
-      </processor>
+      <reader ref="batchItemReader"/>
+      <processor ref="batchItemProcessor"/>
       <writer ref="batchItemWriter"/>
     </chunk>
     <partition>
@@ -96,6 +100,7 @@
       <reducer ref="lucenePartitionReducer"/>
     </partition>
   </step>
+
   <decision id="afterIndexDecision" ref="afterIndexDecider">
     <properties>
       <property name="optimizeAtEnd" value="#{jobParameters['optimizeAtEnd']}?:false;"/>
@@ -103,6 +108,7 @@
     <next on="true" to="optimizeAfterIndex"/>
     <end on="false" exit-status=""/><!-- TODO: add exit-status -->
   </decision>
+
   <step id="optimizeAfterIndex">
     <batchlet ref="optimizerBatchlet"/>
   </step>
