@@ -6,11 +6,11 @@
 
     <listeners>
         <listener ref="batchJobContextSetupListener">
-        <properties>
-            <property name="rootEntities" value="#{jobParameters['rootEntities']}"/>
-        </properties>
+            <properties>
+                <property name="rootEntities" value="#{jobParameters['rootEntities']}"/>
+            </properties>
         </listener>
-        <listener ref="flushingBatchJobListener"/>
+        <!-- <listener ref="flushingBatchJobListener"/> -->
     </listeners>
 
   <step id="loadId" next="purgeDecision">
@@ -77,11 +77,21 @@
           <property name="entityType" value="#{partitionPlan['entityType']}"/>
         </properties>
       </listener>
+      <!-- ItemWriteListener
+      <listener ref="flushingIndexListener">
+        <properties>
+          <property name="entityType" value="#{partitionPlan['entityType']}"/>
+        </properties>
+      </listener> -->
     </listeners>
     <chunk item-count="3">
       <reader ref="batchItemReader"/>
       <processor ref="batchItemProcessor"/>
-      <writer ref="batchItemWriter"/>
+      <writer ref="batchItemWriter">
+        <properties>
+          <property name="entityType" value="#{partitionPlan['entityType']}"/>
+        </properties>
+      </writer>
     </chunk>
     <partition>
       <mapper ref="lucenePartitionMapper">

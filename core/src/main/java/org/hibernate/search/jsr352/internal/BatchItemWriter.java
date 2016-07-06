@@ -4,16 +4,23 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.batch.api.BatchProperty;
 import javax.batch.api.chunk.ItemWriter;
+import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.hibernate.search.backend.AddLuceneWork;
+import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.impl.StreamingOperationExecutor;
 import org.hibernate.search.backend.impl.StreamingOperationExecutorSelector;
 import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
 import org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor;
+import org.hibernate.search.engine.spi.EntityIndexBinding;
+import org.hibernate.search.indexes.spi.IndexManager;
+import org.hibernate.search.jpa.Search;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.IndexShardingStrategy;
 import org.jboss.logging.Logger;
 
@@ -39,7 +46,20 @@ public class BatchItemWriter implements ItemWriter {
     // TODO: The monitor is not used for instance. It should be used later.
     private MassIndexerProgressMonitor monitor;
 
-    @Inject private StepContext stepContext;
+    private JobContext jobContext;
+    private StepContext stepContext;
+    private IndexingContext indexingContext;
+
+    @Inject @BatchProperty
+    private String entityType;
+
+    @Inject
+    public BatchItemWriter (JobContext jobContext, StepContext stepContext,
+            IndexingContext indexingContext) {
+        this.jobContext = jobContext;
+        this.stepContext = stepContext;
+        this.indexingContext = indexingContext;
+    }
 
     private static final Logger logger = Logger.getLogger(BatchItemWriter.class);
 
@@ -103,6 +123,18 @@ public class BatchItemWriter implements ItemWriter {
                         forceAsync
                 );
             }
+        }
+
+        // flush after write operation
+        Class<?> entityClazz = ( (BatchContextData) jobContext.getTransientUserData() ).getIndexedType( entityType );
+        EntityIndexBinding indexBinding = Search
+                .getFullTextEntityManager( indexingContext.getEntityManager() )
+                .getSearchFactory()
+                .unwrap( SearchIntegrator.class )
+                .getIndexBinding( entityClazz );
+        IndexManager[] indexManagers = indexBinding.getIndexManagers();
+        for (IndexManager im : indexManagers) {
+            im.performStreamOperation( FlushLuceneWork.INSTANCE, null, false );
         }
     }
 }
