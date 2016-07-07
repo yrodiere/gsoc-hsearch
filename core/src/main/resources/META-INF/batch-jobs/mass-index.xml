@@ -10,62 +10,7 @@
                 <property name="rootEntities" value="#{jobParameters['rootEntities']}"/>
             </properties>
         </listener>
-        <!-- <listener ref="flushingBatchJobListener"/> -->
     </listeners>
-
-  <step id="loadId" next="purgeDecision">
-    <batchlet ref="idProducerBatchlet">
-      <properties>
-        <!-- fetchSize - The number of rows returned in one chunk in criteria.
-             It tells the JDBC driver how many rows to return in one chunk, for 
-             large queries. It will do nothing if your driver does not support 
-             it. -->
-        <property name="fetchSize" value="#{jobParameters['fetchSize']}?:1000;"/>
-        <!-- arrayCapacity - The initial capacity of the list. Previously called 
-             batchSize, named changed to avoid naming confusion. Used to 
-             construct an empty array with the specified capacity. -->
-        <property name="arrayCapacity" value="#{jobParameters['arrayCapacity']}?:500;"/>
-        <!-- maxResults - the limit of rows returned in criteria. It defines the
-             limit of results the query will ever get. Same as LIMIT in SQL. -->
-        <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;"/>
-        <!-- entity type provided by the partition plan -->
-        <property name="entityType" value="#{partitionPlan['entityType']}"/>
-      </properties>
-    </batchlet>
-    <partition>
-      <!-- 
-           TODO: we have 2 partitions, but there're no way to reduce them at
-           the end !!! In order to debug the situation, the next step is set to
-           the optimization directly.
-       -->
-      <mapper ref="entityPartitionMapper">
-      </mapper>
-    </partition>
-  </step>
-
-  <decision id="purgeDecision" ref="purgeDecider">
-    <properties>
-      <property name="purgeAtStart" value="#{jobParameters['purgeAtStart']}?:false;"/>
-    </properties>
-    <next on="true" to="purgeIndex"/>
-    <next on="false" to="produceLuceneDoc"/>
-  </decision>
-
-  <step id="purgeIndex" next="afterPurgeDecision">
-    <batchlet ref="indexPurgerBatchlet"/>
-  </step>
-
-  <decision id="afterPurgeDecision" ref="afterPurgeDecider">
-    <properties>
-      <property name="optimizeAfterPurge" value="#{jobParameters['optimizeAfterPurge']}?:false;"/>
-    </properties>
-    <next on="true" to="optimizeAfterPurge"/>
-    <next on="false" to="produceLuceneDoc"/>
-  </decision>
-
-  <step id="optimizeAfterPurge" next="produceLuceneDoc">
-    <batchlet ref="optimizerBatchlet"/>
-  </step>
 
   <step id="produceLuceneDoc" next="afterIndexDecision">
     <properties>
@@ -77,15 +22,14 @@
           <property name="entityType" value="#{partitionPlan['entityType']}"/>
         </properties>
       </listener>
-      <!-- ItemWriteListener
-      <listener ref="flushingIndexListener">
-        <properties>
-          <property name="entityType" value="#{partitionPlan['entityType']}"/>
-        </properties>
-      </listener> -->
     </listeners>
     <chunk item-count="3">
-      <reader ref="batchItemReader"/>
+      <reader ref="batchItemReader">
+        <properties>
+          <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;"/>
+          <property name="entityType" value="#{partitionPlan['entityType']}"/>
+        </properties>
+      </reader>
       <processor ref="batchItemProcessor"/>
       <writer ref="batchItemWriter">
         <properties>
@@ -96,15 +40,12 @@
     <partition>
       <mapper ref="lucenePartitionMapper">
         <properties>
-          <property name="partitionCapacity" value="#{jobParameters['partitionCapacity']}?:1;"/>
           <property name="threads" value="#{jobParameters['threads']}?:2;"/>
         </properties>
       </mapper>
       <collector ref="lucenePartitionCollector"/>
       <analyzer ref="lucenePartitionAnalyzer">
         <properties>
-          <!-- maxResults - the limit of rows returned in criteria. It defines the
-               limit of results the query will ever get. Same as LIMIT in SQL. -->
           <property name="maxResults" value="#{jobParameters['maxResults']}?:2147483647;"/>
         </properties>
       </analyzer>

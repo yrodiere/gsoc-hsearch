@@ -1,17 +1,22 @@
 package org.hibernate.search.jsr352.internal;
 
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.Queue;
 
+import javax.batch.api.BatchProperty;
 import javax.batch.api.chunk.ItemReader;
-import javax.batch.runtime.context.StepContext;
+import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.EntityManager;
 
+import org.hibernate.ScrollMode;
+import org.hibernate.ScrollableResults;
+import org.hibernate.Session;
 import org.jboss.logging.Logger;
 
 /**
+ * TODO: update description.
+ *
  * Read entity IDs from {@code IndexingContext}. Each time, there's one array
  * being read. The number of IDs inside the array depends on the array capacity.
  * This value is defined before the job start. Either the default value defined
@@ -29,24 +34,26 @@ import org.jboss.logging.Logger;
 @Named
 public class BatchItemReader implements ItemReader {
 
-    @Inject
-    private IndexingContext indexingContext;
-
-    // TODO: I think this can be done with StepContext
-    private boolean isRestarted;
-    private boolean hasReadTempIDs;
-
-    // TODO: this array should be defined dynamically by the item-count value
-    // defined by the batch job. But for instance, just use a static value
-    private Queue<Serializable[]> tempIDs;
-
     private static final Logger logger = Logger.getLogger(BatchItemReader.class);
 
-    private final StepContext stepContext;
+    @Inject @BatchProperty(name="entityType")
+    private String entityName;
+    @Inject @BatchProperty
+    private int maxResults;
+    private Class<?> entityClazz;
+    private JobContext jobContext;
+    private IndexingContext indexingContext;
+    private Serializable checkpointId;
+
+    private EntityManager em;
+    private Session session;
+    private ScrollableResults scrollableResults;
 
 	@Inject
-	public BatchItemReader(StepContext stepContext) {
-		this.stepContext = stepContext;
+	public BatchItemReader(JobContext jobContext, IndexingContext indexingContext) {
+	    this.jobContext = jobContext;
+		this.indexingContext = indexingContext;
+		this.em = indexingContext.getEntityManager();
 	}
 
 	/**
@@ -58,10 +65,9 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public Serializable checkpointInfo() throws Exception {
-        logger.info("checkpointInfo() called. Saving temporary IDs to batch runtime...");
-        Queue<Serializable[]> checkpoint = new LinkedList<>(tempIDs);
-        tempIDs.clear();
-        return (Serializable) checkpoint;
+        logger.info("checkpointInfo() called. "
+                + "Saving last read ID to batch runtime...");
+        return checkpointId;
     }
 
     /**
@@ -71,7 +77,10 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public void close() throws Exception {
-        logger.info("close");
+        logger.info( "closing ..." );
+        scrollableResults.close();
+        logger.info( "scrollable results closed.");
+        // TODO: close everything: emf, em, ss ...
     }
 
     /**
@@ -80,41 +89,59 @@ public class BatchItemReader implements ItemReader {
      * save the input object "checkpoint" into "tempIDs".
      *
      * @param checkpoint The last checkpoint info saved in the batch runtime,
-     *          previously given by checkpointInfo().
+     *          previously given by checkpointInfo(). If this is the first
+     *          start, then the checkpoint will be null, so does lastId.
      * @throws Exception thrown for any errors.
      */
     @Override
-    @SuppressWarnings("unchecked")
     public void open(Serializable checkpoint) throws Exception {
-        logger.infof( "#open(...)" );
-        if (checkpoint == null) {
-            tempIDs = new LinkedList<>();
-            isRestarted = false;
-        } else {
-            tempIDs = (Queue<Serializable[]>) checkpoint;
-            isRestarted = true;
-        }
+        logger.infof( "open reader for entityName=%s", entityName );
+        checkpointId = checkpoint;
+        session = indexingContext.getEntityManager().unwrap( Session.class );
+
+        entityClazz = ( (BatchContextData) jobContext.getTransientUserData() ).getIndexedType( entityName );
+
+//        // Idea 1
+//        // I can't use the below line because I don't have the "instance" :
+//        em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(instance);
+
+//        // Idea 2
+//        // I've tried the below line too
+//        // But I can't use it because sessionFactory is null
+//        ClassMetadata m = sessionFactory.getClassMetadata( entityType );
+        
+        scrollableResults = session
+                .createCriteria( entityClazz )
+//              .add( Restrictions.gt( m.getIdentifierPropertyName(), checkpointId ))
+                .setReadOnly( true )
+                .setCacheable( true )
+                .setFetchSize( 1 )
+                .setMaxResults( maxResults )
+                .scroll( ScrollMode.FORWARD_ONLY );
+        
+//        while ( scrollableResults.next() ) {
+//            logger.info(entityClazz.cast(scrollableResults.get(0)));
+//        }
     }
 
     /**
-     * Read item from the {@code IndexingContext}. Here, item means an array of
-     * IDs previously produced by the {@code IdProducerBatchlet}.
-     *
-     * If this is a restart job, then the temporary IDs restored from checkpoint
-     * will be read at first.
+     * Read item from database using JPA. Each read, there will be only one
+     * entity fetched.
      *
      * @throws Exception thrown for any errors.
      */
     @Override
     public Object readItem() throws Exception {
-        Serializable[] IDs = null;
-        if (isRestarted && !hasReadTempIDs && !tempIDs.isEmpty()) {
-            IDs = tempIDs.poll();
-            hasReadTempIDs = tempIDs.isEmpty();
+        logger.info( "Reading item ..." );
+        Object entity = null;
+        if ( scrollableResults.next() ) {
+            entity = scrollableResults.get(0);
+            checkpointId = (Serializable) em.getEntityManagerFactory()
+                .getPersistenceUnitUtil()
+                .getIdentifier( entity );
         } else {
-            IDs = indexingContext.poll( ( (EntityIndexingStepData) stepContext.getTransientUserData() ).getEntityClass() );
-            tempIDs.add(IDs);
+            logger.info( "no more result. read ends.");
         }
-        return IDs;
+        return entity;
     }
 }

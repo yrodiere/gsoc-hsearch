@@ -1,8 +1,6 @@
 package org.hibernate.search.jsr352.internal;
 
-import java.util.LinkedList;
 import java.util.Properties;
-import java.util.Queue;
 import java.util.Set;
 
 import javax.batch.api.BatchProperty;
@@ -55,30 +53,7 @@ public class LucenePartitionMapper implements PartitionMapper {
     public PartitionPlan mapPartitions() throws Exception {
 
         Set<Class<?>> rootEntities = ( ( BatchContextData )jobContext.getTransientUserData() ).getEntityTypesToIndex();
-        Queue<String> classQueue = new LinkedList<>();
-
-        int totalPartitions = 0;
-        for (Class<?> rootEntity: rootEntities) {
-
-            int _queueSize = indexingContext.sizeOf(rootEntity);
-            int _partitions = (int) Math.ceil((double) _queueSize / partitionCapacity);
-
-            logger.infof("rootEntity=%s", rootEntity.toString());
-            logger.infof("_queueSize=%d", _queueSize);
-            logger.infof("partitionCapacity=%d", partitionCapacity);
-            logger.infof("_partitions=%d", _partitions);
-
-            // enqueue entity type into classQueue, as much as the number of
-            // the class partitions
-            for (int i = 0; i < _partitions; i++) {
-                classQueue.add(rootEntity.getName());
-            }
-            logger.infof("%d partitions added to root entity \"%s\".",
-                    _partitions, rootEntity);
-
-            totalPartitions += _partitions;
-        }
-        final int TOTAL_PARTITIONS = totalPartitions;
+        final int TOTAL_PARTITIONS = rootEntities.size();
 
         return new PartitionPlanImpl() {
 
@@ -97,8 +72,9 @@ public class LucenePartitionMapper implements PartitionMapper {
             @Override
             public Properties[] getPartitionProperties() {
                 Properties[] props = new Properties[TOTAL_PARTITIONS];
+                Class<?>[] rootEntityArray = rootEntities.toArray(new Class<?>[rootEntities.size()]);
                 for (int i = 0; i < props.length; i++) {
-                    String entityType = classQueue.poll();
+                    String entityType = rootEntityArray[i].getName();
                     props[i] = new Properties();
                     props[i].setProperty("entityType", entityType);
                 }

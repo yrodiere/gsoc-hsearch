@@ -105,24 +105,23 @@ public class BatchItemWriter implements ItemWriter {
      * @throw Exception is thrown for any errors.
      */
     @Override
-    @SuppressWarnings("unchecked")
     public void writeItems(List<Object> items) throws Exception {
+
         // TODO: is the sharding strategy used suitable for the situation ?
         IndexShardingStrategy shardingStrategy =
                 ( (EntityIndexingStepData) stepContext.getTransientUserData() ).getShardingStrategy();
 
         for (Object item : items) {
-            for(AddLuceneWork addWork : (LinkedList<AddLuceneWork>) item) {
-                StreamingOperationExecutor executor = addWork.acceptIndexWorkVisitor(
-                        StreamingOperationExecutorSelector.INSTANCE, null);
-                executor.performStreamOperation(
-                        addWork,
-                        shardingStrategy,
-//                      monitor,
-                        null,
-                        forceAsync
-                );
-            }
+            AddLuceneWork addWork = (AddLuceneWork) item;
+            StreamingOperationExecutor executor = addWork.acceptIndexWorkVisitor(
+                    StreamingOperationExecutorSelector.INSTANCE, null);
+            executor.performStreamOperation(
+                    addWork,
+                    shardingStrategy,
+//                  monitor,
+                    null,
+                    forceAsync
+            );
         }
 
         // flush after write operation

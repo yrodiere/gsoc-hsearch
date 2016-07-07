@@ -67,11 +67,15 @@ public class BatchItemProcessor implements ItemProcessor {
     private Session session;
     private ExtendedSearchIntegrator searchIntegrator;
     private EntityIndexBinding entityIndexBinding;
-
-    @Inject private IndexingContext indexingContext;
-    @Inject private StepContext stepContext;
+    private StepContext stepContext;
 
     private static final Logger logger = Logger.getLogger(BatchItemProcessor.class);
+
+    @Inject
+    public BatchItemProcessor(StepContext stepContext, IndexingContext indexingContext) {
+        this.stepContext = stepContext;
+        this.em = indexingContext.getEntityManager();
+    }
 
     /**
      * Process an input item into an output item. Here, the input item is an
@@ -86,29 +90,11 @@ public class BatchItemProcessor implements ItemProcessor {
     @Override
     public Object processItem(Object item) throws Exception {
 
-        if (em == null) {
-            em = indexingContext.getEntityManager();
-        }
-
         Class<?> entityClazz = ( (EntityIndexingStepData) stepContext.getTransientUserData() ).getEntityClass();
         logger.debugf( "processItem(Object) called. entityType=%s", entityClazz );
-
-        // TODO: should keep item as "Serializable[]" and not cast to "int[]"
-        int[] ids = toIntArray((Serializable[]) item);
-        List<?> entities = null;
-        List<AddLuceneWork> addWorks = null;
-
-        CriteriaQuery<?> q = buildCriteriaQuery(entityClazz, ids);
-        entities = em.createQuery(q)
-                // don't insert into cache.
-                .setHint("javax.persistence.cache.storeMode", "BYPASS")
-                // get data directly from the database.
-                .setHint("javax.persistence.cache.retrieveMode", "BYPASS")
-                .getResultList();
-        addWorks = buildAddLuceneWorks(entities, entityClazz);
-        updateWorksCount(addWorks.size());
-
-        return addWorks;
+        AddLuceneWork addWork = buildAddLuceneWork( item, entityClazz );
+        updateWorksCount(1);
+        return addWork;
     }
 
     /**
@@ -123,18 +109,16 @@ public class BatchItemProcessor implements ItemProcessor {
     }
 
     /**
-     * Build addLuceneWorks using entities. This method is inspired by the
+     * Build addLuceneWork using input entity. This method is inspired by the
      * current mass indexer implementation.
      *
-     * @param entities selected entities, obtained from JPA entity manager.
-     *          They'll be used to build Lucene works.
-     * @param entityClazz the class type of selected entities
-     * @return a list of addLuceneWorks
+     * @param entity selected entity, obtained from JPA entity manager. It is
+     *          used to build Lucene work.
+     * @param entityClazz the class type of selected entity
+     * @return an addLuceneWork
      */
-    private List<AddLuceneWork> buildAddLuceneWorks(List<?> entities,
-            Class<?> entityClazz) {
+    private AddLuceneWork buildAddLuceneWork(Object entity, Class<?> entityClazz) {
 
-        List<AddLuceneWork> addWorks = new LinkedList<>();
         // TODO: tenant ID should not be null
         // Or may it be fine to be null? Gunnar's integration test in Hibernate
         // Search: MassIndexingTimeoutIT does not mention the tenant ID neither
@@ -153,69 +137,28 @@ public class BatchItemProcessor implements ItemProcessor {
                 (SessionImplementor) session
         );
 
-        for (Object entity: entities) {
-            Serializable id = session.getIdentifier(entity);
-            TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
-            conversionContext.pushProperty(docBuilder.getIdKeywordName());
-            String idInString = null;
-            try {
-                idInString = conversionContext
-                        .setClass(entityClazz)
-                        .twoWayConversionContext(idBridge)
-                        .objectToString(id);
-                logger.infof("idInString=%s", idInString);
-            } finally {
-                conversionContext.popProperty();
-            }
-            AddLuceneWork addWork = docBuilder.createAddWork(
-                    tenantId,
-                    entity.getClass(),
-                    entity,
-                    id,
-                    idInString,
-                    sessionInitializer,
-                    conversionContext
-            );
-            addWorks.add(addWork);
+        Serializable id = session.getIdentifier(entity);
+        TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
+        conversionContext.pushProperty(docBuilder.getIdKeywordName());
+        String idInString = null;
+        try {
+            idInString = conversionContext
+                    .setClass(entityClazz)
+                    .twoWayConversionContext(idBridge)
+                    .objectToString(id);
+            logger.infof("idInString=%s", idInString);
+        } finally {
+            conversionContext.popProperty();
         }
-
-        return addWorks;
-    }
-
-    /**
-     * Build criteria query using JPA criteria builder.
-     *
-     * TODO: the type of entry array ids should be generic.
-     *
-     * @param clazz the target class
-     * @param ids the identifiers, of which the correspondent entities should be
-     *          selected.
-     * @return the criteria query built
-     */
-    private <T> CriteriaQuery<T> buildCriteriaQuery(Class<T> clazz, int[] ids) {
-        CriteriaQuery<T> q = em.getCriteriaBuilder().createQuery(clazz);
-        Root<T> root = q.from(clazz);
-        // TODO: get attribute id in generic type
-        Path<Integer> attrId = root.get("id");
-        In<Integer> inIds = em.getCriteriaBuilder().in(attrId);
-        for (int id : ids) {
-            inIds.value(id);
-        }
-        q.where(inIds);
-        return q;
-    }
-
-    /**
-     * Cast the serializable array into primitive integer array.
-     *
-     * @param s serializable array
-     * @return the primitive integer array
-     */
-    private int[] toIntArray(Serializable[] s){
-        int[] array = new int[s.length];
-        for(int i = 0; i < s.length; i++) {
-            array[i] = (int) s[i];
-        }
-        return array;
+        AddLuceneWork addWork = docBuilder.createAddWork(
+                tenantId,
+                entityClazz,
+                entity,
+                id,
+                idInString,
+                sessionInitializer,
+                conversionContext
+        );
+        return addWork;
     }
 }
