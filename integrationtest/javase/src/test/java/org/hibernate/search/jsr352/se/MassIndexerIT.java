@@ -29,7 +29,6 @@ import org.junit.Test;
 public class MassIndexerIT {
 
     private EntityManagerFactory emf;
-    private EntityManager em;
 
     private JobOperator jobOperator;
 
@@ -61,13 +60,14 @@ public class MassIndexerIT {
 
         jobOperator = JobFactory.getJobOperator();
         emf = Persistence.createEntityManagerFactory("h2");
-        em = emf.createEntityManager();
 
+        EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         em.persist(COMPANY_1);
         em.persist(COMPANY_2);
         em.persist(COMPANY_3);
         em.getTransaction().commit();
+        em.close();
     }
 
     @Test
@@ -90,6 +90,7 @@ public class MassIndexerIT {
     }
 
     private List<Company> findCompanyByName(String name) {
+        EntityManager em = emf.createEntityManager();
         FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
         Query luceneQuery = ftem.getSearchFactory().buildQueryBuilder()
                 .forEntity(Company.class).get()
@@ -97,6 +98,7 @@ public class MassIndexerIT {
                 .createQuery();
         @SuppressWarnings("unchecked")
         List<Company> result = ftem.createFullTextQuery(luceneQuery).getResultList();
+        em.close();
         return result;
     }
 
@@ -104,7 +106,7 @@ public class MassIndexerIT {
         // org.hibernate.search.jsr352.MassIndexer
         MassIndexer massIndexer = new MassIndexerImpl()
                 .addRootEntities(Company.class)
-                .entityManager(em)
+                .entityManager(emf.createEntityManager())
                 .jobOperator(jobOperator);
         long executionId = massIndexer.start();
 
@@ -218,7 +220,6 @@ public class MassIndexerIT {
 
     @After
     public void shutdownJPA() {
-        em.close();
         emf.close();
     }
 }

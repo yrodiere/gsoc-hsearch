@@ -30,12 +30,10 @@ import org.junit.Test;
 public class RestartChunkIT {
     
     private EntityManagerFactory emf;
-    private EntityManager em;
     
     // mass indexer configuration values
     private JobOperator jobOperator;
     private final int ARRAY_CAPACITY = 1;
-    // TODO: failed for 1000, only 997 read
     private final long DB_COMP_ROWS = 100;
     private static final int JOB_MAX_TRIES = 30;       // 1s * 30 = 30s
     private static final int JOB_THREAD_SLEEP = 1000;  // 1s
@@ -47,8 +45,8 @@ public class RestartChunkIT {
         
         jobOperator = JobFactory.getJobOperator();
         emf = Persistence.createEntityManagerFactory("h2");
-        em = emf.createEntityManager();
         
+        EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         for (int i = 0; i < DB_COMP_ROWS; i++) {
             Company c;
@@ -63,6 +61,7 @@ public class RestartChunkIT {
             em.persist(c);
         }
         em.getTransaction().commit();
+        em.close();
     }
     
     @Test
@@ -108,12 +107,12 @@ public class RestartChunkIT {
         
         // search again
         companies = findCompanyByName("google");
-//      issue #78 - Cannot find indexed results after mass index
-//      assertEquals(1, companies.size());
+        assertEquals(20, companies.size());
         logger.infof("%d rows found", companies.size());
     }
     
     private List<Company> findCompanyByName(String name) {
+        EntityManager em = emf.createEntityManager();
         FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
         Query luceneQuery = ftem.getSearchFactory().buildQueryBuilder()
                 .forEntity(Company.class).get()
@@ -121,6 +120,7 @@ public class RestartChunkIT {
                 .createQuery();
         @SuppressWarnings("unchecked")
         List<Company> result = ftem.createFullTextQuery(luceneQuery).getResultList();
+        em.close();
         return result;
     }
 
@@ -129,7 +129,7 @@ public class RestartChunkIT {
         MassIndexer massIndexer = new MassIndexerImpl()
                 .addRootEntities(Company.class)
                 .arrayCapacity(ARRAY_CAPACITY)
-                .entityManager(em)
+                .entityManager(emf.createEntityManager())
                 .jobOperator(jobOperator);
         long executionId = massIndexer.start();
         
@@ -256,7 +256,6 @@ public class RestartChunkIT {
     
     @After
     public void shutdownJPA() {
-        em.close();
         emf.close();
     }
 }
