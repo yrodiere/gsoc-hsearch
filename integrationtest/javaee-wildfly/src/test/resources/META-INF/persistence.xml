@@ -9,6 +9,7 @@
       <property name="hibernate.show_sql" value="false" />
       <property name="hibernate.format_sql" value="false" />
       <property name="hibernate.hbm2ddl.auto" value="create-drop" />
+      <property name="hibernate.connection.release_mode" value="on_close" />
       <property name="hibernate.search.default.directory_provider" value="ram" />
       <property name="hibernate.search.indexing_strategy" value="manual" />
       <property name="hibernate.search.lucene_version" value="LUCENE_CURRENT" />

@@ -12,6 +12,7 @@ import javax.persistence.EntityManager;
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
+import org.hibernate.StatelessSession;
 import org.jboss.logging.Logger;
 
 /**
@@ -47,7 +48,8 @@ public class BatchItemReader implements ItemReader {
 
     private EntityManager em;
     private Session session;
-    private ScrollableResults scrollableResults;
+    private StatelessSession ss;
+    private ScrollableResults scroll;
 
 	@Inject
 	public BatchItemReader(JobContext jobContext, IndexingContext indexingContext) {
@@ -77,10 +79,25 @@ public class BatchItemReader implements ItemReader {
      */
     @Override
     public void close() throws Exception {
-        logger.info( "closing ..." );
-        scrollableResults.close();
-        logger.info( "scrollable results closed.");
-        // TODO: close everything: emf, em, ss ...
+        logger.info( "closing everything..." );
+        try {
+            scroll.close();
+            logger.info( "Scrollable results closed." );
+        } catch (Exception e) {
+            logger.error(e);
+        }
+        try {
+            ss.close();
+            logger.info( "Stateless session closed." );
+        } catch (Exception e) {
+            logger.error(e);
+        }
+        try {
+            session.close();
+            logger.info( "Session closed" );
+        } catch (Exception e) {
+            logger.error(e);
+        }
     }
 
     /**
@@ -98,6 +115,7 @@ public class BatchItemReader implements ItemReader {
         logger.infof( "open reader for entityName=%s", entityName );
         checkpointId = checkpoint;
         session = indexingContext.getEntityManager().unwrap( Session.class );
+        ss = session.getSessionFactory().openStatelessSession();
 
         entityClazz = ( (BatchContextData) jobContext.getTransientUserData() ).getIndexedType( entityName );
 
@@ -110,8 +128,7 @@ public class BatchItemReader implements ItemReader {
 //        // But I can't use it because sessionFactory is null
 //        ClassMetadata m = sessionFactory.getClassMetadata( entityType );
         
-        scrollableResults = session
-                .createCriteria( entityClazz )
+        scroll = ss.createCriteria( entityClazz )
 //              .add( Restrictions.gt( m.getIdentifierPropertyName(), checkpointId ))
                 .setReadOnly( true )
                 .setCacheable( true )
@@ -134,8 +151,8 @@ public class BatchItemReader implements ItemReader {
     public Object readItem() throws Exception {
         logger.info( "Reading item ..." );
         Object entity = null;
-        if ( scrollableResults.next() ) {
-            entity = scrollableResults.get(0);
+        if ( scroll.next() ) {
+            entity = scroll.get(0);
             checkpointId = (Serializable) em.getEntityManagerFactory()
                 .getPersistenceUnitUtil()
                 .getIdentifier( entity );
