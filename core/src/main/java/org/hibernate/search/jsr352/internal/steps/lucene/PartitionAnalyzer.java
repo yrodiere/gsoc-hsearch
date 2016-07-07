@@ -1,17 +1,17 @@
-package org.hibernate.search.jsr352.internal;
+package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
 
 import javax.batch.api.BatchProperty;
-import javax.batch.api.partition.PartitionAnalyzer;
 import javax.batch.runtime.BatchStatus;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.jboss.logging.Logger;
 
 @Named
-public class LucenePartitionAnalyzer implements PartitionAnalyzer {
+public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAnalyzer {
 
     @Inject
     private IndexingContext indexingContext;
@@ -22,7 +22,7 @@ public class LucenePartitionAnalyzer implements PartitionAnalyzer {
     private int workCount = 0;
     private float percentage = 0;
     
-    private static final Logger logger = Logger.getLogger(LucenePartitionAnalyzer.class);
+    private static final Logger logger = Logger.getLogger(PartitionAnalyzer.class);
     
     /**
      * Analyze data obtained from different partition plans via partition data

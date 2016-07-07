@@ -1,16 +1,17 @@
-package org.hibernate.search.jsr352.internal;
+package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.util.Properties;
 import java.util.Set;
 
 import javax.batch.api.BatchProperty;
-import javax.batch.api.partition.PartitionMapper;
 import javax.batch.api.partition.PartitionPlan;
 import javax.batch.api.partition.PartitionPlanImpl;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.hibernate.search.jsr352.internal.BatchContextData;
+import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.jboss.logging.Logger;
 
 /**
@@ -33,9 +34,9 @@ import org.jboss.logging.Logger;
  * @author Mincong HUANG
  */
 @Named
-public class LucenePartitionMapper implements PartitionMapper {
+public class PartitionMapper implements javax.batch.api.partition.PartitionMapper {
 
-	private static final Logger logger = Logger.getLogger(LucenePartitionMapper.class);
+	private static final Logger logger = Logger.getLogger(PartitionMapper.class);
 
 	private final JobContext jobContext;
     private final IndexingContext indexingContext;
@@ -44,7 +45,7 @@ public class LucenePartitionMapper implements PartitionMapper {
     @Inject @BatchProperty private int threads;
 
     @Inject
-    public LucenePartitionMapper(JobContext jobContext, IndexingContext indexingContext) {
+    public PartitionMapper(JobContext jobContext, IndexingContext indexingContext) {
 		this.jobContext = jobContext;
 		this.indexingContext = indexingContext;
 	}

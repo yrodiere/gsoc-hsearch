@@ -1,9 +1,8 @@
-package org.hibernate.search.jsr352.internal;
+package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
 
 import javax.batch.api.BatchProperty;
-import javax.batch.api.chunk.ItemReader;
 import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
@@ -24,6 +23,9 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
+import org.hibernate.search.jsr352.internal.BatchContextData;
+import org.hibernate.search.jsr352.internal.EntityIndexingStepData;
+import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
 
@@ -45,9 +47,9 @@ import org.jboss.logging.Logger;
  * @author Mincong HUANG
  */
 @Named
-public class BatchItemReader implements ItemReader {
+public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
-    private static final Logger logger = Logger.getLogger(BatchItemReader.class);
+    private static final Logger logger = Logger.getLogger(ItemReader.class);
 
     @Inject @BatchProperty(name="entityType")
     private String entityName;
@@ -67,7 +69,7 @@ public class BatchItemReader implements ItemReader {
     private EntityIndexBinding entityIndexBinding;
 
 	@Inject
-	public BatchItemReader(JobContext jobContext, StepContext stepContext,
+	public ItemReader(JobContext jobContext, StepContext stepContext,
 	        IndexingContext indexingContext) {
 	    this.jobContext = jobContext;
 	    this.stepContext = stepContext;

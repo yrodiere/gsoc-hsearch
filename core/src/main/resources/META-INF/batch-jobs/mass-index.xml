@@ -12,10 +12,7 @@
         </listener>
     </listeners>
 
-  <step id="produceLuceneDoc" next="afterIndexDecision">
-    <properties>
-      <property name="javax.transaction.global.timeout" value="300"/>
-    </properties>
+  <step id="produceLuceneDoc">
     <listeners>
       <listener ref="entityIndexingStepContextSetupListener">
         <properties>
@@ -24,44 +21,32 @@
       </listener>
     </listeners>
     <chunk item-count="3">
-      <reader ref="batchItemReader">
+      <reader ref="itemReader">
         <properties>
           <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;"/>
           <property name="entityType" value="#{partitionPlan['entityType']}"/>
         </properties>
       </reader>
-      <processor ref="batchItemProcessor"/>
-      <writer ref="batchItemWriter">
+      <processor ref="itemProcessor"/>
+      <writer ref="itemWriter">
         <properties>
           <property name="entityType" value="#{partitionPlan['entityType']}"/>
         </properties>
       </writer>
     </chunk>
     <partition>
-      <mapper ref="lucenePartitionMapper">
+      <mapper ref="partitionMapper">
         <properties>
           <property name="threads" value="#{jobParameters['threads']}?:2;"/>
         </properties>
       </mapper>
-      <collector ref="lucenePartitionCollector"/>
-      <analyzer ref="lucenePartitionAnalyzer">
+      <collector ref="partitionCollector"/>
+      <analyzer ref="partitionAnalyzer">
         <properties>
           <property name="maxResults" value="#{jobParameters['maxResults']}?:2147483647;"/>
         </properties>
       </analyzer>
-      <reducer ref="lucenePartitionReducer"/>
+      <reducer ref="partitionReducer"/>
     </partition>
-  </step>
-
-  <decision id="afterIndexDecision" ref="afterIndexDecider">
-    <properties>
-      <property name="optimizeAtEnd" value="#{jobParameters['optimizeAtEnd']}?:false;"/>
-    </properties>
-    <next on="true" to="optimizeAfterIndex"/>
-    <end on="false" exit-status=""/><!-- TODO: add exit-status -->
-  </decision>
-
-  <step id="optimizeAfterIndex">
-    <batchlet ref="optimizerBatchlet"/>
   </step>
 </job>

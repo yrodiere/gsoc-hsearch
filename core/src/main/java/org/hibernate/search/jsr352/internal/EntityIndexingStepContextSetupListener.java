@@ -21,7 +21,7 @@ import org.jboss.logging.Logger;
 @Named
 public class EntityIndexingStepContextSetupListener extends AbstractItemReadListener {
 
-	private static final Logger LOGGER = Logger.getLogger( BatchItemReader.class );
+	private static final Logger LOGGER = Logger.getLogger( EntityIndexingStepContextSetupListener.class );
 
 	private final JobContext jobContext;
 	private final IndexingContext indexingContext;

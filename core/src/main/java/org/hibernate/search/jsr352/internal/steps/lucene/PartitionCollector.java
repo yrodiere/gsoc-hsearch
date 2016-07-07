@@ -1,14 +1,15 @@
-package org.hibernate.search.jsr352.internal;
+package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
 
-import javax.batch.api.partition.PartitionCollector;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.hibernate.search.jsr352.internal.EntityIndexingStepData;
+
 @Named
-public class LucenePartitionCollector implements PartitionCollector {
+public class PartitionCollector implements javax.batch.api.partition.PartitionCollector {
 
     @Inject
     private StepContext stepContext;

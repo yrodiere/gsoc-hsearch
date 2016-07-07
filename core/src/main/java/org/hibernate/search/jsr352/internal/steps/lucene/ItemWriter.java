@@ -1,11 +1,9 @@
-package org.hibernate.search.jsr352.internal;
+package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.batch.api.BatchProperty;
-import javax.batch.api.chunk.ItemWriter;
 import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
@@ -20,6 +18,9 @@ import org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.jpa.Search;
+import org.hibernate.search.jsr352.internal.BatchContextData;
+import org.hibernate.search.jsr352.internal.EntityIndexingStepData;
+import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.IndexShardingStrategy;
 import org.jboss.logging.Logger;
@@ -39,7 +40,7 @@ import org.jboss.logging.Logger;
  * @author Mincong HUANG
  */
 @Named
-public class BatchItemWriter implements ItemWriter {
+public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 
     private final Boolean forceAsync = true;
 
@@ -54,14 +55,14 @@ public class BatchItemWriter implements ItemWriter {
     private String entityType;
 
     @Inject
-    public BatchItemWriter (JobContext jobContext, StepContext stepContext,
+    public ItemWriter (JobContext jobContext, StepContext stepContext,
             IndexingContext indexingContext) {
         this.jobContext = jobContext;
         this.stepContext = stepContext;
         this.indexingContext = indexingContext;
     }
 
-    private static final Logger logger = Logger.getLogger(BatchItemWriter.class);
+    private static final Logger logger = Logger.getLogger(ItemWriter.class);
 
     /**
      * The checkpointInfo method returns the current checkpoint data for this
