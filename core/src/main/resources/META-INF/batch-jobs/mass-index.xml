@@ -1,52 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<job id="massIndex" xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd"
-    version="1.0">
+<job id="massIndex" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd" version="1.0">
 
     <listeners>
         <listener ref="batchJobContextSetupListener">
             <properties>
-                <property name="rootEntities" value="#{jobParameters['rootEntities']}"/>
+                <property name="rootEntities" value="#{jobParameters['rootEntities']}" />
             </properties>
         </listener>
     </listeners>
 
-  <step id="produceLuceneDoc">
-    <listeners>
-      <listener ref="entityIndexingStepContextSetupListener">
-        <properties>
-          <property name="entityType" value="#{partitionPlan['entityType']}"/>
-        </properties>
-      </listener>
-    </listeners>
-    <chunk item-count="3">
-      <reader ref="itemReader">
-        <properties>
-          <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;"/>
-          <property name="entityType" value="#{partitionPlan['entityType']}"/>
-        </properties>
-      </reader>
-      <processor ref="itemProcessor"/>
-      <writer ref="itemWriter">
-        <properties>
-          <property name="entityType" value="#{partitionPlan['entityType']}"/>
-        </properties>
-      </writer>
-    </chunk>
-    <partition>
-      <mapper ref="partitionMapper">
-        <properties>
-          <property name="threads" value="#{jobParameters['threads']}?:2;"/>
-        </properties>
-      </mapper>
-      <collector ref="partitionCollector"/>
-      <analyzer ref="partitionAnalyzer">
-        <properties>
-          <property name="maxResults" value="#{jobParameters['maxResults']}?:2147483647;"/>
-        </properties>
-      </analyzer>
-      <reducer ref="partitionReducer"/>
-    </partition>
-  </step>
+    <step id="produceLuceneDoc">
+        <listeners>
+            <listener ref="entityIndexingStepContextSetupListener">
+                <properties>
+                    <property name="entityType" value="#{partitionPlan['entityType']}" />
+                </properties>
+            </listener>
+        </listeners>
+        <chunk item-count="3">
+            <reader ref="itemReader">
+                <properties>
+                    <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
+                    <property name="entityType" value="#{partitionPlan['entityType']}" />
+                </properties>
+            </reader>
+            <processor ref="itemProcessor" />
+            <writer ref="itemWriter">
+                <properties>
+                    <property name="entityType" value="#{partitionPlan['entityType']}" />
+                </properties>
+            </writer>
+        </chunk>
+        <partition>
+            <mapper ref="partitionMapper">
+                <properties>
+                    <property name="threads" value="#{jobParameters['threads']}?:2;" />
+                </properties>
+            </mapper>
+            <collector ref="partitionCollector" />
+            <analyzer ref="partitionAnalyzer">
+                <properties>
+                    <property name="maxResults" value="#{jobParameters['maxResults']}?:2147483647;" />
+                </properties>
+            </analyzer>
+            <reducer ref="partitionReducer" />
+        </partition>
+    </step>
 </job>

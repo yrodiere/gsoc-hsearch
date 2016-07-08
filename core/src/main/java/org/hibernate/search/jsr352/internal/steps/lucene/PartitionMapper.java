@@ -25,7 +25,6 @@ import org.jboss.logging.Logger;
  * number of id arrays that will be treated in this partition. So the number of
  * partition is computed by the equation: <br>
  * {@code nbPartition = nbArray / partitionCapacity;}
- *
  * <li><b>threads</b> defines the number of threads wished by the user. Default
  * value is defined in the job xml file. However, the valued used might be
  * smaller, depending on the number of partitions.
@@ -36,51 +35,58 @@ import org.jboss.logging.Logger;
 @Named
 public class PartitionMapper implements javax.batch.api.partition.PartitionMapper {
 
-	private static final Logger logger = Logger.getLogger(PartitionMapper.class);
+	private static final Logger logger = Logger.getLogger( PartitionMapper.class );
 
 	private final JobContext jobContext;
-    private final IndexingContext indexingContext;
+	private final IndexingContext indexingContext;
 
-    @Inject @BatchProperty private int partitionCapacity;
-    @Inject @BatchProperty private int threads;
+	@Inject
+	@BatchProperty
+	private int partitionCapacity;
+	@Inject
+	@BatchProperty
+	private int threads;
 
-    @Inject
-    public PartitionMapper(JobContext jobContext, IndexingContext indexingContext) {
+	@Inject
+	public PartitionMapper(JobContext jobContext, IndexingContext indexingContext) {
 		this.jobContext = jobContext;
 		this.indexingContext = indexingContext;
 	}
 
 	@Override
-    public PartitionPlan mapPartitions() throws Exception {
+	public PartitionPlan mapPartitions() throws Exception {
 
-        Set<Class<?>> rootEntities = ( ( BatchContextData )jobContext.getTransientUserData() ).getEntityTypesToIndex();
-        final int TOTAL_PARTITIONS = rootEntities.size();
+		Set<Class<?>> rootEntities = ( (BatchContextData) jobContext.getTransientUserData() )
+				.getEntityTypesToIndex();
+		final int TOTAL_PARTITIONS = rootEntities.size();
 
-        return new PartitionPlanImpl() {
+		return new PartitionPlanImpl() {
 
-            @Override
-            public int getPartitions() {
-                logger.infof("#mapPartitions(): %d partitions.", TOTAL_PARTITIONS);
-                return TOTAL_PARTITIONS;
-            }
+			@Override
+			public int getPartitions() {
+				logger.infof( "#mapPartitions(): %d partitions.", TOTAL_PARTITIONS );
+				return TOTAL_PARTITIONS;
+			}
 
-            @Override
-            public int getThreads() {
-                logger.infof("#getThreads(): %d threads.", TOTAL_PARTITIONS);//Math.min(TOTAL_PARTITIONS, threads));
-                return Math.min(TOTAL_PARTITIONS, threads);
-            }
+			@Override
+			public int getThreads() {
+				logger.infof( "#getThreads(): %d threads.", TOTAL_PARTITIONS );// Math.min(TOTAL_PARTITIONS,
+																				// threads));
+				return Math.min( TOTAL_PARTITIONS, threads );
+			}
 
-            @Override
-            public Properties[] getPartitionProperties() {
-                Properties[] props = new Properties[TOTAL_PARTITIONS];
-                Class<?>[] rootEntityArray = rootEntities.toArray(new Class<?>[rootEntities.size()]);
-                for (int i = 0; i < props.length; i++) {
-                    String entityType = rootEntityArray[i].getName();
-                    props[i] = new Properties();
-                    props[i].setProperty("entityType", entityType);
-                }
-                return props;
-            }
-        };
-    }
+			@Override
+			public Properties[] getPartitionProperties() {
+				Properties[] props = new Properties[TOTAL_PARTITIONS];
+				Class<?>[] rootEntityArray = rootEntities
+						.toArray( new Class<?>[rootEntities.size()] );
+				for ( int i = 0; i < props.length; i++ ) {
+					String entityType = rootEntityArray[i].getName();
+					props[i] = new Properties();
+					props[i].setProperty( "entityType", entityType );
+				}
+				return props;
+			}
+		};
+	}
 }

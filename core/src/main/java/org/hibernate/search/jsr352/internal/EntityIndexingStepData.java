@@ -28,7 +28,7 @@ public class EntityIndexingStepData {
 	}
 
 	public void incrementProcessedWorkCount(int increment) {
-		processedWorkCount+= increment;
+		processedWorkCount += increment;
 	}
 
 	public int getProcessedWorkCount() {

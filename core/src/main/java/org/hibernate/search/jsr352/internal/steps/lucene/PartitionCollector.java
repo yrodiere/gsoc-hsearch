@@ -11,26 +11,27 @@ import org.hibernate.search.jsr352.internal.EntityIndexingStepData;
 @Named
 public class PartitionCollector implements javax.batch.api.partition.PartitionCollector {
 
-    @Inject
-    private StepContext stepContext;
+	@Inject
+	private StepContext stepContext;
 
-    /**
-     * The collectPartitionData method receives control periodically during
-     * partition processing. This method receives control on each thread
-     * processing a partition as IdProducerBatchlet, once at the end of the
-     * process.
-     */
-    @Override
-    public Serializable collectPartitionData() throws Exception {
+	/**
+	 * The collectPartitionData method receives control periodically during
+	 * partition processing. This method receives control on each thread
+	 * processing a partition as IdProducerBatchlet, once at the end of the
+	 * process.
+	 */
+	@Override
+	public Serializable collectPartitionData() throws Exception {
 
-        // get transient user data
-        EntityIndexingStepData userData = (EntityIndexingStepData) stepContext.getTransientUserData();
+		// get transient user data
+		EntityIndexingStepData userData = (EntityIndexingStepData) stepContext
+				.getTransientUserData();
 
-        // TODO Is this really required?
-        // once data collected, reset the counter
-        // to zero in transient user data
-//        stepContext.setTransientUserData(0);
+		// TODO Is this really required?
+		// once data collected, reset the counter
+		// to zero in transient user data
+		// stepContext.setTransientUserData(0);
 
-        return userData.getProcessedWorkCount();
-    }
+		return userData.getProcessedWorkCount();
+	}
 }

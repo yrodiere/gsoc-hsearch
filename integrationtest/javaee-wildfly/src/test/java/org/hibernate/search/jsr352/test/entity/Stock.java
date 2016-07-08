@@ -4,22 +4,23 @@ import java.io.Serializable;
 import javax.persistence.*;
 import java.util.Date;
 
-
 /**
  * The persistent class for the stock database table.
- * 
+ *
+ * @author Mincong HUANG
  */
 @Entity
-@NamedQuery(name="Stock.findAll", query="SELECT s FROM Stock s")
-@Table(name="stock")
+@NamedQuery(name = "Stock.findAll", query = "SELECT s FROM Stock s")
+@Table(name = "stock")
 public class Stock implements Serializable {
+
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 
-	@Column(name="adj_close")
+	@Column(name = "adj_close")
 	private float adjClose;
 
 	private float close;
@@ -112,11 +113,11 @@ public class Stock implements Serializable {
 		this.volume = volume;
 	}
 
-    @Override
-    public String toString() {
-        return "Stock [id=" + id + ", adjClose=" + adjClose + ", close=" + close
-                + ", company=" + company + ", date=" + date + ", high=" + high
-                + ", low=" + low + ", open=" + open + ", volume=" + volume
-                + "]";
-    }
+	@Override
+	public String toString() {
+		return "Stock [id=" + id + ", adjClose=" + adjClose + ", close=" + close
+				+ ", company=" + company + ", date=" + date + ", high=" + high
+				+ ", low=" + low + ", open=" + open + ", volume=" + volume
+				+ "]";
+	}
 }

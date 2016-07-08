@@ -32,9 +32,8 @@ import org.jboss.logging.Logger;
  * <p>
  * <ul>
  * <li>{@code indexingContext} is used to store the shardingStrategy
- *
  * <li>{@code monitor} mass indexer progress monitor helps to follow the mass
- *      indexing progress and show it in the console.
+ * indexing progress and show it in the console.
  * </ul>
  *
  * @author Mincong HUANG
@@ -42,99 +41,101 @@ import org.jboss.logging.Logger;
 @Named
 public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 
-    private final Boolean forceAsync = true;
+	private final Boolean forceAsync = true;
 
-    // TODO: The monitor is not used for instance. It should be used later.
-    private MassIndexerProgressMonitor monitor;
+	// TODO: The monitor is not used for instance. It should be used later.
+	private MassIndexerProgressMonitor monitor;
 
-    private JobContext jobContext;
-    private StepContext stepContext;
-    private IndexingContext indexingContext;
+	private JobContext jobContext;
+	private StepContext stepContext;
+	private IndexingContext indexingContext;
 
-    @Inject @BatchProperty
-    private String entityType;
+	@Inject
+	@BatchProperty
+	private String entityType;
 
-    @Inject
-    public ItemWriter (JobContext jobContext, StepContext stepContext,
-            IndexingContext indexingContext) {
-        this.jobContext = jobContext;
-        this.stepContext = stepContext;
-        this.indexingContext = indexingContext;
-    }
+	@Inject
+	public ItemWriter(JobContext jobContext,
+			StepContext stepContext,
+			IndexingContext indexingContext) {
+		this.jobContext = jobContext;
+		this.stepContext = stepContext;
+		this.indexingContext = indexingContext;
+	}
 
-    private static final Logger logger = Logger.getLogger(ItemWriter.class);
+	private static final Logger logger = Logger.getLogger( ItemWriter.class );
 
-    /**
-     * The checkpointInfo method returns the current checkpoint data for this
-     * writer. It is called before a chunk checkpoint is committed.
-     *
-     * @return the checkpoint info
-     * @throws Exception is thrown for any errors.
-     */
-    @Override
-    public Serializable checkpointInfo() throws Exception {
-        logger.info("checkpointInfo called");
-        return null;
-    }
+	/**
+	 * The checkpointInfo method returns the current checkpoint data for this
+	 * writer. It is called before a chunk checkpoint is committed.
+	 *
+	 * @return the checkpoint info
+	 * @throws Exception is thrown for any errors.
+	 */
+	@Override
+	public Serializable checkpointInfo() throws Exception {
+		logger.info( "checkpointInfo called" );
+		return null;
+	}
 
-    /**
-     * The close method marks the end of use of the ItemWriter. The writer
-     * is used to do the cleanup.
-     *
-     * @throws Exception is thrown for any errors.
-     */
-    @Override
-    public void close() throws Exception {
-        logger.info("close() called");
-    }
+	/**
+	 * The close method marks the end of use of the ItemWriter. The writer is
+	 * used to do the cleanup.
+	 *
+	 * @throws Exception is thrown for any errors.
+	 */
+	@Override
+	public void close() throws Exception {
+		logger.info( "close() called" );
+	}
 
-    /**
-     * The open method prepares the writer to write items.
-     *
-     * @param checkpoint the last checkpoint
-     */
-    @Override
-    public void open(Serializable checkpoint) throws Exception {
-        logger.info("open(Seriliazable) called");
-        monitor = new SimpleIndexingProgressMonitor();
-    }
+	/**
+	 * The open method prepares the writer to write items.
+	 *
+	 * @param checkpoint the last checkpoint
+	 */
+	@Override
+	public void open(Serializable checkpoint) throws Exception {
+		logger.info( "open(Seriliazable) called" );
+		monitor = new SimpleIndexingProgressMonitor();
+	}
 
-    /**
-     * Execute {@code LuceneWork}
-     *
-     * @param items a list of items, where each item is a list of Lucene works.
-     * @throw Exception is thrown for any errors.
-     */
-    @Override
-    public void writeItems(List<Object> items) throws Exception {
+	/**
+	 * Execute {@code LuceneWork}
+	 *
+	 * @param items a list of items, where each item is a list of Lucene works.
+	 * @throw Exception is thrown for any errors.
+	 */
+	@Override
+	public void writeItems(List<Object> items) throws Exception {
 
-        // TODO: is the sharding strategy used suitable for the situation ?
-        IndexShardingStrategy shardingStrategy =
-                ( (EntityIndexingStepData) stepContext.getTransientUserData() ).getShardingStrategy();
+		// TODO: is the sharding strategy used suitable for the situation ?
+		IndexShardingStrategy shardingStrategy = ( (EntityIndexingStepData) stepContext
+				.getTransientUserData() ).getShardingStrategy();
 
-        for (Object item : items) {
-            AddLuceneWork addWork = (AddLuceneWork) item;
-            StreamingOperationExecutor executor = addWork.acceptIndexWorkVisitor(
-                    StreamingOperationExecutorSelector.INSTANCE, null);
-            executor.performStreamOperation(
-                    addWork,
-                    shardingStrategy,
-//                  monitor,
-                    null,
-                    forceAsync
-            );
-        }
+		for ( Object item : items ) {
+			AddLuceneWork addWork = (AddLuceneWork) item;
+			StreamingOperationExecutor executor = addWork.acceptIndexWorkVisitor(
+					StreamingOperationExecutorSelector.INSTANCE, null );
+			executor.performStreamOperation(
+					addWork,
+					shardingStrategy,
+					// monitor,
+					null,
+					forceAsync );
+		}
 
-        // flush after write operation
-        Class<?> entityClazz = ( (BatchContextData) jobContext.getTransientUserData() ).getIndexedType( entityType );
-        EntityIndexBinding indexBinding = Search
-                .getFullTextEntityManager( indexingContext.getEntityManager() )
-                .getSearchFactory()
-                .unwrap( SearchIntegrator.class )
-                .getIndexBinding( entityClazz );
-        IndexManager[] indexManagers = indexBinding.getIndexManagers();
-        for (IndexManager im : indexManagers) {
-            im.performStreamOperation( FlushLuceneWork.INSTANCE, null, false );
-        }
-    }
+		// flush after write operation
+		Class<?> entityClazz = ( (BatchContextData) jobContext.getTransientUserData() )
+				.getIndexedType( entityType );
+		EntityIndexBinding indexBinding = Search
+				.getFullTextEntityManager( indexingContext.getEntityManager() )
+				.getSearchFactory()
+				.unwrap( SearchIntegrator.class )
+				.getIndexBinding( entityClazz );
+		IndexManager[] indexManagers = indexBinding.getIndexManagers();
+		for ( IndexManager im : indexManagers ) {
+			im.performStreamOperation( FlushLuceneWork.INSTANCE, null, false );
+		}
+	}
 }

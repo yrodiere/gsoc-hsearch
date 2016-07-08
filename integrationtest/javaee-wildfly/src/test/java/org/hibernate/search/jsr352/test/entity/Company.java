@@ -10,41 +10,45 @@ import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 
+/**
+ *
+ * @author Mincong HUANG
+ */
 @Entity
 @Indexed
 public class Company implements Serializable {
-    
-    private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue
-    @DocumentId
-    private int id;
+	private static final long serialVersionUID = 1L;
 
-    @Field
-    private String name;
-    
-    Company() {
-        
-    }
-    
-    public Company(String name) {
-        this.name = name;
-    }
-    
-    public int getId() {
-        return id;
-    }
-    
-    public void setId(int id) {
-        this.id = id;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    public void setName(String name) {
-        this.name = name;
-    }
+	@Id
+	@GeneratedValue
+	@DocumentId
+	private int id;
+
+	@Field
+	private String name;
+
+	Company() {
+
+	}
+
+	public Company(String name) {
+		this.name = name;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 }

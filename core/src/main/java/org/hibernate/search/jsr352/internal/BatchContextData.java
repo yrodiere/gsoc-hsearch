@@ -6,7 +6,6 @@ import java.util.Set;
  * Container for data shared across the entire batch.
  *
  * @author Gunnar Morling
- *
  */
 public class BatchContextData {
 

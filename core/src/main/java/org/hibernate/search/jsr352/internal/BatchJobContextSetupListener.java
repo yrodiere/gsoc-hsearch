@@ -17,11 +17,13 @@ public class BatchJobContextSetupListener extends AbstractJobListener {
 	private final JobContext jobContext;
 	private final IndexingContext indexingContext;
 
-	@Inject @BatchProperty
+	@Inject
+	@BatchProperty
 	private String rootEntities;
 
 	@Inject
-	public BatchJobContextSetupListener(JobContext jobContext, IndexingContext indexingContext) {
+	public BatchJobContextSetupListener(JobContext jobContext,
+			IndexingContext indexingContext) {
 		this.jobContext = jobContext;
 		this.indexingContext = indexingContext;
 	}
@@ -31,9 +33,10 @@ public class BatchJobContextSetupListener extends AbstractJobListener {
 		Set<Class<?>> entitiesToIndex = new HashSet<>();
 
 		String[] entityTypeNamesToIndex = rootEntities.split( "," );
-		Set<Class<?>> indexedTypes = Search.getFullTextEntityManager( indexingContext.getEntityManager() )
-			.getSearchFactory()
-			.getIndexedTypes();
+		Set<Class<?>> indexedTypes = Search
+				.getFullTextEntityManager( indexingContext.getEntityManager() )
+				.getSearchFactory()
+				.getIndexedTypes();
 
 		for ( String entityType : entityTypeNamesToIndex ) {
 			for ( Class<?> indexedType : indexedTypes ) {
