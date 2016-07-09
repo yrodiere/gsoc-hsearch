@@ -14,6 +14,7 @@ import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.EntityManager;
 
 import org.hibernate.search.backend.AddLuceneWork;
 import org.hibernate.search.backend.FlushLuceneWork;
@@ -52,7 +53,8 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	private MassIndexerProgressMonitor monitor;
 
 	private JobContext jobContext;
-	private IndexingContext indexingContext;
+	private EntityManager em;
+	private EntityIndexBinding entityIndexBinding;
 
 	@Inject
 	@BatchProperty
@@ -61,7 +63,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	@Inject
 	public ItemWriter(JobContext jobContext, IndexingContext indexingContext) {
 		this.jobContext = jobContext;
-		this.indexingContext = indexingContext;
+		this.em = indexingContext.getEntityManager();
 	}
 
 	private static final Logger logger = Logger.getLogger( ItemWriter.class );
@@ -99,6 +101,13 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	public void open(Serializable checkpoint) throws Exception {
 		logger.info( "open(Seriliazable) called" );
 		monitor = new SimpleIndexingProgressMonitor();
+		BatchContextData jobData = (BatchContextData) jobContext.getTransientUserData();
+		Class<?> entityClazz = jobData.getIndexedType( entityName );
+		entityIndexBinding = Search
+				.getFullTextEntityManager( em )
+				.getSearchFactory()
+				.unwrap( SearchIntegrator.class )
+				.getIndexBinding( entityClazz );
 	}
 
 	/**
@@ -109,11 +118,9 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	 */
 	@Override
 	public void writeItems(List<Object> items) throws Exception {
-
-		// TODO: is the sharding strategy used suitable for the situation ?
-		BatchContextData jobData = (BatchContextData) jobContext.getTransientUserData();
-		IndexShardingStrategy shardingStrategy = jobData.getShardingStrategy( entityName );
-
+		IndexShardingStrategy shardingStrategy =
+				entityIndexBinding.getSelectionStrategy();
+		
 		for ( Object item : items ) {
 			AddLuceneWork addWork = (AddLuceneWork) item;
 			StreamingOperationExecutor executor = addWork.acceptIndexWorkVisitor(
@@ -127,13 +134,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 		}
 
 		// flush after write operation
-		Class<?> entityClazz = jobData.getIndexedType( entityName );
-		EntityIndexBinding indexBinding = Search
-				.getFullTextEntityManager( indexingContext.getEntityManager() )
-				.getSearchFactory()
-				.unwrap( SearchIntegrator.class )
-				.getIndexBinding( entityClazz );
-		IndexManager[] indexManagers = indexBinding.getIndexManagers();
+		IndexManager[] indexManagers = entityIndexBinding.getIndexManagers();
 		for ( IndexManager im : indexManagers ) {
 			im.performStreamOperation( FlushLuceneWork.INSTANCE, null, false );
 		}
