@@ -9,7 +9,7 @@
     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd" version="1.0">
 
     <listeners>
-        <listener ref="batchJobContextSetupListener">
+        <listener ref="batchContextSetupListener">
             <properties>
                 <property name="rootEntities" value="#{jobParameters['rootEntities']}" />
             </properties>
@@ -17,13 +17,13 @@
     </listeners>
 
     <step id="produceLuceneDoc">
-        <listeners>
-            <listener ref="entityIndexingStepContextSetupListener">
+        <!-- <listeners>
+            <listener ref="contextSetupListener">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
                 </properties>
             </listener>
-        </listeners>
+        </listeners> -->
         <chunk checkpoint-policy="custom">
             <reader ref="itemReader">
                 <properties>

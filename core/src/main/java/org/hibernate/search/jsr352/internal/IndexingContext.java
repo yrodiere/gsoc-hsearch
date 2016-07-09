@@ -20,9 +20,11 @@ import org.jboss.logging.Logger;
  * Specific indexing context for mass indexer. Several attributes are used :
  * <p>
  * <ul>
- * <li>entityCount: the total number of entities to be indexed in the job. The number is summarized by partitioned step
- * "loadId". Each IdProducerBatchlet (partiton) produces the number of entities linked to its own target entity, then
- * call the method #addEntityCount(long) to summarize it with other partition(s).</li>
+ * <li>entityCount: the total number of entities to be indexed in the job. The
+ * number is summarized by partitioned step "loadId". Each IdProducerBatchlet
+ * (partiton) produces the number of entities linked to its own target entity,
+ * then call the method #addEntityCount(long) to summarize it with other
+ * partition(s).</li>
  * </ul>
  * 
  * @author Mincong HUANG

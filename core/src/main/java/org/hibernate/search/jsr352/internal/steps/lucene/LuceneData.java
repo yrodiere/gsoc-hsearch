@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.jsr352.internal;
+package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import org.hibernate.search.store.IndexShardingStrategy;
 
@@ -12,15 +12,16 @@ import org.hibernate.search.store.IndexShardingStrategy;
  * Container for data specific to the entity indexing batch step.
  *
  * @author Gunnar Morling
+ * @author Mincong HUANG
  */
-public class EntityIndexingStepData {
+public class LuceneData {
 
 	private final Class<?> entityClass;
 	private final IndexShardingStrategy shardingStrategy;
 
 	private int processedWorkCount = 0;
 
-	public EntityIndexingStepData(Class<?> entityClass, IndexShardingStrategy shardingStrategy) {
+	public LuceneData(Class<?> entityClass, IndexShardingStrategy shardingStrategy) {
 		this.entityClass = entityClass;
 		this.shardingStrategy = shardingStrategy;
 	}

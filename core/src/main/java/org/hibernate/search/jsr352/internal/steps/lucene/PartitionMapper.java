@@ -44,7 +44,6 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	private static final Logger logger = Logger.getLogger( PartitionMapper.class );
 
 	private final JobContext jobContext;
-	private final IndexingContext indexingContext;
 
 	@Inject
 	@BatchProperty
@@ -54,16 +53,15 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	private int threads;
 
 	@Inject
-	public PartitionMapper(JobContext jobContext, IndexingContext indexingContext) {
+	public PartitionMapper(JobContext jobContext) {
 		this.jobContext = jobContext;
-		this.indexingContext = indexingContext;
 	}
 
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
 
-		Set<Class<?>> rootEntityClazzes = ( (BatchContextData) jobContext.getTransientUserData() )
-				.getEntityTypesToIndex();
+		BatchContextData jobData = (BatchContextData) jobContext.getTransientUserData();
+		Set<Class<?>> rootEntityClazzes = jobData.getEntityTypesToIndex();
 		final int TOTAL_PARTITIONS = rootEntityClazzes.size();
 
 		return new PartitionPlanImpl() {

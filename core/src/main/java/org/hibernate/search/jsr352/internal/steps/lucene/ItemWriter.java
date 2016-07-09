@@ -25,7 +25,6 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.internal.BatchContextData;
-import org.hibernate.search.jsr352.internal.EntityIndexingStepData;
 import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.IndexShardingStrategy;
@@ -53,7 +52,6 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	private MassIndexerProgressMonitor monitor;
 
 	private JobContext jobContext;
-	private StepContext stepContext;
 	private IndexingContext indexingContext;
 
 	@Inject
@@ -61,11 +59,8 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	private String entityName;
 
 	@Inject
-	public ItemWriter(JobContext jobContext,
-			StepContext stepContext,
-			IndexingContext indexingContext) {
+	public ItemWriter(JobContext jobContext, IndexingContext indexingContext) {
 		this.jobContext = jobContext;
-		this.stepContext = stepContext;
 		this.indexingContext = indexingContext;
 	}
 
@@ -116,8 +111,8 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	public void writeItems(List<Object> items) throws Exception {
 
 		// TODO: is the sharding strategy used suitable for the situation ?
-		IndexShardingStrategy shardingStrategy = ( (EntityIndexingStepData) stepContext
-				.getTransientUserData() ).getShardingStrategy();
+		BatchContextData jobData = (BatchContextData) jobContext.getTransientUserData();
+		IndexShardingStrategy shardingStrategy = jobData.getShardingStrategy( entityName );
 
 		for ( Object item : items ) {
 			AddLuceneWork addWork = (AddLuceneWork) item;
@@ -132,8 +127,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 		}
 
 		// flush after write operation
-		Class<?> entityClazz = ( (BatchContextData) jobContext.getTransientUserData() )
-				.getIndexedType( entityName );
+		Class<?> entityClazz = jobData.getIndexedType( entityName );
 		EntityIndexBinding indexBinding = Search
 				.getFullTextEntityManager( indexingContext.getEntityManager() )
 				.getSearchFactory()

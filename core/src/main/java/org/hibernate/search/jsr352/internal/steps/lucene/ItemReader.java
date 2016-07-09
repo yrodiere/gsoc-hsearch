@@ -31,7 +31,6 @@ import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.BatchContextData;
-import org.hibernate.search.jsr352.internal.EntityIndexingStepData;
 import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
@@ -212,7 +211,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	 */
 	public AddLuceneWork processItem(Object item) throws Exception {
 		AddLuceneWork addWork = buildAddLuceneWork( item, entityClazz );
-		updateWorksCount( 1 );
+		// updateWorksCount( 1 );
 		return addWork;
 	}
 
@@ -222,9 +221,8 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	 * @param currentCount the works processed during the current processItem().
 	 */
 	private void updateWorksCount(int currentCount) {
-		EntityIndexingStepData userData = (EntityIndexingStepData) stepContext
-				.getTransientUserData();
-		userData.incrementProcessedWorkCount( currentCount );
+		LuceneData luceneData = (LuceneData) stepContext.getTransientUserData();
+		luceneData.incrementProcessedWorkCount( currentCount );
 	}
 
 	/**
