@@ -62,9 +62,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
 
-		Set<Class<?>> rootEntities = ( (BatchContextData) jobContext.getTransientUserData() )
+		Set<Class<?>> rootEntityClazzes = ( (BatchContextData) jobContext.getTransientUserData() )
 				.getEntityTypesToIndex();
-		final int TOTAL_PARTITIONS = rootEntities.size();
+		final int TOTAL_PARTITIONS = rootEntityClazzes.size();
 
 		return new PartitionPlanImpl() {
 
@@ -84,12 +84,12 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			@Override
 			public Properties[] getPartitionProperties() {
 				Properties[] props = new Properties[TOTAL_PARTITIONS];
-				Class<?>[] rootEntityArray = rootEntities
-						.toArray( new Class<?>[rootEntities.size()] );
+				final Class<?>[] rootEntityArray = rootEntityClazzes
+						.toArray( new Class<?>[rootEntityClazzes.size()] );
 				for ( int i = 0; i < props.length; i++ ) {
-					String entityType = rootEntityArray[i].getName();
+					String entityName = rootEntityArray[i].getName();
 					props[i] = new Properties();
-					props[i].setProperty( "entityType", entityType );
+					props[i].setProperty( "entityName", entityName );
 				}
 				return props;
 			}

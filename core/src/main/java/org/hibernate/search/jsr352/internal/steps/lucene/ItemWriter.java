@@ -58,7 +58,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 
 	@Inject
 	@BatchProperty
-	private String entityType;
+	private String entityName;
 
 	@Inject
 	public ItemWriter(JobContext jobContext,
@@ -133,7 +133,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 
 		// flush after write operation
 		Class<?> entityClazz = ( (BatchContextData) jobContext.getTransientUserData() )
-				.getIndexedType( entityType );
+				.getIndexedType( entityName );
 		EntityIndexBinding indexBinding = Search
 				.getFullTextEntityManager( indexingContext.getEntityManager() )
 				.getSearchFactory()

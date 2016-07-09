@@ -34,7 +34,7 @@ public class EntityIndexingStepContextSetupListener extends AbstractItemReadList
 	private final StepContext stepContext;
 
 	@Inject @BatchProperty
-	private String entityType;
+	private String entityName;
 
 
 	@Inject
@@ -46,7 +46,7 @@ public class EntityIndexingStepContextSetupListener extends AbstractItemReadList
 
 	@Override
 	public void beforeRead() throws Exception {
-		Class<?> entityClazz = ( (BatchContextData) jobContext.getTransientUserData() ).getIndexedType( entityType );
+		Class<?> entityClazz = ( (BatchContextData) jobContext.getTransientUserData() ).getIndexedType( entityName );
 
 		LOGGER.debugf( "#beforeRead(...): entityClazz = %s", entityClazz );
 

@@ -57,11 +57,12 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private static final Logger logger = Logger.getLogger( ItemReader.class );
 
 	@Inject
-	@BatchProperty(name = "entityType")
+	@BatchProperty
 	private String entityName;
 	@Inject
 	@BatchProperty
 	private int maxResults;
+
 	private Class<?> entityClazz;
 	private JobContext jobContext;
 	private StepContext stepContext;
@@ -154,18 +155,19 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
 		docBuilder = entityIndexBinding.getDocumentBuilder();
 
-		if (checkpoint == null) {
+		if ( checkpoint == null ) {
 			scroll = ss.createCriteria( entityClazz )
 					.setReadOnly( true )
 					.setCacheable( true )
 					.setFetchSize( 1 )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
-		} else {
+		}
+		else {
 			String idName = docBuilder.getIdentifierName();
 			checkpointId = checkpoint;
 			scroll = ss.createCriteria( entityClazz )
-					.add( Restrictions.gt( idName, checkpointId ))
+					.add( Restrictions.gt( idName, checkpointId ) )
 					.setReadOnly( true )
 					.setCacheable( true )
 					.setFetchSize( 1 )

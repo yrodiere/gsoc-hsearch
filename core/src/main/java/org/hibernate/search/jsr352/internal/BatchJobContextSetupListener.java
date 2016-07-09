@@ -38,15 +38,15 @@ public class BatchJobContextSetupListener extends AbstractJobListener {
 	public void beforeJob() throws Exception {
 		Set<Class<?>> entitiesToIndex = new HashSet<>();
 
-		String[] entityTypeNamesToIndex = rootEntities.split( "," );
+		String[] entityNamesToIndex = rootEntities.split( "," );
 		Set<Class<?>> indexedTypes = Search
 				.getFullTextEntityManager( indexingContext.getEntityManager() )
 				.getSearchFactory()
 				.getIndexedTypes();
 
-		for ( String entityType : entityTypeNamesToIndex ) {
+		for ( String entityName : entityNamesToIndex ) {
 			for ( Class<?> indexedType : indexedTypes ) {
-				if ( indexedType.getName().equals( entityType.trim() ) ) {
+				if ( indexedType.getName().equals( entityName.trim() ) ) {
 					entitiesToIndex.add( indexedType );
 					continue;
 				}

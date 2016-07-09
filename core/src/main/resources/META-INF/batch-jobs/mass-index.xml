@@ -20,7 +20,7 @@
         <listeners>
             <listener ref="entityIndexingStepContextSetupListener">
                 <properties>
-                    <property name="entityType" value="#{partitionPlan['entityType']}" />
+                    <property name="entityName" value="#{partitionPlan['entityName']}" />
                 </properties>
             </listener>
         </listeners>
@@ -28,13 +28,13 @@
             <reader ref="itemReader">
                 <properties>
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
-                    <property name="entityType" value="#{partitionPlan['entityType']}" />
+                    <property name="entityName" value="#{partitionPlan['entityName']}" />
                 </properties>
             </reader>
             <processor ref="itemProcessor" />
             <writer ref="itemWriter">
                 <properties>
-                    <property name="entityType" value="#{partitionPlan['entityType']}" />
+                    <property name="entityName" value="#{partitionPlan['entityName']}" />
                 </properties>
             </writer>
             <checkpoint-algorithm ref="checkpointAlgorithm">
