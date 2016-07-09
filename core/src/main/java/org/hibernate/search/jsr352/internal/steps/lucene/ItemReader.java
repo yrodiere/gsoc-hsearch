@@ -19,6 +19,7 @@ import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.StatelessSession;
+import org.hibernate.criterion.Restrictions;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.search.backend.AddLuceneWork;
 import org.hibernate.search.bridge.TwoWayFieldBridge;
@@ -67,12 +68,14 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private IndexingContext indexingContext;
 	private Serializable checkpointId;
 
+	// read entities and produce Lucene work
 	private EntityManager em;
 	private Session session;
 	private StatelessSession ss;
 	private ScrollableResults scroll;
 	private ExtendedSearchIntegrator searchIntegrator;
 	private EntityIndexBinding entityIndexBinding;
+	private DocumentBuilderIndexedEntity docBuilder;
 
 	@Inject
 	public ItemReader(JobContext jobContext,
@@ -142,34 +145,33 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@Override
 	public void open(Serializable checkpoint) throws Exception {
 		logger.infof( "open reader for entityName=%s", entityName );
-		checkpointId = checkpoint;
-		session = indexingContext.getEntityManager().unwrap( Session.class );
-		ss = session.getSessionFactory().openStatelessSession();
-
 		entityClazz = ( (BatchContextData) jobContext.getTransientUserData() )
 				.getIndexedType( entityName );
 
-		// // Idea 1
-		// // I can't use the below line because I don't have the "instance" :
-		// em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(instance);
+		session = em.unwrap( Session.class );
+		ss = session.getSessionFactory().openStatelessSession();
+		searchIntegrator = ContextHelper.getSearchintegrator( session );
+		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
+		docBuilder = entityIndexBinding.getDocumentBuilder();
 
-		// // Idea 2
-		// // I've tried the below line too
-		// // But I can't use it because sessionFactory is null
-		// ClassMetadata m = sessionFactory.getClassMetadata( entityType );
-
-		scroll = ss.createCriteria( entityClazz )
-				// .add( Restrictions.gt( m.getIdentifierPropertyName(),
-				// checkpointId ))
-				.setReadOnly( true )
-				.setCacheable( true )
-				.setFetchSize( 1 )
-				.setMaxResults( maxResults )
-				.scroll( ScrollMode.FORWARD_ONLY );
-
-		// while ( scrollableResults.next() ) {
-		// logger.info(entityClazz.cast(scrollableResults.get(0)));
-		// }
+		if (checkpoint == null) {
+			scroll = ss.createCriteria( entityClazz )
+					.setReadOnly( true )
+					.setCacheable( true )
+					.setFetchSize( 1 )
+					.setMaxResults( maxResults )
+					.scroll( ScrollMode.FORWARD_ONLY );
+		} else {
+			String idName = docBuilder.getIdentifierName();
+			checkpointId = checkpoint;
+			scroll = ss.createCriteria( entityClazz )
+					.add( Restrictions.gt( idName, checkpointId ))
+					.setReadOnly( true )
+					.setCacheable( true )
+					.setFetchSize( 1 )
+					.setMaxResults( maxResults )
+					.scroll( ScrollMode.FORWARD_ONLY );
+		}
 	}
 
 	/**
@@ -241,15 +243,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		// (The tenant ID is not included mass indexer setup in the
 		// ConcertManager)
 		String tenantId = null;
-
-		// session = em.unwrap(Session.class);
-		searchIntegrator = ContextHelper.getSearchintegrator( session );
-		entityIndexBinding = searchIntegrator
-				.getIndexBindings()
-				.get( entityClazz );
-
-		DocumentBuilderIndexedEntity docBuilder = entityIndexBinding
-				.getDocumentBuilder();
 		ConversionContext conversionContext = new ContextualExceptionBridgeHelper();
 		final InstanceInitializer sessionInitializer = new HibernateSessionLoadingInitializer(
 				(SessionImplementor) session );
