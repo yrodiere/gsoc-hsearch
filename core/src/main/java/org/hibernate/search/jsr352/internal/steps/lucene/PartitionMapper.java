@@ -17,7 +17,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.hibernate.search.jsr352.internal.BatchContextData;
-import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.jboss.logging.Logger;
 
 /**
@@ -61,8 +60,8 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	public PartitionPlan mapPartitions() throws Exception {
 
 		BatchContextData jobData = (BatchContextData) jobContext.getTransientUserData();
-		Set<Class<?>> rootEntityClazzes = jobData.getEntityTypesToIndex();
-		final int TOTAL_PARTITIONS = rootEntityClazzes.size();
+		Set<String> entityNameSet = jobData.getEntityNames();
+		final int TOTAL_PARTITIONS = entityNameSet.size();
 
 		return new PartitionPlanImpl() {
 
@@ -82,10 +81,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			@Override
 			public Properties[] getPartitionProperties() {
 				Properties[] props = new Properties[TOTAL_PARTITIONS];
-				final Class<?>[] rootEntityArray = rootEntityClazzes
-						.toArray( new Class<?>[rootEntityClazzes.size()] );
+				String[] entityNameArr = entityNameSet.toArray( new String[TOTAL_PARTITIONS] );
 				for ( int i = 0; i < props.length; i++ ) {
-					String entityName = rootEntityArray[i].getName();
+					String entityName = entityNameArr[i];
 					props[i] = new Properties();
 					props[i].setProperty( "entityName", entityName );
 				}

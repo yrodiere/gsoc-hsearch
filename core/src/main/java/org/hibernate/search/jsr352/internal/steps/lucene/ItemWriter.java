@@ -11,7 +11,6 @@ import java.util.List;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.runtime.context.JobContext;
-import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
