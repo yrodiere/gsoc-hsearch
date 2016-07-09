@@ -43,6 +43,16 @@ public interface MassIndexer {
 
 	public MassIndexer threads(int threads);
 
+	/**
+	 * Checkpoint frequency during the mass index process. The checkpoint will
+	 * be done every N items read, where N is the given item count.
+	 *
+	 * @param itemCount the number of item count before starting the next
+	 * checkpoint.
+	 * @return
+	 */
+	public MassIndexer checkpointFreq(int itemCount);
+
 	// TODO: should be reviewed
 	public MassIndexer entityManager(EntityManager entityManager);
 
@@ -67,6 +77,8 @@ public interface MassIndexer {
 	public Set<Class<?>> getRootEntities();
 
 	public int getThreads();
+
+	public int getItemCount();
 
 	public EntityManager getEntityManager();
 

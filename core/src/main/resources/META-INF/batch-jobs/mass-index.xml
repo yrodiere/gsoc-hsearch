@@ -24,7 +24,7 @@
                 </properties>
             </listener>
         </listeners>
-        <chunk item-count="3">
+        <chunk checkpoint-policy="custom">
             <reader ref="itemReader">
                 <properties>
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
@@ -37,6 +37,11 @@
                     <property name="entityType" value="#{partitionPlan['entityType']}" />
                 </properties>
             </writer>
+            <checkpoint-algorithm ref="checkpointAlgorithm">
+                <properties>
+                    <property name="itemCount" value="#{jobParameters['itemCount']}?:3;" />
+                </properties>
+            </checkpoint-algorithm>
         </chunk>
         <partition>
             <mapper ref="partitionMapper">

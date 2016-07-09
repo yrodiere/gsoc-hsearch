@@ -32,6 +32,7 @@ public class MassIndexerImpl implements MassIndexer {
 	private int partitionCapacity = 250;
 	private int partitions = 1;
 	private int threads = 1;
+	private int itemCount = 3;
 	private final Set<Class<?>> rootEntities = new HashSet<>();
 	private EntityManager entityManager;
 	private JobOperator jobOperator;
@@ -70,6 +71,7 @@ public class MassIndexerImpl implements MassIndexer {
 		jobParams.setProperty( "purgeAtStart", String.valueOf( purgeAtStart ) );
 		jobParams.setProperty( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
 		jobParams.setProperty( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
+		jobParams.setProperty( "itemCount", String.valueOf( itemCount ) );
 		jobParams.put( "rootEntities", getEntitiesToIndexAsString() );
 		// JobOperator jobOperator = BatchRuntime.getJobOperator();
 		Long executionId = jobOperator.start( JOB_NAME, jobParams );
@@ -174,6 +176,12 @@ public class MassIndexerImpl implements MassIndexer {
 		this.rootEntities.addAll( Arrays.asList( rootEntities ) );
 		return this;
 	}
+	
+	@Override
+	public MassIndexer checkpointFreq(int itemCount) {
+		this.itemCount = itemCount;
+		return this;
+	}
 
 	@Override
 	public MassIndexer entityManager(EntityManager entityManager) {
@@ -239,6 +247,11 @@ public class MassIndexerImpl implements MassIndexer {
 	@Override
 	public Set<Class<?>> getRootEntities() {
 		return rootEntities;
+	}
+
+	@Override
+	public int getItemCount() {
+		return itemCount;
 	}
 
 	private String getEntitiesToIndexAsString() {
