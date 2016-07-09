@@ -28,11 +28,11 @@ public class MassIndexerImpl implements MassIndexer {
 	private boolean purgeAtStart = false;
 	private int arrayCapacity = 1000;
 	private int fetchSize = 200 * 1000;
+	private int itemCount = 3;
 	private int maxResults = 1000 * 1000;
 	private int partitionCapacity = 250;
 	private int partitions = 1;
 	private int threads = 1;
-	private int itemCount = 3;
 	private final Set<Class<?>> rootEntities = new HashSet<>();
 	private EntityManager entityManager;
 	private JobOperator jobOperator;

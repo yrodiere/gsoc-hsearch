@@ -21,27 +21,11 @@ public interface MassIndexer {
 
 	public void stop(long executionId);
 
-	public MassIndexer arrayCapacity(int arrayCapacity);
-
-	public MassIndexer fetchSize(int fetchSize);
-
-	public MassIndexer maxResults(int maxResults);
-
-	public MassIndexer optimizeAfterPurge(boolean optimizeAfterPurge);
-
-	public MassIndexer optimizeAtEnd(boolean optimizeAtEnd);
-
-	public MassIndexer partitionCapacity(int partitionCapacity);
-
-	public MassIndexer partitions(int partitions);
-
-	public MassIndexer purgeAtStart(boolean purgeAtStart);
+	public MassIndexer addRootEntities(Class<?>... rootEntities);
 
 	public MassIndexer addRootEntities(Set<Class<?>> rootEntities);
 
-	public MassIndexer addRootEntities(Class<?>... rootEntities);
-
-	public MassIndexer threads(int threads);
+	public MassIndexer arrayCapacity(int arrayCapacity);
 
 	/**
 	 * Checkpoint frequency during the mass index process. The checkpoint will
@@ -56,29 +40,45 @@ public interface MassIndexer {
 	// TODO: should be reviewed
 	public MassIndexer entityManager(EntityManager entityManager);
 
+	public MassIndexer fetchSize(int fetchSize);
+
 	public MassIndexer jobOperator(JobOperator jobOperator);
+
+	public MassIndexer maxResults(int maxResults);
+
+	public MassIndexer optimizeAfterPurge(boolean optimizeAfterPurge);
+
+	public MassIndexer optimizeAtEnd(boolean optimizeAtEnd);
+
+	public MassIndexer partitionCapacity(int partitionCapacity);
+
+	public MassIndexer partitions(int partitions);
+
+	public MassIndexer purgeAtStart(boolean purgeAtStart);
+
+	public MassIndexer threads(int threads);
 
 	public int getArrayCapacity();
 
 	public int getFetchSize();
 
+	public int getItemCount();
+
 	public int getMaxResults();
-
-	public boolean isOptimizeAfterPurge();
-
-	public boolean isOptimizeAtEnd();
 
 	public int getPartitionCapacity();
 
 	public int getPartitions();
 
+	public int getThreads();
+
+	public boolean isOptimizeAfterPurge();
+
+	public boolean isOptimizeAtEnd();
+
 	public boolean isPurgeAtStart();
 
 	public Set<Class<?>> getRootEntities();
-
-	public int getThreads();
-
-	public int getItemCount();
 
 	public EntityManager getEntityManager();
 
