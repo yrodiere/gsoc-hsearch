@@ -26,12 +26,9 @@ multiple instance of the same step definition across multiple threads, one
 partition per thread. The number of partitions equals to the size of root
 entities selected before the job start.
 
-### Context data
+## Context data
 
-There're 2 types of context data in this job. They have different usage and
-correspond to different scope.
-
-#### JobContextData
+### JobContextData
 
 `JobContextData` stands for context data in the job scope. It contains common
 information potentially used across the whole job. They’re
@@ -44,7 +41,7 @@ type `Class<?> entityClazz`, matched to the entity class name
 
 Job context data is setup using the `JobContextSetupListener`.
 
-#### PartitionedContextData
+### PartitionedContextData
 
 `PartitionedContextData` stands for partitioned step context data in the step
 _produceLuceneDoc_. Since the batch runtime maintains one context data per
@@ -55,7 +52,9 @@ progress, which are `chunkWorkCount` and `partitionWorkCount`.
    _chunk_ refers to items processed between checkpoints, which equals to
    workflow
 
-       ( 1 item-read + 1 item-process ) * N + items-write * 1
+   ``` 
+   ( 1 item-read + 1 item-process ) * N + items-write * 1
+   ```
 
 *  **partitionWorkCount** is the sum of all the `chunkWorkCount`s is this
    partition. Partitioned context data is serializable. When job is stopped,
