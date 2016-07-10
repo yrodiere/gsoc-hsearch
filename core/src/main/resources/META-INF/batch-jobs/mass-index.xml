@@ -17,13 +17,6 @@
     </listeners>
 
     <step id="produceLuceneDoc">
-        <!-- <listeners>
-            <listener ref="contextSetupListener">
-                <properties>
-                    <property name="entityName" value="#{partitionPlan['entityName']}" />
-                </properties>
-            </listener>
-        </listeners> -->
         <chunk checkpoint-policy="custom">
             <reader ref="itemReader">
                 <properties>
