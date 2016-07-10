@@ -19,7 +19,7 @@ import javax.persistence.EntityManager;
 import org.hibernate.search.jpa.Search;
 
 @Named
-public class BatchContextSetupListener extends AbstractJobListener {
+public class JobContextSetupListener extends AbstractJobListener {
 
 	private final JobContext jobContext;
 	private EntityManager em;
@@ -29,7 +29,7 @@ public class BatchContextSetupListener extends AbstractJobListener {
 	private String rootEntities;
 
 	@Inject
-	public BatchContextSetupListener(JobContext jobContext,
+	public JobContextSetupListener(JobContext jobContext,
 			IndexingContext indexingContext) {
 		this.jobContext = jobContext;
 		this.em = indexingContext.getEntityManager();
