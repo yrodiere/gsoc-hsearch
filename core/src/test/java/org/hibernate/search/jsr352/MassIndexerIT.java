@@ -8,6 +8,7 @@ package org.hibernate.search.jsr352;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +28,13 @@ import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.MassIndexer;
 import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.entity.Company;
+import org.hibernate.search.jsr352.entity.Person;
 import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
- *
  * @author Mincong HUANG
  */
 public class MassIndexerIT {
@@ -56,9 +57,6 @@ public class MassIndexerIT {
 	// example dataset
 	private final long DB_COMP_ROWS = 3;
 	private final long DB_COMP_ROWS_LOADED = 3;
-	private final Company COMPANY_1 = new Company( "Google" );
-	private final Company COMPANY_2 = new Company( "Red Hat" );
-	private final Company COMPANY_3 = new Company( "Microsoft" );
 
 	private static final int JOB_MAX_TRIES = 240; // 240 second
 	private static final int JOB_THREAD_SLEEP = 1000;
@@ -71,11 +69,19 @@ public class MassIndexerIT {
 		jobOperator = JobFactory.getJobOperator();
 		emf = Persistence.createEntityManagerFactory( "h2" );
 
+		List<Company> companies = Arrays.asList(
+				new Company( "Google" ),
+				new Company( "Red Hat" ),
+				new Company( "Microsoft" ) );
+		List<Person> people = Arrays.asList(
+				new Person( "BG", "Bill", "Gates" ),
+				new Person( "LT", "Linus", "Torvalds" ),
+				new Person( "SJ", "Steven", "Jobs" ) );
+
 		EntityManager em = emf.createEntityManager();
 		em.getTransaction().begin();
-		em.persist( COMPANY_1 );
-		em.persist( COMPANY_2 );
-		em.persist( COMPANY_3 );
+		companies.forEach( c -> em.persist( c ) );
+		people.forEach( p -> em.persist( p ) );
 		em.getTransaction().commit();
 		em.close();
 	}
@@ -83,9 +89,12 @@ public class MassIndexerIT {
 	@Test
 	public void testMassIndexer() throws InterruptedException {
 
-		logger.infof( "finding company called %s ...", "google" );
-		List<Company> companies = findCompanyByName( "google" );
+		// searches before mass index,
+		// expected no results for each search
+		List<Company> companies = findClass( Company.class, "name", "Google" );
+		List<Person> people = findClass( Person.class, "firstName", "Linus" );
 		assertEquals( 0, companies.size() );
+		assertEquals( 0, people.size() );
 
 		long executionId = indexCompany();
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
@@ -95,19 +104,21 @@ public class MassIndexerIT {
 			logger.infof( "step %s executed.", stepExecution.getStepName() );
 		}
 
-		companies = findCompanyByName( "google" );
+		companies = findClass( Company.class, "name", "Google" );
+		people = findClass( Person.class, "firstName", "Linus" );
 		assertEquals( 1, companies.size() );
+		assertEquals( 1, people.size() );
 	}
 
-	private List<Company> findCompanyByName(String name) {
+	private <T> List<T> findClass(Class<T> clazz, String key, String value) {
 		EntityManager em = emf.createEntityManager();
 		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
 		Query luceneQuery = ftem.getSearchFactory().buildQueryBuilder()
-				.forEntity( Company.class ).get()
-				.keyword().onField( "name" ).matching( name )
+				.forEntity( clazz ).get()
+				.keyword().onField( key ).matching( value )
 				.createQuery();
 		@SuppressWarnings("unchecked")
-		List<Company> result = ftem.createFullTextQuery( luceneQuery ).getResultList();
+		List<T> result = ftem.createFullTextQuery( luceneQuery ).getResultList();
 		em.close();
 		return result;
 	}
@@ -115,7 +126,7 @@ public class MassIndexerIT {
 	private long indexCompany() throws InterruptedException {
 		// org.hibernate.search.jsr352.MassIndexer
 		MassIndexer massIndexer = new MassIndexerImpl()
-				.addRootEntities( Company.class )
+				.addRootEntities( Company.class, Person.class )
 				.entityManager( emf.createEntityManager() )
 				.jobOperator( jobOperator );
 		long executionId = massIndexer.start();

@@ -11,8 +11,8 @@
         template -->
     <persistence-unit name="h2" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-        <!-- <provider>org.hibernate.ejb.HibernatePersistence</provider> -->
         <class>org.hibernate.search.jsr352.entity.Company</class>
+        <class>org.hibernate.search.jsr352.entity.Person</class>
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect" />
             <property name="hibernate.connection.driver_class" value="org.h2.Driver" />
