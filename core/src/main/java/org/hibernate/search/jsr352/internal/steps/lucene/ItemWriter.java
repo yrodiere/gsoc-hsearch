@@ -11,6 +11,7 @@ import java.util.List;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
@@ -24,8 +25,8 @@ import org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.jpa.Search;
-import org.hibernate.search.jsr352.internal.BatchContextData;
 import org.hibernate.search.jsr352.internal.IndexingContext;
+import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.IndexShardingStrategy;
 import org.jboss.logging.Logger;
@@ -52,6 +53,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	private MassIndexerProgressMonitor monitor;
 
 	private JobContext jobContext;
+	private StepContext stepContext;
 	private EntityManager em;
 	private EntityIndexBinding entityIndexBinding;
 
@@ -60,8 +62,11 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	private String entityName;
 
 	@Inject
-	public ItemWriter(JobContext jobContext, IndexingContext indexingContext) {
+	public ItemWriter(JobContext jobContext,
+			StepContext stepContext,
+			IndexingContext indexingContext) {
 		this.jobContext = jobContext;
+		this.stepContext = stepContext;
 		this.em = indexingContext.getEntityManager();
 	}
 
@@ -88,7 +93,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	 */
 	@Override
 	public void close() throws Exception {
-		logger.info( "close() called" );
+		logger.info( "close() called." );
 	}
 
 	/**
@@ -100,13 +105,16 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	public void open(Serializable checkpoint) throws Exception {
 		logger.info( "open(Seriliazable) called" );
 		monitor = new SimpleIndexingProgressMonitor();
-		BatchContextData jobData = (BatchContextData) jobContext.getTransientUserData();
+		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		Class<?> entityClazz = jobData.getIndexedType( entityName );
 		entityIndexBinding = Search
 				.getFullTextEntityManager( em )
 				.getSearchFactory()
 				.unwrap( SearchIntegrator.class )
 				.getIndexBinding( entityClazz );
+		if ( stepContext.getPersistentUserData() == null ) {
+			stepContext.setPersistentUserData( new PartitionedContextData() );
+		}
 	}
 
 	/**
@@ -117,9 +125,8 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	 */
 	@Override
 	public void writeItems(List<Object> items) throws Exception {
-		IndexShardingStrategy shardingStrategy =
-				entityIndexBinding.getSelectionStrategy();
-		
+		IndexShardingStrategy shardingStrategy = entityIndexBinding.getSelectionStrategy();
+
 		for ( Object item : items ) {
 			AddLuceneWork addWork = (AddLuceneWork) item;
 			StreamingOperationExecutor executor = addWork.acceptIndexWorkVisitor(
@@ -137,5 +144,11 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 		for ( IndexManager im : indexManagers ) {
 			im.performStreamOperation( FlushLuceneWork.INSTANCE, null, false );
 		}
+
+		// update work count
+		PartitionedContextData pData =
+				(PartitionedContextData) stepContext.getPersistentUserData();
+		pData.setChunkWorkCount( items.size() );
+		stepContext.setPersistentUserData( pData );
 	}
 }

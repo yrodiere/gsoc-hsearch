@@ -11,16 +11,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Container for data shared across the entire batch.
+ * Container for data shared across the entire batch job.
  *
  * @author Gunnar Morling
  * @author Mincong HUANG
  */
-public class BatchContextData {
+public class JobContextData {
 
 	private Map<String, Class<?>> entityClazzMap;
-
-	public BatchContextData(Set<Class<?>> entityClazzes) {
+	public JobContextData(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
 		entityClazzes.forEach( clz -> entityClazzMap.put( clz.toString(), clz ) );
 	}

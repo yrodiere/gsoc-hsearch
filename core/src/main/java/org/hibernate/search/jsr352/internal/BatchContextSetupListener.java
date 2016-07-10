@@ -53,6 +53,6 @@ public class BatchContextSetupListener extends AbstractJobListener {
 			}
 		}
 
-		jobContext.setTransientUserData( new BatchContextData( entityClazzesToIndex ) );
+		jobContext.setTransientUserData( new JobContextData( entityClazzesToIndex ) );
 	}
 }

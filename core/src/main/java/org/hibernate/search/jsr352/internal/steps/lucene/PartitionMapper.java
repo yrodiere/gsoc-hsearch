@@ -16,7 +16,7 @@ import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.hibernate.search.jsr352.internal.BatchContextData;
+import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
 /**
@@ -59,7 +59,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
 
-		BatchContextData jobData = (BatchContextData) jobContext.getTransientUserData();
+		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		Set<String> entityNameSet = jobData.getEntityNames();
 		final int TOTAL_PARTITIONS = entityNameSet.size();
 

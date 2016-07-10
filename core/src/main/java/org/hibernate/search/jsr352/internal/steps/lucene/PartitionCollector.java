@@ -8,10 +8,18 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
 
+import javax.batch.runtime.context.StepContext;
+import javax.inject.Inject;
 import javax.inject.Named;
 
+/**
+ * @author Mincong HUANG
+ */
 @Named
 public class PartitionCollector implements javax.batch.api.partition.PartitionCollector {
+
+	@Inject
+	private StepContext stepContext;
 
 	/**
 	 * The collectPartitionData method receives control periodically during
@@ -21,17 +29,8 @@ public class PartitionCollector implements javax.batch.api.partition.PartitionCo
 	 */
 	@Override
 	public Serializable collectPartitionData() throws Exception {
-
-		// get transient user data
-		// LuceneData userData = (LuceneData) stepContext.getTransientUserData();
-
-		// TODO Is this really required?
-		// once data collected, reset the counter
-		// to zero in transient user data
-		// stepContext.setTransientUserData(0);
-
-		// return userData.getProcessedWorkCount();
-		// TODO: change mechanism
-		return 0;
+		PartitionedContextData pData = (PartitionedContextData) stepContext
+				.getPersistentUserData();
+		return pData.getChunkWorkCount();
 	}
 }

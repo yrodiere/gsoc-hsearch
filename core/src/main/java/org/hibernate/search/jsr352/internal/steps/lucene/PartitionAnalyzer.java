@@ -8,28 +8,16 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
 
-import javax.batch.api.BatchProperty;
 import javax.batch.runtime.BatchStatus;
-import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.jboss.logging.Logger;
 
 @Named
 public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAnalyzer {
 
-	@Inject
-	private IndexingContext indexingContext;
-
-	@Inject
-	@BatchProperty
-	private int maxResults;
-
-	private int workCount = 0;
-	private float percentage = 0;
-
 	private static final Logger logger = Logger.getLogger( PartitionAnalyzer.class );
+	private long workCount;
 
 	/**
 	 * Analyze data obtained from different partition plans via partition data
@@ -45,17 +33,12 @@ public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAna
 	 * collectPartitionData
 	 */
 	@Override
-	public void analyzeCollectorData(Serializable fromCollector) throws Exception {
-
-		long entityCount = indexingContext.getEntityCount();
-		int entitiesLoaded = Math.min( (int) entityCount, maxResults );
-
-		workCount += (int) fromCollector;
-		if ( entitiesLoaded != 0 ) {
-			percentage = workCount * 100f / entitiesLoaded;
-		}
-		logger.infof( "%d works processed (%.1f%%).",
-				workCount, percentage );
+	public void analyzeCollectorData(Serializable fromCollector)
+			throws Exception {
+		
+//		logger.infof( "%d works processed (%.1f%%).", workDone, percentage );
+		workCount += (long) fromCollector;
+		logger.infof( "%d works done",  workCount );
 	}
 
 	@Override

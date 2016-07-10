@@ -43,11 +43,7 @@
                 </properties>
             </mapper>
             <collector ref="partitionCollector" />
-            <analyzer ref="partitionAnalyzer">
-                <properties>
-                    <property name="maxResults" value="#{jobParameters['maxResults']}?:2147483647;" />
-                </properties>
-            </analyzer>
+            <analyzer ref="partitionAnalyzer" />
             <reducer ref="partitionReducer" />
         </partition>
     </step>

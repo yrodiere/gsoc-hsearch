@@ -10,7 +10,6 @@ import java.io.Serializable;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.runtime.context.JobContext;
-import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
@@ -30,8 +29,8 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
-import org.hibernate.search.jsr352.internal.BatchContextData;
 import org.hibernate.search.jsr352.internal.IndexingContext;
+import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
 
@@ -64,8 +63,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	private Class<?> entityClazz;
 	private JobContext jobContext;
-	private StepContext stepContext;
-	private IndexingContext indexingContext;
 	private Serializable checkpointId;
 
 	// read entities and produce Lucene work
@@ -78,12 +75,8 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private DocumentBuilderIndexedEntity docBuilder;
 
 	@Inject
-	public ItemReader(JobContext jobContext,
-			StepContext stepContext,
-			IndexingContext indexingContext) {
+	public ItemReader(JobContext jobContext, IndexingContext indexingContext) {
 		this.jobContext = jobContext;
-		this.stepContext = stepContext;
-		this.indexingContext = indexingContext;
 		this.em = indexingContext.getEntityManager();
 	}
 
@@ -145,7 +138,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@Override
 	public void open(Serializable checkpoint) throws Exception {
 		logger.infof( "open reader for entityName=%s", entityName );
-		entityClazz = ( (BatchContextData) jobContext.getTransientUserData() )
+		entityClazz = ( (JobContextData) jobContext.getTransientUserData() )
 				.getIndexedType( entityName );
 
 		session = em.unwrap( Session.class );
@@ -211,18 +204,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	 */
 	public AddLuceneWork processItem(Object item) throws Exception {
 		AddLuceneWork addWork = buildAddLuceneWork( item, entityClazz );
-		// updateWorksCount( 1 );
 		return addWork;
-	}
-
-	/**
-	 * Update the Lucene Works counts using the step context.
-	 *
-	 * @param currentCount the works processed during the current processItem().
-	 */
-	private void updateWorksCount(int currentCount) {
-		LuceneData luceneData = (LuceneData) stepContext.getTransientUserData();
-		luceneData.incrementProcessedWorkCount( currentCount );
 	}
 
 	/**
