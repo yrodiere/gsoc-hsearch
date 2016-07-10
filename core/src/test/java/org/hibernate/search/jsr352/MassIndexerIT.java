@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.jsr352.se;
+package org.hibernate.search.jsr352;
 
 import static org.junit.Assert.assertEquals;
 
@@ -26,7 +26,7 @@ import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.MassIndexer;
 import org.hibernate.search.jsr352.MassIndexerImpl;
-import org.hibernate.search.jsr352.se.test.Company;
+import org.hibernate.search.jsr352.entity.Company;
 import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.Before;
@@ -122,18 +122,6 @@ public class MassIndexerIT {
 
 		logger.infof( "job execution id = %d", executionId );
 		return executionId;
-		// try {
-		// Search.getFullTextEntityManager( em )
-		// .createIndexer()
-		// .batchSizeToLoadObjects( 1 )
-		// .threadsToLoadObjects( 1 )
-		// .transactionTimeout( 10 )
-		// .cacheMode( CacheMode.IGNORE )
-		// .startAndWait();
-		// }
-		// catch (InterruptedException e) {
-		// throw new RuntimeException( e );
-		// }
 	}
 
 	public JobExecution keepTestAlive(JobExecution jobExecution) throws InterruptedException {
