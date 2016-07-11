@@ -28,13 +28,13 @@ import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.MassIndexer;
 import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.entity.Company;
+import org.hibernate.search.jsr352.entity.Person;
 import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
- *
  * @author Mincong HUANG
  */
 public class RestartChunkIT {
@@ -45,6 +45,7 @@ public class RestartChunkIT {
 	private JobOperator jobOperator;
 	private final int ARRAY_CAPACITY = 1;
 	private final long DB_COMP_ROWS = 100;
+	private final long DB_PERS_ROWS = 50;
 	private static final int JOB_MAX_TRIES = 30; // 1s * 30 = 30s
 	private static final int JOB_THREAD_SLEEP = 1000; // 1s
 
@@ -53,34 +54,28 @@ public class RestartChunkIT {
 	@Before
 	public void setup() {
 
+		String[][] str = new String[][]{
+				{ "Google", "Sundar", "Pichai" },
+				{ "Red Hat", "James", "M. Whitehurst" },
+				{ "Microsoft", "Satya", "Nadella" },
+				{ "Facebook", "Mark", "Zuckerberg" },
+				{ "Amazon", "Jeff", "Bezos" }
+		};
+
 		jobOperator = JobFactory.getJobOperator();
 		emf = Persistence.createEntityManagerFactory( "h2" );
 
 		EntityManager em = emf.createEntityManager();
 		em.getTransaction().begin();
 		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
-			Company c;
-			switch ( i % 5 ) {
-				case 0:
-					c = new Company( "Google" );
-					break;
-				case 1:
-					c = new Company( "Red Hat" );
-					break;
-				case 2:
-					c = new Company( "Microsoft" );
-					break;
-				case 3:
-					c = new Company( "Facebook" );
-					break;
-				case 4:
-					c = new Company( "Amazon" );
-					break;
-				default:
-					c = null;
-					break;
-			}
-			em.persist( c );
+			em.persist( new Company( str[i % 5][0] ) );
+		}
+		for ( int i = 0; i < DB_PERS_ROWS; i++ ) {
+			em.persist( new Person(
+					String.valueOf( i ),
+					str[i % 5][1],
+					str[i % 5][2]
+			));
 		}
 		em.getTransaction().commit();
 		em.close();
@@ -89,9 +84,10 @@ public class RestartChunkIT {
 	@Test
 	public void testJob() throws InterruptedException {
 
-		logger.infof( "finding company called %s ...", "google" );
-		List<Company> companies = findCompanyByName( "google" );
+		List<Company> companies = findClasses( Company.class, "name", "Google" );
+		List<Person> people = findClasses( Person.class, "firstName", "Sundar");
 		assertEquals( 0, companies.size() );
+		assertEquals( 0, people.size() );
 
 		// start the job, then stop it
 		long execId1 = startJob();
@@ -128,20 +124,21 @@ public class RestartChunkIT {
 		logger.info( "finished" );
 
 		// search again
-		companies = findCompanyByName( "google" );
-		assertEquals( 20, companies.size() );
-		logger.infof( "%d rows found", companies.size() );
+		companies = findClasses( Company.class, "name", "google" );
+		people = findClasses( Person.class, "firstName", "Sundar" );
+		assertEquals( DB_COMP_ROWS / 5, companies.size() );
+		assertEquals( DB_PERS_ROWS / 5, people.size() );
 	}
 
-	private List<Company> findCompanyByName(String name) {
+	private <T> List<T> findClasses(Class<T> clazz, String key, String value) {
 		EntityManager em = emf.createEntityManager();
 		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
 		Query luceneQuery = ftem.getSearchFactory().buildQueryBuilder()
-				.forEntity( Company.class ).get()
-				.keyword().onField( "name" ).matching( name )
+				.forEntity( clazz ).get()
+				.keyword().onField( key ).matching( value )
 				.createQuery();
 		@SuppressWarnings("unchecked")
-		List<Company> result = ftem.createFullTextQuery( luceneQuery ).getResultList();
+		List<T> result = ftem.createFullTextQuery( luceneQuery ).getResultList();
 		em.close();
 		return result;
 	}
@@ -149,7 +146,7 @@ public class RestartChunkIT {
 	private long startJob() throws InterruptedException {
 		// org.hibernate.search.jsr352.MassIndexer
 		MassIndexer massIndexer = new MassIndexerImpl()
-				.addRootEntities( Company.class )
+				.addRootEntities( Company.class, Person.class )
 				.arrayCapacity( ARRAY_CAPACITY )
 				.entityManager( emf.createEntityManager() )
 				.jobOperator( jobOperator );
