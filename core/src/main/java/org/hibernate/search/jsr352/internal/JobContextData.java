@@ -19,6 +19,7 @@ import java.util.Set;
 public class JobContextData {
 
 	private Map<String, Class<?>> entityClazzMap;
+
 	public JobContextData(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
 		entityClazzes.forEach( clz -> entityClazzMap.put( clz.toString(), clz ) );

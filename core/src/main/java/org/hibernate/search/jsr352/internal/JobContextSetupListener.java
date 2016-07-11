@@ -14,29 +14,47 @@ import javax.batch.api.listener.AbstractJobListener;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.naming.InitialContext;
+import javax.naming.NoInitialContextException;
 import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
 
 import org.hibernate.search.jpa.Search;
+import org.jboss.logging.Logger;
 
 @Named
 public class JobContextSetupListener extends AbstractJobListener {
 
+	private static final Logger logger = Logger.getLogger( JobContextSetupListener.class );
 	private final JobContext jobContext;
-	private EntityManager em;
 
 	@Inject
 	@BatchProperty
 	private String rootEntities;
+	
+	@Inject
+	@BatchProperty
+	private String persistenceUnitName;
 
 	@Inject
-	public JobContextSetupListener(JobContext jobContext,
-			IndexingContext indexingContext) {
+	public JobContextSetupListener(JobContext jobContext) {
 		this.jobContext = jobContext;
-		this.em = indexingContext.getEntityManager();
 	}
 
 	@Override
 	public void beforeJob() throws Exception {
+		EntityManager em;
+		try {
+			String path = "java:comp/env/" + persistenceUnitName;
+			em = (EntityManager) InitialContext.doLookup( path );
+		} catch (NoInitialContextException e) {
+			// TODO: is it a right way to do this ?
+			logger.info("This is a Java SE environment, "
+					+ "using entity manager factory ..." );
+			em = Persistence.createEntityManagerFactory( persistenceUnitName )
+					.createEntityManager();
+		}
+
 		String[] entityNamesToIndex = rootEntities.split( "," );
 		Set<Class<?>> entityClazzesToIndex = new HashSet<>();
 		Set<Class<?>> indexedTypes = Search

@@ -22,7 +22,6 @@ import javax.batch.runtime.Metric;
 import javax.batch.runtime.StepExecution;
 import javax.inject.Inject;
 
-import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.hibernate.search.jsr352.test.entity.Company;
 import org.hibernate.search.jsr352.test.entity.CompanyManager;
 import org.hibernate.search.jsr352.test.util.BatchTestHelper;
@@ -59,9 +58,6 @@ public class MassIndexerIT {
 	private final Company COMPANY_1 = new Company( "Google" );
 	private final Company COMPANY_2 = new Company( "Red Hat" );
 	private final Company COMPANY_3 = new Company( "Microsoft" );
-
-	@Inject
-	private IndexingContext indexingContext;
 
 	private static final Logger logger = Logger.getLogger( MassIndexerIT.class );
 
@@ -178,7 +174,7 @@ public class MassIndexerIT {
 				.partitions( PARTITIONS )
 				.purgeAtStart( PURGE_AT_START )
 				.threads( THREADS )
-				.entityManager( companyManager.getEntityManager() )
+				.entityManagerProvider( "h2" )
 				.jobOperator( jobOperator )
 				.addRootEntities( Company.class );
 		return massIndexer;

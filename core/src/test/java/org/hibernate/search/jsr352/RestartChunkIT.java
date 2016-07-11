@@ -147,7 +147,7 @@ public class RestartChunkIT {
 		MassIndexer massIndexer = new MassIndexerImpl()
 				.addRootEntities( Company.class, Person.class )
 				.arrayCapacity( ARRAY_CAPACITY )
-				.entityManager( emf.createEntityManager() )
+				.entityManagerProvider( "h2" )
 				.jobOperator( jobOperator );
 		long executionId = massIndexer.start();
 

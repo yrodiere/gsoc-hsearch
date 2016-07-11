@@ -37,8 +37,15 @@ public interface MassIndexer {
 	 */
 	public MassIndexer checkpointFreq(int itemCount);
 
-	// TODO: should be reviewed
-	public MassIndexer entityManager(EntityManager entityManager);
+	/**
+	 * EntityManager will be assigned inside the mass indexer with the JNDI
+	 * lookup.
+	 *
+	 * @param persistenceUnitName the persistence unit name marked in the
+	 * persistence.xml file.
+	 * @return
+	 */
+	public MassIndexer entityManagerProvider(String persistenceUnitName);
 
 	public MassIndexer fetchSize(int fetchSize);
 
@@ -79,8 +86,6 @@ public interface MassIndexer {
 	public boolean isPurgeAtStart();
 
 	public Set<Class<?>> getRootEntities();
-
-	public EntityManager getEntityManager();
 
 	public JobOperator getJobOperator();
 }

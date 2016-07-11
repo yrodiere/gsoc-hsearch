@@ -12,6 +12,7 @@
         <listener ref="jobContextSetupListener">
             <properties>
                 <property name="rootEntities" value="#{jobParameters['rootEntities']}" />
+                <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
             </properties>
         </listener>
     </listeners>
@@ -22,12 +23,14 @@
                 <properties>
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
+                    <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
                 </properties>
             </reader>
             <processor ref="itemProcessor" />
             <writer ref="itemWriter">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
+                    <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
                 </properties>
             </writer>
             <checkpoint-algorithm ref="checkpointAlgorithm">

@@ -12,7 +12,11 @@ import javax.batch.api.BatchProperty;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.naming.InitialContext;
+import javax.naming.NoInitialContextException;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
@@ -30,7 +34,6 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
-import org.hibernate.search.jsr352.internal.IndexingContext;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
@@ -58,15 +61,21 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@Inject
 	@BatchProperty
 	private String entityName;
+
 	@Inject
 	@BatchProperty
 	private int maxResults;
+
+	@Inject
+	@BatchProperty
+	private String persistenceUnitName;
 
 	private Class<?> entityClazz;
 	private JobContext jobContext;
 	private Serializable checkpointId;
 
 	// read entities and produce Lucene work
+	private EntityManagerFactory emf = null;
 	private EntityManager em;
 	private Session session;
 	private StatelessSession ss;
@@ -76,9 +85,8 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private DocumentBuilderIndexedEntity docBuilder;
 
 	@Inject
-	public ItemReader(JobContext jobContext, IndexingContext indexingContext) {
+	public ItemReader(JobContext jobContext) {
 		this.jobContext = jobContext;
-		this.em = indexingContext.getEntityManager();
 	}
 
 	/**
@@ -124,6 +132,22 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		catch (Exception e) {
 			logger.error( e );
 		}
+		try {
+			em.close();
+			logger.info( "EntityManager closed" );
+		}
+		catch (Exception e) {
+			logger.error( e );
+		}
+		try {
+			if ( emf != null ) {
+				emf.close();
+				logger.info( "EntityManagerFactory closed" );
+			}
+		}
+		catch (Exception e) {
+			logger.error( e );
+		}
 	}
 
 	/**
@@ -141,6 +165,18 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		logger.infof( "open reader for entityName=%s", entityName );
 		entityClazz = ( (JobContextData) jobContext.getTransientUserData() )
 				.getIndexedType( entityName );
+
+		try {
+			String path = "java:comp/env/" + persistenceUnitName;
+			em = (EntityManager) InitialContext.doLookup( path );
+		}
+		catch (NoInitialContextException e) {
+			// TODO: is it a right way to do this ?
+			logger.info( "This is a Java SE environment, "
+					+ "using entity manager factory ..." );
+			emf = Persistence.createEntityManagerFactory( persistenceUnitName );
+			em = emf.createEntityManager();
+		}
 
 		session = em.unwrap( Session.class );
 		ss = session.getSessionFactory().openStatelessSession();

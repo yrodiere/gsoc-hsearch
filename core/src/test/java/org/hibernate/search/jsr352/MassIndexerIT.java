@@ -127,7 +127,7 @@ public class MassIndexerIT {
 		// org.hibernate.search.jsr352.MassIndexer
 		MassIndexer massIndexer = new MassIndexerImpl()
 				.addRootEntities( Company.class, Person.class )
-				.entityManager( emf.createEntityManager() )
+				.entityManagerProvider( "h2" )
 				.jobOperator( jobOperator );
 		long executionId = massIndexer.start();
 

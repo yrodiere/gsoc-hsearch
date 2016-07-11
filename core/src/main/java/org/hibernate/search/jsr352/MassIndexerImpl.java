@@ -1,5 +1,5 @@
 /*
- * Hibernate Search, full-text search for your domain model
+é * Hibernate Search, full-text search for your domain model
  *
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
@@ -14,12 +14,7 @@ import java.util.stream.Collectors;
 
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
-import javax.persistence.EntityManager;
 
-import org.hibernate.search.jsr352.internal.IndexingContext;
 
 public class MassIndexerImpl implements MassIndexer {
 
@@ -33,8 +28,8 @@ public class MassIndexerImpl implements MassIndexer {
 	private int partitionCapacity = 250;
 	private int partitions = 1;
 	private int threads = 1;
+	private String persistenceUnitName;
 	private final Set<Class<?>> rootEntities = new HashSet<>();
-	private EntityManager entityManager;
 	private JobOperator jobOperator;
 
 	private final String JOB_NAME = "mass-index";
@@ -59,7 +54,7 @@ public class MassIndexerImpl implements MassIndexer {
 	 */
 	@Override
 	public long start() {
-		registrerEntityManager( entityManager );
+//		registrerEntityManager( entityManager );
 
 		Properties jobParams = new Properties();
 		jobParams.setProperty( "fetchSize", String.valueOf( fetchSize ) );
@@ -72,6 +67,7 @@ public class MassIndexerImpl implements MassIndexer {
 		jobParams.setProperty( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
 		jobParams.setProperty( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
 		jobParams.setProperty( "itemCount", String.valueOf( itemCount ) );
+		jobParams.setProperty( "persistenceUnitName", persistenceUnitName );
 		jobParams.put( "rootEntities", getEntitiesToIndexAsString() );
 		// JobOperator jobOperator = BatchRuntime.getJobOperator();
 		Long executionId = jobOperator.start( JOB_NAME, jobParams );
@@ -184,8 +180,8 @@ public class MassIndexerImpl implements MassIndexer {
 	}
 
 	@Override
-	public MassIndexer entityManager(EntityManager entityManager) {
-		this.entityManager = entityManager;
+	public MassIndexer entityManagerProvider(String persistenceUnitName) {
+		this.persistenceUnitName = persistenceUnitName;
 		return this;
 	}
 
@@ -259,7 +255,7 @@ public class MassIndexerImpl implements MassIndexer {
 				.map( (e) -> e.getName() )
 				.collect( Collectors.joining( ", " ) );
 	}
-
+/*
 	@SuppressWarnings("unchecked")
 	private void registrerEntityManager(EntityManager entityManager) {
 		BeanManager bm = CDI.current().getBeanManager();
@@ -269,12 +265,7 @@ public class MassIndexerImpl implements MassIndexer {
 				.get( bean, bm.createCreationalContext( bean ) );
 		indexingContext.setEntityManager( entityManager );
 	}
-
-	@Override
-	public EntityManager getEntityManager() {
-		return entityManager;
-	}
-
+*/
 	@Override
 	public JobOperator getJobOperator() {
 		return jobOperator;
