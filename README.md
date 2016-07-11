@@ -7,11 +7,13 @@ execution and many other optimization features. This batch job should accept
 the entity type(s) to re-index as an input, load the relevant entities from the 
 database and rebuild the full-text index from these.
 
+
 ## Run
 
 You can install the project and see test cases using:
 
     mvn clean install
+
 
 ## Mechanism
 
@@ -19,27 +21,31 @@ This project redesigns the mass index job as a chunk-oriented, non-interactive,
 long-running, background execution process. Execution contains operational
 control (start/stop/restart), logging, checkpointing and parallelization.
 
-### Parallelization
+*  **Parallelization**. The core step execution _produceLuceneDoc_ runs in
+   parallel. It runs as multiple instance of the same step definition across
+   multiple threads, one partition per thread. The number of partitions equals
+   to the size of root entities selected before the job start.
 
-The core step execution _produceLuceneDoc_ runs in parallel. It runs as
-multiple instance of the same step definition across multiple threads, one
-partition per thread. The number of partitions equals to the size of root
-entities selected before the job start.
 
 ## Context data
 
 ### JobContextData
 
 `JobContextData` stands for context data in the job scope. It contains common
-information potentially used across the whole job. They’re
+information potentially used across the whole job.
 
-*  `entityClazzMap`, the map of type `Map<String, Class<?>>`, designed for all
-root entities. In JSR 352 standard, only property of type `String` can be put
-into the job properties. So, this map facilites the lookup of entity class
-type `Class<?> entityClazz`, matched to the entity class name
-`String entityName`.
+*  **entityClazzMap**, the map of key value pair (string, class-type),
+   designed for storage of name and class type of all root entities. In JSR 352
+   standard, only string values can be propagated using job properties, but
+   class types are frequently used too. So this map facilites this kind of
+   lookup.
+
+   ```java
+   Map<String, Class<?>> entityClazzMap;
+   ```
 
 Job context data is setup using the `JobContextSetupListener`.
+
 
 ### PartitionedContextData
 
