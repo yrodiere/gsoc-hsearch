@@ -71,11 +71,10 @@ public class RestartChunkIT {
 			em.persist( new Company( str[i % 5][0] ) );
 		}
 		for ( int i = 0; i < DB_PERS_ROWS; i++ ) {
-			em.persist( new Person(
-					String.valueOf( i ),
-					str[i % 5][1],
-					str[i % 5][2]
-			));
+			String firstName = str[i % 5][1];
+			String lastName = str[i % 5][2];
+			String id = String.format( "%2d%c", i, firstName.charAt( 0 ) );
+			em.persist( new Person( id, firstName, lastName ) );
 		}
 		em.getTransaction().commit();
 		em.close();
@@ -85,7 +84,7 @@ public class RestartChunkIT {
 	public void testJob() throws InterruptedException {
 
 		List<Company> companies = findClasses( Company.class, "name", "Google" );
-		List<Person> people = findClasses( Person.class, "firstName", "Sundar");
+		List<Person> people = findClasses( Person.class, "firstName", "Sundar" );
 		assertEquals( 0, companies.size() );
 		assertEquals( 0, people.size() );
 
@@ -205,7 +204,7 @@ public class RestartChunkIT {
 					}
 				}
 			}
-			Thread.sleep( 100 );
+			Thread.sleep( 200 );
 			tries++;
 			stepExecutions = jobOperator.getStepExecutions( executionId );
 			cursor = stepExecutions.iterator();
