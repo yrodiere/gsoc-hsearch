@@ -18,6 +18,7 @@ import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.StatelessSession;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.search.backend.AddLuceneWork;
@@ -146,9 +147,11 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		searchIntegrator = ContextHelper.getSearchintegrator( session );
 		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
 		docBuilder = entityIndexBinding.getDocumentBuilder();
+		String idName = docBuilder.getIdentifierName();
 
 		if ( checkpoint == null ) {
 			scroll = ss.createCriteria( entityClazz )
+					.addOrder( Order.asc( idName ) )
 					.setReadOnly( true )
 					.setCacheable( true )
 					.setFetchSize( 1 )
@@ -156,10 +159,10 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.scroll( ScrollMode.FORWARD_ONLY );
 		}
 		else {
-			String idName = docBuilder.getIdentifierName();
 			checkpointId = checkpoint;
 			scroll = ss.createCriteria( entityClazz )
 					.add( Restrictions.gt( idName, checkpointId ) )
+					.addOrder( Order.asc( idName ) )
 					.setReadOnly( true )
 					.setCacheable( true )
 					.setFetchSize( 1 )
