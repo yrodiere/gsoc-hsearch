@@ -47,32 +47,33 @@ information potentially used across the whole job.
 Job context data is setup using the `JobContextSetupListener`.
 
 
-### PartitionedContextData
+### StepContextData
 
-`PartitionedContextData` stands for partitioned step context data in the step
+`StepContextData` stands for partitioned step context data in the step
 _produceLuceneDoc_. Since the batch runtime maintains one context data per
-partition, this class contains information only belonging to its own partition
-progress, which are `chunkWorkCount` and `partitionWorkCount`.
+partition, the information contained in this class, `chunkWorkCount` and
+`partitionWorkCount`, only belong to its own partition progress.
 
 *  **chunkWorkCount** is the elementary work count of the current chunk. A
-   _chunk_ refers to items processed between checkpoints, which equals to
-   workflow
+   _chunk_ refers to items processed between checkpoints, which is equivalent
+   to work-flow :
 
    ``` 
    ( 1 item-read + 1 item-process ) * N + items-write * 1
    ```
 
-*  **partitionWorkCount** is the sum of all the `chunkWorkCount`s is this
-   partition. Partitioned context data is serializable. When job is stopped,
-   it will be stored as the persistent user data in the file system through
-   the batch runtime and re-used when job restarted. This mechanism make it
-   possible to maintain the work progress in attribute `partitionWorkCount`.  
+*  **partitionWorkCount** is the sum of all the `chunkWorkCount`s in this
+   partition. Step context data is serializable : when job is stopped, the data
+   will be stored as the persistent-user-data in the file system through
+   the batch runtime and re-used when job restarted. This mechanism makes it
+   possible to maintain the work progress of the previous execution in
+   attribute `partitionWorkCount`.  
 
 :warning: Please notice that **when method
 `PartitionCollector#collectPartitionData` is called, the value returned by
-the `PartitionedContextData` should be the `chunkWorkCount` and not
-`partitionWorkCount`.** This is because the analyzer in main thread will
-summarize itself all elementary count from each partition and compute the
-progress. If `partitionWorkCount` is given, then the progress wil be a
-double-summarized result, which is not desired.
+the `StepContextData` should be the chunk-work-count instead of
+partition-work-count. **This is because the analyzer in main thread will
+summarize all elementary count from each partition and compute the progress.
+If the given were partition-work-count, then the computed result will be a
+double-summarized progress, which is not desired.
 

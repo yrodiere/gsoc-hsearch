@@ -13,10 +13,7 @@ import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.naming.InitialContext;
-import javax.naming.NoInitialContextException;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
@@ -71,11 +68,10 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private String persistenceUnitName;
 
 	private Class<?> entityClazz;
-	private JobContext jobContext;
 	private Serializable checkpointId;
+	private final JobContext jobContext;
 
 	// read entities and produce Lucene work
-	private EntityManagerFactory emf = null;
 	private EntityManager em;
 	private Session session;
 	private StatelessSession ss;
@@ -139,15 +135,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		catch (Exception e) {
 			logger.error( e );
 		}
-		try {
-			if ( emf != null ) {
-				emf.close();
-				logger.info( "EntityManagerFactory closed" );
-			}
-		}
-		catch (Exception e) {
-			logger.error( e );
-		}
 	}
 
 	/**
@@ -162,21 +149,13 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	 */
 	@Override
 	public void open(Serializable checkpoint) throws Exception {
+
 		logger.infof( "open reader for entityName=%s", entityName );
 		entityClazz = ( (JobContextData) jobContext.getTransientUserData() )
 				.getIndexedType( entityName );
 
-		try {
-			String path = "java:comp/env/" + persistenceUnitName;
-			em = (EntityManager) InitialContext.doLookup( path );
-		}
-		catch (NoInitialContextException e) {
-			// TODO: is it a right way to do this ?
-			logger.info( "This is a Java SE environment, "
-					+ "using entity manager factory ..." );
-			emf = Persistence.createEntityManagerFactory( persistenceUnitName );
-			em = emf.createEntityManager();
-		}
+		String path = "java:comp/env/" + persistenceUnitName;
+		em = (EntityManager) InitialContext.doLookup( path );
 
 		session = em.unwrap( Session.class );
 		ss = session.getSessionFactory().openStatelessSession();

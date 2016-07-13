@@ -18,8 +18,12 @@ import javax.inject.Named;
 @Named
 public class PartitionCollector implements javax.batch.api.partition.PartitionCollector {
 
-	@Inject
 	private StepContext stepContext;
+
+	@Inject
+	public PartitionCollector(StepContext stepContext) {
+		this.stepContext = stepContext;
+	}
 
 	/**
 	 * The collectPartitionData method receives control periodically during
@@ -29,8 +33,7 @@ public class PartitionCollector implements javax.batch.api.partition.PartitionCo
 	 */
 	@Override
 	public Serializable collectPartitionData() throws Exception {
-		PartitionedContextData pData = (PartitionedContextData) stepContext
-				.getPersistentUserData();
-		return pData.getChunkWorkCount();
+		return ( (StepContextData) stepContext.getPersistentUserData() )
+				.getChunkWorkCount();
 	}
 }

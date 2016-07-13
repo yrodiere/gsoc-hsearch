@@ -15,9 +15,7 @@ import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.naming.InitialContext;
-import javax.naming.NoInitialContextException;
 import javax.persistence.EntityManager;
-import javax.persistence.Persistence;
 
 import org.hibernate.search.jpa.Search;
 import org.jboss.logging.Logger;
@@ -43,18 +41,11 @@ public class JobContextSetupListener extends AbstractJobListener {
 
 	@Override
 	public void beforeJob() throws Exception {
-		EntityManager em;
-		try {
-			String path = "java:comp/env/" + persistenceUnitName;
-			em = (EntityManager) InitialContext.doLookup( path );
-		} catch (NoInitialContextException e) {
-			// TODO: is it a right way to do this ?
-			logger.info("This is a Java SE environment, "
-					+ "using entity manager factory ..." );
-			em = Persistence.createEntityManagerFactory( persistenceUnitName )
-					.createEntityManager();
-		}
 
+		String path = "java:comp/env/" + persistenceUnitName;
+		logger.infof( "JNDI lookup for persistenceUnitName=\"%s\"...", path );
+
+		EntityManager em = (EntityManager) InitialContext.doLookup( path );
 		String[] entityNamesToIndex = rootEntities.split( "," );
 		Set<Class<?>> entityClazzesToIndex = new HashSet<>();
 		Set<Class<?>> indexedTypes = Search
@@ -62,6 +53,8 @@ public class JobContextSetupListener extends AbstractJobListener {
 				.getSearchFactory()
 				.getIndexedTypes();
 
+		// check the root entities selected do exist
+		// in full-text entity session
 		for ( String entityName : entityNamesToIndex ) {
 			for ( Class<?> indexedType : indexedTypes ) {
 				if ( indexedType.getName().equals( entityName.trim() ) ) {

@@ -15,17 +15,12 @@ import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.naming.InitialContext;
-import javax.naming.NoInitialContextException;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 
 import org.hibernate.search.backend.AddLuceneWork;
 import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.impl.StreamingOperationExecutor;
 import org.hibernate.search.backend.impl.StreamingOperationExecutorSelector;
-import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
-import org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.jpa.Search;
@@ -51,13 +46,8 @@ import org.jboss.logging.Logger;
 public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 
 	private final Boolean forceAsync = true;
-
-	// TODO: The monitor is not used for instance. It should be used later.
-	private MassIndexerProgressMonitor monitor;
-
-	private JobContext jobContext;
-	private StepContext stepContext;
-	private EntityManagerFactory emf = null;
+	private final JobContext jobContext;
+	private final StepContext stepContext;
 	private EntityManager em;
 	private EntityIndexBinding entityIndexBinding;
 
@@ -99,14 +89,6 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	@Override
 	public void close() throws Exception {
 		logger.info( "close() called." );
-		try {
-			if ( emf != null ) {
-				emf.close();
-			}
-		}
-		catch (Exception e) {
-			logger.error( e );
-		}
 	}
 
 	/**
@@ -116,21 +98,11 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	 */
 	@Override
 	public void open(Serializable checkpoint) throws Exception {
+
 		logger.info( "open(Seriliazable) called" );
+		String path = "java:comp/env/" + persistenceUnitName;
+		em = (EntityManager) InitialContext.doLookup( path );
 
-		try {
-			String path = "java:comp/env/" + persistenceUnitName;
-			em = (EntityManager) InitialContext.doLookup( path );
-		}
-		catch (NoInitialContextException e) {
-			// TODO: is it a right way to do this ?
-			logger.info( "This is a Java SE environment, "
-					+ "using entity manager factory ..." );
-			emf = Persistence.createEntityManagerFactory( persistenceUnitName );
-			em = emf.createEntityManager();
-		}
-
-		monitor = new SimpleIndexingProgressMonitor();
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		Class<?> entityClazz = jobData.getIndexedType( entityName );
 		entityIndexBinding = Search
@@ -138,8 +110,9 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 				.getSearchFactory()
 				.unwrap( SearchIntegrator.class )
 				.getIndexBinding( entityClazz );
+
 		if ( stepContext.getPersistentUserData() == null ) {
-			stepContext.setPersistentUserData( new PartitionedContextData() );
+			stepContext.setPersistentUserData( new StepContextData() );
 		}
 	}
 
@@ -160,8 +133,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 			executor.performStreamOperation(
 					addWork,
 					shardingStrategy,
-					// monitor,
-					null,
+					null, // monitor,
 					forceAsync );
 		}
 
@@ -172,8 +144,8 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 		}
 
 		// update work count
-		PartitionedContextData pData = (PartitionedContextData) stepContext.getPersistentUserData();
-		pData.setChunkWorkCount( items.size() );
-		stepContext.setPersistentUserData( pData );
+		StepContextData stepContextData = (StepContextData) stepContext.getPersistentUserData();
+		stepContextData.setChunkWorkCount( items.size() );
+		stepContext.setPersistentUserData( stepContextData );
 	}
 }

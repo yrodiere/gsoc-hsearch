@@ -47,6 +47,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@Inject
 	@BatchProperty
 	private int partitionCapacity;
+
 	@Inject
 	@BatchProperty
 	private int threads;
@@ -73,8 +74,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 			@Override
 			public int getThreads() {
-				logger.infof( "#getThreads(): %d threads.", TOTAL_PARTITIONS );// Math.min(TOTAL_PARTITIONS,
-																				// threads));
+				logger.infof( "#getThreads(): %d threads.", TOTAL_PARTITIONS );
 				return Math.min( TOTAL_PARTITIONS, threads );
 			}
 

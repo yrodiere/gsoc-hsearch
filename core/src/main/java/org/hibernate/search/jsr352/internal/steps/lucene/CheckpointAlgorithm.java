@@ -21,7 +21,8 @@ public class CheckpointAlgorithm implements javax.batch.api.chunk.CheckpointAlgo
 	@Inject
 	@BatchProperty
 	private int itemCount;
-	private StepContext stepContext;
+
+	private final StepContext stepContext;
 
 	@Inject
 	public CheckpointAlgorithm(StepContext stepContext) {
