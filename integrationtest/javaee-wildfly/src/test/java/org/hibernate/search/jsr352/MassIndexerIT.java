@@ -50,7 +50,7 @@ public class MassIndexerIT {
 	private final int PARTITIONS = 1;
 	private final int THREADS = 1;
 
-	private final long DB_COMP_ROWS = 100;
+	private final long DB_COMP_ROWS = 1000;
 
 	@Inject
 	private CompanyManager companyManager;
