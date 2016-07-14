@@ -26,7 +26,12 @@
                     <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
                 </properties>
             </reader>
-            <processor ref="itemProcessor" />
+            <processor ref="itemProcessor">
+                <properties>
+                    <property name="entityName" value="#{partitionPlan['entityName']}" />
+                    <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
+                </properties>
+            </processor>
             <writer ref="itemWriter">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />

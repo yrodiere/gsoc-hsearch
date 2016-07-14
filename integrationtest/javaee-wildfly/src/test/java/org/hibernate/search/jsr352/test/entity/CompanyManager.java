@@ -27,10 +27,8 @@ public class CompanyManager {
 	@PersistenceContext(name = "h2")
 	private EntityManager em;
 
-	public void persist(Iterable<Company> companies) {
-		for ( Company company : companies ) {
-			em.persist( company );
-		}
+	public void persist(Company company) {
+		em.persist( company );
 	}
 
 	public List<Company> findCompanyByName(String name) {

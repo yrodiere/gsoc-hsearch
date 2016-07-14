@@ -21,18 +21,8 @@ import org.hibernate.Session;
 import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.engine.spi.SessionImplementor;
-import org.hibernate.search.backend.AddLuceneWork;
-import org.hibernate.search.bridge.TwoWayFieldBridge;
-import org.hibernate.search.bridge.spi.ConversionContext;
-import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
-import org.hibernate.search.engine.impl.HibernateSessionLoadingInitializer;
-import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
-import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
-import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
-import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
 
 /**
@@ -76,9 +66,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private Session session;
 	private StatelessSession ss;
 	private ScrollableResults scroll;
-	private ExtendedSearchIntegrator searchIntegrator;
-	private EntityIndexBinding entityIndexBinding;
-	private DocumentBuilderIndexedEntity docBuilder;
 
 	@Inject
 	public ItemReader(JobContext jobContext) {
@@ -128,13 +115,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		catch (Exception e) {
 			logger.error( e );
 		}
-		try {
-			em.close();
-			logger.info( "EntityManager closed" );
-		}
-		catch (Exception e) {
-			logger.error( e );
-		}
 	}
 
 	/**
@@ -159,17 +139,19 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 		session = em.unwrap( Session.class );
 		ss = session.getSessionFactory().openStatelessSession();
-		searchIntegrator = ContextHelper.getSearchintegrator( session );
-		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
-		docBuilder = entityIndexBinding.getDocumentBuilder();
-		String idName = docBuilder.getIdentifierName();
+		String idName = ContextHelper
+				.getSearchintegrator( session )
+				.getIndexBindings()
+				.get( entityClazz )
+				.getDocumentBuilder()
+				.getIdentifierName();
 
 		if ( checkpoint == null ) {
 			scroll = ss.createCriteria( entityClazz )
 					.addOrder( Order.asc( idName ) )
 					.setReadOnly( true )
 					.setCacheable( true )
-					.setFetchSize( 1 )
+					.setFetchSize( 1000 )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
 		}
@@ -180,7 +162,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.addOrder( Order.asc( idName ) )
 					.setReadOnly( true )
 					.setCacheable( true )
-					.setFetchSize( 1 )
+					.setFetchSize( 1000 )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
 		}
@@ -196,82 +178,15 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	public Object readItem() throws Exception {
 		logger.info( "Reading item ..." );
 		Object entity = null;
-		AddLuceneWork addWork = null;
 		if ( scroll.next() ) {
 			entity = scroll.get( 0 );
 			checkpointId = (Serializable) em.getEntityManagerFactory()
 					.getPersistenceUnitUtil()
 					.getIdentifier( entity );
-			addWork = processItem( entity );
 		}
 		else {
 			logger.info( "no more result. read ends." );
 		}
-		return addWork;
-	}
-
-	/**
-	 * Process an input item into an output item. Here, the input item is an
-	 * array of IDs and the output item is a list of Lucene works. During the
-	 * process, entities are found by an injected entity manager, then they are
-	 * used for building the correspondent Lucene works.
-	 *
-	 * @param item the input item, an array of IDs
-	 * @return a list of Lucene works
-	 * @throws Exception thrown for any errors.
-	 */
-	public AddLuceneWork processItem(Object item) throws Exception {
-		AddLuceneWork addWork = buildAddLuceneWork( item, entityClazz );
-		return addWork;
-	}
-
-	/**
-	 * Build addLuceneWork using input entity. This method is inspired by the
-	 * current mass indexer implementation.
-	 *
-	 * @param entity selected entity, obtained from JPA entity manager. It is
-	 * used to build Lucene work.
-	 * @param entityClazz the class type of selected entity
-	 * @return an addLuceneWork
-	 */
-	private AddLuceneWork buildAddLuceneWork(Object entity,
-			Class<?> entityClazz) {
-
-		// TODO: tenant ID should not be null
-		// Or may it be fine to be null? Gunnar's integration test in Hibernate
-		// Search: MassIndexingTimeoutIT does not mention the tenant ID neither
-		// (The tenant ID is not included mass indexer setup in the
-		// ConcertManager)
-		String tenantId = null;
-		ConversionContext conversionContext = new ContextualExceptionBridgeHelper();
-		final InstanceInitializer sessionInitializer = new HibernateSessionLoadingInitializer(
-				(SessionImplementor) session );
-
-		// Serializable id = session.getIdentifier(entity);
-		Serializable id = (Serializable) em.getEntityManagerFactory()
-				.getPersistenceUnitUtil()
-				.getIdentifier( entity );
-		TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
-		conversionContext.pushProperty( docBuilder.getIdKeywordName() );
-		String idInString = null;
-		try {
-			idInString = conversionContext
-					.setClass( entityClazz )
-					.twoWayConversionContext( idBridge )
-					.objectToString( id );
-			logger.infof( "idInString=%s", idInString );
-		}
-		finally {
-			conversionContext.popProperty();
-		}
-		AddLuceneWork addWork = docBuilder.createAddWork(
-				tenantId,
-				entityClazz,
-				entity,
-				id,
-				idInString,
-				sessionInitializer,
-				conversionContext );
-		return addWork;
+		return entity;
 	}
 }

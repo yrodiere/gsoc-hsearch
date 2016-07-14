@@ -35,7 +35,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- *
  * @author Mincong HUANG
  */
 @RunWith(Arquillian.class)
@@ -51,13 +50,18 @@ public class MassIndexerIT {
 	private final int PARTITIONS = 1;
 	private final int THREADS = 1;
 
-	private final long DB_COMP_ROWS = 3;
+	private final long DB_COMP_ROWS = 100;
 
 	@Inject
 	private CompanyManager companyManager;
-	private final Company COMPANY_1 = new Company( "Google" );
-	private final Company COMPANY_2 = new Company( "Red Hat" );
-	private final Company COMPANY_3 = new Company( "Microsoft" );
+
+	private final String[][] str = new String[][]{
+			{ "Google", "Sundar", "Pichai" },
+			{ "Red Hat", "James", "M. Whitehurst" },
+			{ "Microsoft", "Satya", "Nadella" },
+			{ "Facebook", "Mark", "Zuckerberg" },
+			{ "Amazon", "Jeff", "Bezos" }
+	};
 
 	private static final Logger logger = Logger.getLogger( MassIndexerIT.class );
 
@@ -78,35 +82,30 @@ public class MassIndexerIT {
 	@Test
 	public void testJob() throws InterruptedException {
 
-		//
 		// Before the job start, insert data and
 		// make sure search result is empty without index
-		//
-		Company[] _companies = new Company[]{ COMPANY_1, COMPANY_2, COMPANY_3 };
-		companyManager.persist( Arrays.asList( _companies ) );
+		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
+			companyManager.persist( new Company( str[i % 5][0] ) );
+		}
 		final String keyword = "google";
 		List<Company> companies = companyManager.findCompanyByName( keyword );
 		assertEquals( 0, companies.size() );
 
-		//
 		// start job and test it
 		// with different metrics obtained
-		//
 		JobOperator jobOperator = BatchRuntime.getJobOperator();
 		MassIndexer massIndexer = createAndInitJob( jobOperator );
 		long executionId = massIndexer.start();
 
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
 		jobExecution = BatchTestHelper.keepTestAlive( jobExecution );
-
-		List<StepExecution> stepExecutions = jobOperator.getStepExecutions( executionId );
-		for ( StepExecution stepExecution : stepExecutions ) {
-			testBatchStatus( stepExecution );
-		}
+		jobOperator.getStepExecutions( executionId )
+				.forEach( stepExec -> testBatchStatus( stepExec ) );
 		assertEquals( jobExecution.getBatchStatus(), BatchStatus.COMPLETED );
 		logger.info( "Mass indexing finished" );
+
 		companies = companyManager.findCompanyByName( keyword );
-		assertEquals( 1, companies.size() );
+		assertEquals( DB_COMP_ROWS / 5, companies.size() );
 	}
 
 	private void testBatchStatus(StepExecution stepExecution) {
@@ -115,7 +114,8 @@ public class MassIndexerIT {
 
 			case "loadId":
 				long expectedEntityCount = DB_COMP_ROWS;
-				// assertEquals( expectedEntityCount, indexingContext.getEntityCount() );
+				// assertEquals( expectedEntityCount,
+				// indexingContext.getEntityCount() );
 				assertEquals( BatchStatus.COMPLETED, batchStatus );
 				break;
 

@@ -72,7 +72,7 @@ partition, the information contained in this class, `chunkWorkCount` and
 :warning: Please notice that **when method
 `PartitionCollector#collectPartitionData` is called, the value returned by
 the `StepContextData` should be the chunk-work-count instead of
-partition-work-count. **This is because the analyzer in main thread will
+partition-work-count.** This is because the analyzer in main thread will
 summarize all elementary count from each partition and compute the progress.
 If the given were partition-work-count, then the computed result will be a
 double-summarized progress, which is not desired.
