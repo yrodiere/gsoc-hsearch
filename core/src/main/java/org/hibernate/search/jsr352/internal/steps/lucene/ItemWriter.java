@@ -40,7 +40,7 @@ import org.jboss.logging.Logger;
  * indexing progress and show it in the console.
  * </ul>
  *
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Named
 public class ItemWriter implements javax.batch.api.chunk.ItemWriter {

@@ -36,7 +36,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Ignore("Issue #96 EntityManager and TX cannot be handled correctly in Java SE")
 public class RestartChunkIT {

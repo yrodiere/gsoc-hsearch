@@ -13,7 +13,7 @@ import javax.persistence.EntityManager;
 
 /**
  *
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 public interface MassIndexer {
 

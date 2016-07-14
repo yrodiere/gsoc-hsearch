@@ -20,7 +20,7 @@ import java.io.Serializable;
  * chunkWorkCount.</li>
  *
  * @author Gunnar Morling
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 public class StepContextData implements Serializable {
 

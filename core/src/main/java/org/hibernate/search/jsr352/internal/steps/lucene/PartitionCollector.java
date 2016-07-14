@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 /**
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Named
 public class PartitionCollector implements javax.batch.api.partition.PartitionCollector {

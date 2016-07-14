@@ -35,7 +35,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @RunWith(Arquillian.class)
 public class MassIndexerIT {

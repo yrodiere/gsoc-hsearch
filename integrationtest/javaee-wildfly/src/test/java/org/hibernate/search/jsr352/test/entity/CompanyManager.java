@@ -19,7 +19,7 @@ import org.hibernate.search.jpa.Search;
 
 /**
  *
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Stateless
 public class CompanyManager {

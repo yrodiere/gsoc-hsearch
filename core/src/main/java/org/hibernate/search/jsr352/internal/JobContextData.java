@@ -14,7 +14,7 @@ import java.util.Set;
  * Container for data shared across the entire batch job.
  *
  * @author Gunnar Morling
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 public class JobContextData {
 

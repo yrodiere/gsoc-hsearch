@@ -17,7 +17,7 @@ import org.hibernate.search.annotations.Indexed;
 /**
  * The persistent class for the address database table.
  * 
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Entity
 @Indexed

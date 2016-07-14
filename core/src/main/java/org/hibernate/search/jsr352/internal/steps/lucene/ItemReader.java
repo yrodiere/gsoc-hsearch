@@ -38,7 +38,7 @@ import org.jboss.logging.Logger;
  * waste. For more detail about the entity process, please check {@code
  * BatchItemProcessor}.
  *
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Named
 public class ItemReader implements javax.batch.api.chunk.ItemReader {

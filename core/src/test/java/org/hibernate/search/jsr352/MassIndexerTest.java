@@ -18,7 +18,7 @@ import org.junit.Test;
 
 /**
  *
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 public class MassIndexerTest {
 

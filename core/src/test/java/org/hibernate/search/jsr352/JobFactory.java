@@ -11,7 +11,7 @@ import javax.batch.runtime.BatchRuntime;
 
 /**
  *
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 public class JobFactory {
 

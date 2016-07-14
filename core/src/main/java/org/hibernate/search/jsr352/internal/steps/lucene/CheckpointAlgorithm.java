@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 /**
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Named
 public class CheckpointAlgorithm implements javax.batch.api.chunk.CheckpointAlgorithm {

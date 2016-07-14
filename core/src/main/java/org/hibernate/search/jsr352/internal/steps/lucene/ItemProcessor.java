@@ -32,7 +32,7 @@ import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
 
 /**
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Named
 public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {

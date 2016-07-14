@@ -18,7 +18,7 @@ import org.hibernate.search.annotations.Indexed;
 
 /**
  *
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Entity
 @Indexed

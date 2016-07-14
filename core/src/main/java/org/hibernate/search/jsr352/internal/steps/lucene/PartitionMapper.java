@@ -35,7 +35,7 @@ import org.jboss.logging.Logger;
  * smaller, depending on the number of partitions.
  * </ul>
  *
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Named
 public class PartitionMapper implements javax.batch.api.partition.PartitionMapper {

@@ -13,7 +13,7 @@ import java.util.Date;
 /**
  * The persistent class for the stock database table.
  *
- * @author Mincong HUANG
+ * @author Mincong Huang
  */
 @Entity
 @NamedQuery(name = "Stock.findAll", query = "SELECT s FROM Stock s")
