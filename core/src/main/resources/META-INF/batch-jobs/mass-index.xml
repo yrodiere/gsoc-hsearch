@@ -23,6 +23,8 @@
                 <properties>
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
+                    <property name="partitionNumber" value="#{partitionPlan['partitionNumber']}" />
+                    <property name="partitionSize" value="#{partitionPlan['partitionSize']}" />
                     <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
                 </properties>
             </reader>

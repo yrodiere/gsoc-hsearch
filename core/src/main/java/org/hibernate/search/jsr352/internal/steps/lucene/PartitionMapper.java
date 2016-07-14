@@ -62,7 +62,8 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		Set<String> entityNameSet = jobData.getEntityNames();
-		final int TOTAL_PARTITIONS = entityNameSet.size();
+		int partitionSize = 2;
+		final int TOTAL_PARTITIONS = entityNameSet.size() * partitionSize;
 
 		return new PartitionPlanImpl() {
 
@@ -75,7 +76,8 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			@Override
 			public int getThreads() {
 				logger.infof( "#getThreads(): %d threads.", TOTAL_PARTITIONS );
-				return Math.min( TOTAL_PARTITIONS, threads );
+//				return Math.min( TOTAL_PARTITIONS, threads );
+				return TOTAL_PARTITIONS;
 			}
 
 			@Override
@@ -83,9 +85,11 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				Properties[] props = new Properties[TOTAL_PARTITIONS];
 				String[] entityNameArr = entityNameSet.toArray( new String[TOTAL_PARTITIONS] );
 				for ( int i = 0; i < props.length; i++ ) {
-					String entityName = entityNameArr[i];
+					String entityName = entityNameArr[i / partitionSize];
 					props[i] = new Properties();
 					props[i].setProperty( "entityName", entityName );
+					props[i].setProperty( "partitionNumber", String.valueOf( i % partitionSize ) );
+					props[i].setProperty( "partitionSize", String.valueOf( partitionSize ) );
 				}
 				return props;
 			}

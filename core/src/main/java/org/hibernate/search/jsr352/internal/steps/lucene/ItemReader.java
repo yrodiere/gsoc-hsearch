@@ -19,6 +19,7 @@ import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.StatelessSession;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
@@ -53,6 +54,17 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@BatchProperty
 	private int maxResults;
 
+	// The partition number i of target entity, starting from 0.
+	// e.g. partition number 0, 1, 2 ...
+	@Inject
+	@BatchProperty(name = "partitionNumber")
+	private int offset;
+
+	// The size of partitions associated with the target entity
+	@Inject
+	@BatchProperty(name = "partitionSize")
+	private int interval;
+
 	@Inject
 	@BatchProperty
 	private String persistenceUnitName;
@@ -66,6 +78,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private Session session;
 	private StatelessSession ss;
 	private ScrollableResults scroll;
+	private boolean hasMoreItem = true;
 
 	@Inject
 	public ItemReader(JobContext jobContext) {
@@ -154,17 +167,19 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.setFetchSize( 1000 )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
+			hasMoreItem = scroll.scroll( 1 + offset );
 		}
 		else {
 			checkpointId = checkpoint;
 			scroll = ss.createCriteria( entityClazz )
-					.add( Restrictions.gt( idName, checkpointId ) )
+					.add( Restrictions.ge( idName, checkpointId ) )
 					.addOrder( Order.asc( idName ) )
 					.setReadOnly( true )
 					.setCacheable( true )
 					.setFetchSize( 1000 )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
+			hasMoreItem = scroll.scroll( interval );
 		}
 	}
 
@@ -178,11 +193,13 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	public Object readItem() throws Exception {
 		logger.info( "Reading item ..." );
 		Object entity = null;
-		if ( scroll.next() ) {
+
+		if ( hasMoreItem ) {
 			entity = scroll.get( 0 );
 			checkpointId = (Serializable) em.getEntityManagerFactory()
 					.getPersistenceUnitUtil()
 					.getIdentifier( entity );
+			hasMoreItem = scroll.scroll( interval );
 		}
 		else {
 			logger.info( "no more result. read ends." );
