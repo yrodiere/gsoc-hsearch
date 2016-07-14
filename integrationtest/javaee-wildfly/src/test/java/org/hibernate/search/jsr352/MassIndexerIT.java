@@ -9,7 +9,6 @@ package org.hibernate.search.jsr352;
 import static org.junit.Assert.assertEquals;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;

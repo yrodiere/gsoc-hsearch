@@ -74,7 +74,7 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 	 * @throws Exception thrown for any errors.
 	 */
 	public Object processItem(Object item) throws Exception {
-		logger.info( "processing item ..." );
+		logger.debug( "processing item ..." );
 		if ( !isSetup ) {
 			setup();
 			isSetup = true;

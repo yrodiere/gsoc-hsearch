@@ -19,7 +19,6 @@ import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.StatelessSession;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
@@ -191,7 +190,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	 */
 	@Override
 	public Object readItem() throws Exception {
-		logger.info( "Reading item ..." );
+		logger.debug( "Reading item ..." );
 		Object entity = null;
 
 		if ( hasMoreItem ) {

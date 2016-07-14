@@ -7,7 +7,6 @@
 package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.util.Properties;
-import java.util.Set;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.api.partition.PartitionPlan;
@@ -15,7 +14,13 @@ import javax.batch.api.partition.PartitionPlanImpl;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.persistence.EntityManager;
 
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
+import org.hibernate.criterion.Projections;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
@@ -53,6 +58,10 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	private int threads;
 
 	@Inject
+	@BatchProperty
+	private String persistenceUnitName;
+
+	@Inject
 	public PartitionMapper(JobContext jobContext) {
 		this.jobContext = jobContext;
 	}
@@ -61,10 +70,20 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	public PartitionPlan mapPartitions() throws Exception {
 
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		Set<String> entityNameSet = jobData.getEntityNames();
-		int partitionSize = 2;
-		final int TOTAL_PARTITIONS = entityNameSet.size() * partitionSize;
+		EntityMetadata[] metas = getEntityMetadatas( jobData.getEntityNameArray() );
+		final int TOTAL_PARTITIONS = getPartitionCount( metas );
 
+		Properties[] props = new Properties[TOTAL_PARTITIONS];
+		for ( int i = 0; i < metas.length; i++ ) {
+			for ( int j = i; j < i + metas[i].partitionCount; j++ ) {
+				props[j] = new Properties();
+				int remainder = j % metas[i].partitionCount;
+				props[j].setProperty( "entityName", metas[i].entityName );
+				props[j].setProperty( "partitionNumber", String.valueOf( remainder ) );
+				props[j].setProperty( "partitionSize", String.valueOf( metas[i].partitionCount ) );
+			}
+		}
+		
 		return new PartitionPlanImpl() {
 
 			@Override
@@ -76,23 +95,66 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			@Override
 			public int getThreads() {
 				logger.infof( "#getThreads(): %d threads.", TOTAL_PARTITIONS );
-//				return Math.min( TOTAL_PARTITIONS, threads );
+				// return Math.min( TOTAL_PARTITIONS, threads );
 				return TOTAL_PARTITIONS;
 			}
 
 			@Override
 			public Properties[] getPartitionProperties() {
-				Properties[] props = new Properties[TOTAL_PARTITIONS];
-				String[] entityNameArr = entityNameSet.toArray( new String[TOTAL_PARTITIONS] );
-				for ( int i = 0; i < props.length; i++ ) {
-					String entityName = entityNameArr[i / partitionSize];
-					props[i] = new Properties();
-					props[i].setProperty( "entityName", entityName );
-					props[i].setProperty( "partitionNumber", String.valueOf( i % partitionSize ) );
-					props[i].setProperty( "partitionSize", String.valueOf( partitionSize ) );
-				}
+				
 				return props;
 			}
 		};
+	}
+
+	private int getPartitionCount(EntityMetadata[] metadatas) {
+		int partitionCount = 0;
+		for (EntityMetadata meta : metadatas ) {
+			partitionCount += meta.partitionCount;
+		}
+		return partitionCount;
+	}
+
+	/**
+	 * Get an array of entity meta-data. This class is an inner class of
+	 * PartitionMapper.
+	 *
+	 * @param entityNames an array of entity names
+	 * @return an array of entity meta-data
+	 * @throws NamingException if the target path is not found in the JNDI look
+	 * up.
+	 * @throws ClassNotFoundException if the entity type not found
+	 * @throws HibernateException 
+	 */
+	private EntityMetadata[] getEntityMetadatas(String[] entityNames)
+			throws NamingException, HibernateException, ClassNotFoundException {
+
+		EntityMetadata[] metas = new EntityMetadata[entityNames.length];
+		String path = "java:comp/env/" + persistenceUnitName;
+		EntityManager em = (EntityManager) InitialContext.doLookup( path );
+		Session session = em.unwrap( Session.class );
+		JobContextData jobData = ( JobContextData ) jobContext.getTransientUserData();
+
+		for ( int i = 0; i < entityNames.length; i++ ) {
+			long rowCount = (long) session
+					.createCriteria( jobData.getIndexedType( entityNames[i] ) )
+					.setProjection( Projections.rowCount() )
+					.setCacheable( false )
+					.uniqueResult();
+			logger.infof( "rowCount=%d, partitionCapacity=%d",
+					rowCount,
+					partitionCapacity );
+			metas[i] = new EntityMetadata();
+			metas[i].entityName = entityNames[i];
+			metas[i].partitionCount =
+					(int) Math.ceil( (double) rowCount / partitionCapacity );
+		}
+		return metas;
+	}
+
+	private class EntityMetadata {
+
+		String entityName;
+		int partitionCount;
 	}
 }

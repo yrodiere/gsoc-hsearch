@@ -29,6 +29,11 @@ public class JobContextData {
 		return entityClazzMap.keySet();
 	}
 
+	public String[] getEntityNameArray() {
+		Set<String> keySet = entityClazzMap.keySet();
+		return keySet.toArray( new String[keySet.size()] );
+	}
+
 	public Class<?> getIndexedType(String entityName) throws ClassNotFoundException {
 		Class<?> clazz = entityClazzMap.get( entityName );
 		if ( clazz == null ) {
