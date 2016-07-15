@@ -49,9 +49,9 @@
         <partition>
             <mapper ref="partitionMapper">
                 <properties>
+                    <property name="maxThreads" value="#{jobParameters['threads']}?:8;" />
                     <property name="partitionCapacity" value="#{jobParameters['partitionCapacity']}?:500;" />
                     <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
-                    <property name="threads" value="#{jobParameters['threads']}?:2;" />
                 </properties>
             </mapper>
             <collector ref="partitionCollector" />

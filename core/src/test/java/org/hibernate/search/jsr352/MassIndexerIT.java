@@ -47,14 +47,8 @@ public class MassIndexerIT {
 
 	// mass indexer configuration values
 	private final boolean OPTIMIZE_AFTER_PURGE = true;
-	private final boolean OPTIMIZE_AT_END = true;
 	private final boolean PURGE_AT_START = true;
 	private final int ARRAY_CAPACITY = 500;
-	private final int FETCH_SIZE = 100000;
-	private final int MAX_RESULTS = 200 * 1000;
-	private final int PARTITION_CAPACITY = 250;
-	private final int PARTITIONS = 1;
-	private final int THREADS = 1;
 
 	// example dataset
 	private final long DB_COMP_ROWS = 3;

@@ -26,8 +26,7 @@ public class MassIndexerImpl implements MassIndexer {
 	private int itemCount = 3;
 	private int maxResults = 1000 * 1000;
 	private int partitionCapacity = 250;
-	private int partitions = 1;
-	private int threads = 1;
+	private int maxThreads = 1;
 	private String persistenceUnitName;
 	private final Set<Class<?>> rootEntities = new HashSet<>();
 	private JobOperator jobOperator;
@@ -57,17 +56,16 @@ public class MassIndexerImpl implements MassIndexer {
 //		registrerEntityManager( entityManager );
 
 		Properties jobParams = new Properties();
-		jobParams.setProperty( "fetchSize", String.valueOf( fetchSize ) );
 		jobParams.setProperty( "arrayCapacity", String.valueOf( arrayCapacity ) );
+		jobParams.setProperty( "fetchSize", String.valueOf( fetchSize ) );
+		jobParams.setProperty( "itemCount", String.valueOf( itemCount ) );
 		jobParams.setProperty( "maxResults", String.valueOf( maxResults ) );
-		jobParams.setProperty( "partitionCapacity", String.valueOf( partitionCapacity ) );
-		jobParams.setProperty( "partitions", String.valueOf( partitions ) );
-		jobParams.setProperty( "threads", String.valueOf( threads ) );
-		jobParams.setProperty( "purgeAtStart", String.valueOf( purgeAtStart ) );
+		jobParams.setProperty( "maxThreads", String.valueOf( maxThreads ) );
 		jobParams.setProperty( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
 		jobParams.setProperty( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
-		jobParams.setProperty( "itemCount", String.valueOf( itemCount ) );
+		jobParams.setProperty( "partitionCapacity", String.valueOf( partitionCapacity ) );
 		jobParams.setProperty( "persistenceUnitName", persistenceUnitName );
+		jobParams.setProperty( "purgeAtStart", String.valueOf( purgeAtStart ) );
 		jobParams.put( "rootEntities", getEntitiesToIndexAsString() );
 		// JobOperator jobOperator = BatchRuntime.getJobOperator();
 		Long executionId = jobOperator.start( JOB_NAME, jobParams );
@@ -130,45 +128,29 @@ public class MassIndexerImpl implements MassIndexer {
 	}
 
 	@Override
-	public MassIndexer partitions(int partitions) {
-		if ( partitions < 1 ) {
-			throw new IllegalArgumentException(
-					"partitions must be at least 1" );
-		}
-		this.partitions = partitions;
-		return this;
-	}
-
-	@Override
 	public MassIndexer purgeAtStart(boolean purgeAtStart) {
 		this.purgeAtStart = purgeAtStart;
 		return this;
 	}
 
 	@Override
-	public MassIndexer threads(int threads) {
-		if ( threads < 1 ) {
+	public MassIndexer maxThreads(int maxThreads) {
+		if ( maxThreads < 1 ) {
 			throw new IllegalArgumentException( "threads must be at least 1." );
 		}
-		this.threads = threads;
-		return this;
-	}
-
-	@Override
-	public MassIndexer addRootEntities(Set<Class<?>> rootEntities) {
-		if ( rootEntities == null ) {
-			throw new NullPointerException( "rootEntities cannot be NULL." );
-		}
-		else if ( rootEntities.isEmpty() ) {
-			throw new NullPointerException(
-					"rootEntities must have at least 1 element." );
-		}
-		this.rootEntities.addAll( rootEntities );
+		this.maxThreads = maxThreads;
 		return this;
 	}
 
 	@Override
 	public MassIndexer addRootEntities(Class<?>... rootEntities) {
+		if ( rootEntities == null ) {
+			throw new NullPointerException( "rootEntities cannot be NULL." );
+		}
+		else if ( rootEntities.length == 0 ) {
+			throw new IllegalStateException(
+					"rootEntities must have at least 1 element." );
+		}
 		this.rootEntities.addAll( Arrays.asList( rootEntities ) );
 		return this;
 	}
@@ -227,13 +209,8 @@ public class MassIndexerImpl implements MassIndexer {
 	}
 
 	@Override
-	public int getPartitions() {
-		return partitions;
-	}
-
-	@Override
-	public int getThreads() {
-		return threads;
+	public int getMaxThreads() {
+		return maxThreads;
 	}
 
 	public String getJOB_NAME() {
@@ -253,19 +230,9 @@ public class MassIndexerImpl implements MassIndexer {
 	private String getEntitiesToIndexAsString() {
 		return rootEntities.stream()
 				.map( (e) -> e.getName() )
-				.collect( Collectors.joining( ", " ) );
+				.collect( Collectors.joining( "," ) );
 	}
-/*
-	@SuppressWarnings("unchecked")
-	private void registrerEntityManager(EntityManager entityManager) {
-		BeanManager bm = CDI.current().getBeanManager();
-		Bean<IndexingContext> bean = (Bean<IndexingContext>) bm
-				.resolve( bm.getBeans( IndexingContext.class ) );
-		IndexingContext indexingContext = bm.getContext( bean.getScope() )
-				.get( bean, bm.createCreationalContext( bean ) );
-		indexingContext.setEntityManager( entityManager );
-	}
-*/
+
 	@Override
 	public JobOperator getJobOperator() {
 		return jobOperator;

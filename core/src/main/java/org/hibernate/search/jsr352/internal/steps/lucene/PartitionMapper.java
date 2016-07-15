@@ -55,7 +55,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	@Inject
 	@BatchProperty
-	private int threads;
+	private int maxThreads;
 
 	@Inject
 	@BatchProperty
@@ -83,7 +83,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				props[j].setProperty( "partitionSize", String.valueOf( metas[i].partitionCount ) );
 			}
 		}
-		
+
 		return new PartitionPlanImpl() {
 
 			@Override
@@ -94,14 +94,13 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 			@Override
 			public int getThreads() {
-				logger.infof( "#getThreads(): %d threads.", TOTAL_PARTITIONS );
-				// return Math.min( TOTAL_PARTITIONS, threads );
-				return TOTAL_PARTITIONS;
+				int threads = Math.min( maxThreads, TOTAL_PARTITIONS );
+				logger.infof( "#getThreads(): %d threads.", threads );
+				return threads;
 			}
 
 			@Override
 			public Properties[] getPartitionProperties() {
-				
 				return props;
 			}
 		};
@@ -109,7 +108,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	private int getPartitionCount(EntityMetadata[] metadatas) {
 		int partitionCount = 0;
-		for (EntityMetadata meta : metadatas ) {
+		for ( EntityMetadata meta : metadatas ) {
 			partitionCount += meta.partitionCount;
 		}
 		return partitionCount;
@@ -124,7 +123,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	 * @throws NamingException if the target path is not found in the JNDI look
 	 * up.
 	 * @throws ClassNotFoundException if the entity type not found
-	 * @throws HibernateException 
+	 * @throws HibernateException
 	 */
 	private EntityMetadata[] getEntityMetadatas(String[] entityNames)
 			throws NamingException, HibernateException, ClassNotFoundException {
@@ -133,7 +132,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		String path = "java:comp/env/" + persistenceUnitName;
 		EntityManager em = (EntityManager) InitialContext.doLookup( path );
 		Session session = em.unwrap( Session.class );
-		JobContextData jobData = ( JobContextData ) jobContext.getTransientUserData();
+		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 
 		for ( int i = 0; i < entityNames.length; i++ ) {
 			long rowCount = (long) session
@@ -146,8 +145,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 					partitionCapacity );
 			metas[i] = new EntityMetadata();
 			metas[i].entityName = entityNames[i];
-			metas[i].partitionCount =
-					(int) Math.ceil( (double) rowCount / partitionCapacity );
+			metas[i].partitionCount = (int) Math.ceil( (double) rowCount / partitionCapacity );
 		}
 		return metas;
 	}

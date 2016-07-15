@@ -45,9 +45,8 @@ public class MassIndexerIT {
 	private final int ARRAY_CAPACITY = 500;
 	private final int FETCH_SIZE = 100000;
 	private final int MAX_RESULTS = 200 * 1000;
+	private final int MAX_THREADS = 1;
 	private final int PARTITION_CAPACITY = 250;
-	private final int PARTITIONS = 1;
-	private final int THREADS = 1;
 
 	private final long DB_COMP_ROWS = 1000;
 
@@ -170,9 +169,8 @@ public class MassIndexerIT {
 				.optimizeAfterPurge( OPTIMIZE_AFTER_PURGE )
 				.optimizeAtEnd( OPTIMIZE_AT_END )
 				.partitionCapacity( PARTITION_CAPACITY )
-				.partitions( PARTITIONS )
 				.purgeAtStart( PURGE_AT_START )
-				.threads( THREADS )
+				.maxThreads( MAX_THREADS )
 				.entityManagerProvider( "h2" )
 				.jobOperator( jobOperator )
 				.addRootEntities( Company.class );
