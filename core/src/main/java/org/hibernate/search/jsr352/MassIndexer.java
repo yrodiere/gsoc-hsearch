@@ -21,8 +21,6 @@ public interface MassIndexer {
 
 	public MassIndexer addRootEntities(Class<?>... rootEntities);
 
-	public MassIndexer arrayCapacity(int arrayCapacity);
-
 	/**
 	 * Checkpoint frequency during the mass index process. The checkpoint will
 	 * be done every N items read, where N is the given item count.
@@ -68,8 +66,6 @@ public interface MassIndexer {
 	public MassIndexer partitionCapacity(int partitionCapacity);
 
 	public MassIndexer purgeAtStart(boolean purgeAtStart);
-
-	public int getArrayCapacity();
 
 	public int getFetchSize();
 

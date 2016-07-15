@@ -19,6 +19,7 @@ import java.util.Set;
 public class JobContextData {
 
 	private Map<String, Class<?>> entityClazzMap;
+	private long totalEntityToIndex;
 
 	public JobContextData(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
@@ -41,5 +42,13 @@ public class JobContextData {
 			throw new ClassNotFoundException( msg );
 		}
 		return clazz;
+	}
+
+	public long getTotalEntityToIndex() {
+		return totalEntityToIndex;
+	}
+
+	public void setTotalEntityToIndex(long totalEntityToIndex) {
+		this.totalEntityToIndex = totalEntityToIndex;
 	}
 }

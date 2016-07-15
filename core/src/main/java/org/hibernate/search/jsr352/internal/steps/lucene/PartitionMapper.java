@@ -133,6 +133,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		EntityManager em = (EntityManager) InitialContext.doLookup( path );
 		Session session = em.unwrap( Session.class );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
+		long totalEntityToIndex = 0;
 
 		for ( int i = 0; i < entityNames.length; i++ ) {
 			long rowCount = (long) session
@@ -140,13 +141,18 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 					.setProjection( Projections.rowCount() )
 					.setCacheable( false )
 					.uniqueResult();
-			logger.infof( "rowCount=%d, partitionCapacity=%d",
+			logger.infof( "entityName=%s, rowCount=%d, partitionCapacity=%d",
+					entityNames[i],
 					rowCount,
 					partitionCapacity );
 			metas[i] = new EntityMetadata();
 			metas[i].entityName = entityNames[i];
 			metas[i].partitionCount = (int) Math.ceil( (double) rowCount / partitionCapacity );
+			totalEntityToIndex += rowCount;
 		}
+
+		jobData.setTotalEntityToIndex( totalEntityToIndex );
+		logger.infof( "totalEntityToIndex=%d", totalEntityToIndex );
 		return metas;
 	}
 

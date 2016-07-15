@@ -9,15 +9,24 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 import java.io.Serializable;
 
 import javax.batch.runtime.BatchStatus;
+import javax.batch.runtime.context.JobContext;
+import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
 @Named
 public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAnalyzer {
 
 	private static final Logger logger = Logger.getLogger( PartitionAnalyzer.class );
-	private long workCount;
+	private final JobContext jobContext;
+	private long workDone;
+
+	@Inject
+	public PartitionAnalyzer(JobContext jobContext) {
+		this.jobContext = jobContext;
+	}
 
 	/**
 	 * Analyze data obtained from different partition plans via partition data
@@ -29,16 +38,22 @@ public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAna
 	 * database table and the max results to process, defined by user before the
 	 * job start. So the minimum between them will be used.
 	 * 
-	 * @param fromCollector the checkpoint obtained from partition collector's
+	 * @param fromCollector the workCount obtained from partition collector's
 	 * collectPartitionData
 	 */
 	@Override
 	public void analyzeCollectorData(Serializable fromCollector)
 			throws Exception {
-		
-//		logger.infof( "%d works processed (%.1f%%).", workDone, percentage );
-		workCount += (long) fromCollector;
-		logger.infof( "%d works done",  workCount );
+
+		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
+		long workTodo = jobData.getTotalEntityToIndex();
+		workDone += (long) fromCollector;
+
+		String percentStr = "??.?%";
+		if (workTodo != 0) {
+			percentStr = String.format( "%.1f%%", 100f * workDone / workTodo);
+		}
+		logger.infof( "%d works processed (%s).", workDone, percentStr );
 	}
 
 	@Override

@@ -89,6 +89,10 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	@Override
 	public void close() throws Exception {
 		logger.info( "close() called." );
+		// reset the chunk work count to avoid over-count in item collector
+		StepContextData stepContextData = (StepContextData) stepContext.getTransientUserData();
+		stepContextData.setChunkWorkCount( 0 );
+		stepContext.setPersistentUserData( stepContextData );
 	}
 
 	/**
@@ -111,9 +115,9 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 				.unwrap( SearchIntegrator.class )
 				.getIndexBinding( entityClazz );
 
-		if ( stepContext.getPersistentUserData() == null ) {
-			stepContext.setPersistentUserData( new StepContextData() );
-		}
+		StepContextData prevData = (StepContextData) stepContext.getPersistentUserData();
+		StepContextData currData = prevData != null ? prevData : new StepContextData();
+		stepContext.setTransientUserData( currData );
 	}
 
 	/**
@@ -144,8 +148,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 		}
 
 		// update work count
-		StepContextData stepContextData = (StepContextData) stepContext.getPersistentUserData();
+		StepContextData stepContextData = (StepContextData) stepContext.getTransientUserData();
 		stepContextData.setChunkWorkCount( items.size() );
-		stepContext.setPersistentUserData( stepContextData );
 	}
 }

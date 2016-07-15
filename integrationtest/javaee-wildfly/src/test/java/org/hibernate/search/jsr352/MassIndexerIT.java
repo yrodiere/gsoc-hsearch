@@ -42,13 +42,12 @@ public class MassIndexerIT {
 	private final boolean OPTIMIZE_AFTER_PURGE = true;
 	private final boolean OPTIMIZE_AT_END = true;
 	private final boolean PURGE_AT_START = true;
-	private final int ARRAY_CAPACITY = 500;
 	private final int FETCH_SIZE = 100000;
 	private final int MAX_RESULTS = 200 * 1000;
 	private final int MAX_THREADS = 1;
-	private final int PARTITION_CAPACITY = 250;
+	private final int PARTITION_CAPACITY = 1000;
 
-	private final long DB_COMP_ROWS = 1000;
+	private final long DB_COMP_ROWS = 5000;
 
 	@Inject
 	private CompanyManager companyManager;
@@ -163,7 +162,6 @@ public class MassIndexerIT {
 
 	private MassIndexer createAndInitJob(JobOperator jobOperator) {
 		MassIndexer massIndexer = new MassIndexerImpl()
-				.arrayCapacity( ARRAY_CAPACITY )
 				.fetchSize( FETCH_SIZE )
 				.maxResults( MAX_RESULTS )
 				.optimizeAfterPurge( OPTIMIZE_AFTER_PURGE )

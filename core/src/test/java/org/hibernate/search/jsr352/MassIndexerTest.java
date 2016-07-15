@@ -22,7 +22,6 @@ public class MassIndexerTest {
 	private final boolean OPTIMIZE_AFTER_PURGE = true;
 	private final boolean OPTIMIZE_AT_END = true;
 	private final boolean PURGE_AT_START = true;
-	private final int ARRAY_CAPACITY = 500;
 	private final int FETCH_SIZE = 100000;
 	private final int MAX_RESULTS = 1000000;
 	private final int MAX_THREADS = 2;
@@ -35,7 +34,6 @@ public class MassIndexerTest {
 	public void testJobParams() {
 
 		MassIndexer massIndexer = new MassIndexerImpl()
-				.arrayCapacity( ARRAY_CAPACITY )
 				.fetchSize( FETCH_SIZE )
 				.maxResults( MAX_RESULTS )
 				.maxThreads( MAX_THREADS )
@@ -44,7 +42,6 @@ public class MassIndexerTest {
 				.partitionCapacity( PARTITION_CAPACITY )
 				.purgeAtStart( PURGE_AT_START );
 
-		assertEquals( ARRAY_CAPACITY, massIndexer.getArrayCapacity() );
 		assertEquals( FETCH_SIZE, massIndexer.getFetchSize() );
 		assertEquals( MAX_RESULTS, massIndexer.getMaxResults() );
 		assertEquals( OPTIMIZE_AFTER_PURGE, massIndexer.isOptimizeAfterPurge() );

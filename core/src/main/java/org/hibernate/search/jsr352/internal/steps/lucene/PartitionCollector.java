@@ -12,12 +12,15 @@ import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author Mincong Huang
  */
 @Named
 public class PartitionCollector implements javax.batch.api.partition.PartitionCollector {
 
+	private static final Logger logger = Logger.getLogger( PartitionCollector.class );
 	private StepContext stepContext;
 
 	@Inject
@@ -33,7 +36,8 @@ public class PartitionCollector implements javax.batch.api.partition.PartitionCo
 	 */
 	@Override
 	public Serializable collectPartitionData() throws Exception {
-		return ( (StepContextData) stepContext.getPersistentUserData() )
+		logger.info( "Collecting partition data ..." );
+		return ( (StepContextData) stepContext.getTransientUserData() )
 				.getChunkWorkCount();
 	}
 }

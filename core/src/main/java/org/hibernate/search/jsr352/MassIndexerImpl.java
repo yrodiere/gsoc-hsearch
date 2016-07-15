@@ -21,7 +21,6 @@ public class MassIndexerImpl implements MassIndexer {
 	private boolean optimizeAfterPurge = false;
 	private boolean optimizeAtEnd = false;
 	private boolean purgeAtStart = false;
-	private int arrayCapacity = 1000;
 	private int fetchSize = 200 * 1000;
 	private int itemCount = 3;
 	private int maxResults = 1000 * 1000;
@@ -56,7 +55,6 @@ public class MassIndexerImpl implements MassIndexer {
 //		registrerEntityManager( entityManager );
 
 		Properties jobParams = new Properties();
-		jobParams.setProperty( "arrayCapacity", String.valueOf( arrayCapacity ) );
 		jobParams.setProperty( "fetchSize", String.valueOf( fetchSize ) );
 		jobParams.setProperty( "itemCount", String.valueOf( itemCount ) );
 		jobParams.setProperty( "maxResults", String.valueOf( maxResults ) );
@@ -76,15 +74,6 @@ public class MassIndexerImpl implements MassIndexer {
 	public void stop(long executionId) {
 		JobOperator jobOperator = BatchRuntime.getJobOperator();
 		jobOperator.stop( executionId );
-	}
-
-	@Override
-	public MassIndexer arrayCapacity(int arrayCapacity) {
-		if ( arrayCapacity < 1 ) {
-			throw new IllegalArgumentException( "arrayCapacity must be at least 1" );
-		}
-		this.arrayCapacity = arrayCapacity;
-		return this;
 	}
 
 	@Override
@@ -186,11 +175,6 @@ public class MassIndexerImpl implements MassIndexer {
 	@Override
 	public boolean isPurgeAtStart() {
 		return purgeAtStart;
-	}
-
-	@Override
-	public int getArrayCapacity() {
-		return arrayCapacity;
 	}
 
 	@Override

@@ -45,7 +45,6 @@ public class RestartChunkIT {
 
 	// mass indexer configuration values
 	private JobOperator jobOperator;
-	private final int ARRAY_CAPACITY = 1;
 	private final long DB_COMP_ROWS = 100;
 	private final long DB_PERS_ROWS = 50;
 	private static final int JOB_MAX_TRIES = 30; // 1s * 30 = 30s
@@ -148,7 +147,6 @@ public class RestartChunkIT {
 		// org.hibernate.search.jsr352.MassIndexer
 		MassIndexer massIndexer = new MassIndexerImpl()
 				.addRootEntities( Company.class, Person.class )
-				.arrayCapacity( ARRAY_CAPACITY )
 				.entityManagerProvider( "h2" )
 				.jobOperator( jobOperator );
 		long executionId = massIndexer.start();
@@ -248,7 +246,7 @@ public class RestartChunkIT {
 	}
 
 	private void testChunk(Map<Metric.MetricType, Long> metricsMap) {
-		long companyCount = (long) Math.ceil( (double) DB_COMP_ROWS / ARRAY_CAPACITY );
+		long companyCount = DB_COMP_ROWS;
 		// The read count.
 		long expectedReadCount = companyCount;
 		long actualReadCount = metricsMap.get( Metric.MetricType.READ_COUNT );
