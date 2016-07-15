@@ -53,16 +53,18 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@BatchProperty
 	private int maxResults;
 
-	// The partition number i of target entity, starting from 0.
-	// e.g. partition number 0, 1, 2 ...
+	// The offset at the beginning of the entity scroll, starting from 0, e.g.
+	// if scroll-offset is 0, then reader starts reading at entity 1.
+	// if scroll-offset is 1, then reader starts reading at entity 2.
 	@Inject
-	@BatchProperty(name = "partitionNumber")
-	private int offset;
+	@BatchProperty
+	private int scrollOffset;
 
-	// The size of partitions associated with the target entity
+	// The interval of for the next scroll, e.g. if scrollInverval is 3, then
+	// reader will read entity [ 1, 4, 7, ... ]
 	@Inject
-	@BatchProperty(name = "partitionSize")
-	private int interval;
+	@BatchProperty
+	private int scrollInterval;
 
 	@Inject
 	@BatchProperty
@@ -166,7 +168,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.setFetchSize( 1000 )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
-			hasMoreItem = scroll.scroll( 1 + offset );
+			hasMoreItem = scroll.scroll( 1 + scrollOffset );
 		}
 		else {
 			checkpointId = checkpoint;
@@ -178,7 +180,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.setFetchSize( 1000 )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
-			hasMoreItem = scroll.scroll( interval );
+			hasMoreItem = scroll.scroll( scrollInterval );
 		}
 	}
 
@@ -198,7 +200,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 			checkpointId = (Serializable) em.getEntityManagerFactory()
 					.getPersistenceUnitUtil()
 					.getIdentifier( entity );
-			hasMoreItem = scroll.scroll( interval );
+			hasMoreItem = scroll.scroll( scrollInterval );
 		}
 		else {
 			logger.info( "no more result. read ends." );

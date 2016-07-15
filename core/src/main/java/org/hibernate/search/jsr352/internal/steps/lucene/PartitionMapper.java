@@ -71,16 +71,16 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		EntityMetadata[] metas = getEntityMetadatas( jobData.getEntityNameArray() );
-		final int TOTAL_PARTITIONS = getPartitionCount( metas );
+		final int partitions = getPartitionCount( metas );
 
-		Properties[] props = new Properties[TOTAL_PARTITIONS];
+		Properties[] props = new Properties[partitions];
 		for ( int i = 0; i < metas.length; i++ ) {
 			for ( int j = i; j < i + metas[i].partitionCount; j++ ) {
 				props[j] = new Properties();
 				int remainder = j % metas[i].partitionCount;
 				props[j].setProperty( "entityName", metas[i].entityName );
-				props[j].setProperty( "partitionNumber", String.valueOf( remainder ) );
-				props[j].setProperty( "partitionSize", String.valueOf( metas[i].partitionCount ) );
+				props[j].setProperty( "scrollOffset", String.valueOf( remainder ) );
+				props[j].setProperty( "scrollInterval", String.valueOf( metas[i].partitionCount ) );
 			}
 		}
 
@@ -88,13 +88,13 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 			@Override
 			public int getPartitions() {
-				logger.infof( "#mapPartitions(): %d partitions.", TOTAL_PARTITIONS );
-				return TOTAL_PARTITIONS;
+				logger.infof( "#mapPartitions(): %d partitions.", partitions );
+				return partitions;
 			}
 
 			@Override
 			public int getThreads() {
-				int threads = Math.min( maxThreads, TOTAL_PARTITIONS );
+				int threads = Math.min( maxThreads, partitions );
 				logger.infof( "#getThreads(): %d threads.", threads );
 				return threads;
 			}
