@@ -21,11 +21,12 @@
         <chunk checkpoint-policy="custom">
             <reader ref="itemReader">
                 <properties>
-                    <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
-                    <property name="scrollOffset" value="#{partitionPlan['scrollOffset']}" />
-                    <property name="scrollInterval" value="#{partitionPlan['scrollInterval']}" />
+                    <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
+                    <property name="optimizeAfterPurge" value="#{jobParameters['optimizeAfterPurge']}" />
                     <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
+                    <property name="scrollInterval" value="#{partitionPlan['scrollInterval']}" />
+                    <property name="scrollOffset" value="#{partitionPlan['scrollOffset']}" />
                 </properties>
             </reader>
             <processor ref="itemProcessor">

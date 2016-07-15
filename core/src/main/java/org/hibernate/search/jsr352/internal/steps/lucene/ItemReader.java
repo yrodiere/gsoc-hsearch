@@ -21,8 +21,13 @@ import org.hibernate.Session;
 import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.search.backend.OptimizeLuceneWork;
+import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
+import org.hibernate.search.indexes.spi.IndexManager;
+import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.internal.JobContextData;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.jboss.logging.Logger;
 
 /**
@@ -47,7 +52,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	@Inject
 	@BatchProperty
-	private String entityName;
+	private boolean optimizeAfterPurge;
 
 	@Inject
 	@BatchProperty
@@ -68,7 +73,12 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	@Inject
 	@BatchProperty
+	private String entityName;
+
+	@Inject
+	@BatchProperty
 	private String persistenceUnitName;
+
 
 	private Class<?> entityClazz;
 	private Serializable checkpointId;
@@ -151,6 +161,15 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		String path = "java:comp/env/" + persistenceUnitName;
 		em = (EntityManager) InitialContext.doLookup( path );
 
+		if ( optimizeAfterPurge ) {
+			EntityIndexBinding entityIndexBinding = Search
+					.getFullTextEntityManager( em )
+					.getSearchFactory()
+					.unwrap( SearchIntegrator.class )
+					.getIndexBinding( entityClazz );
+			optimize( entityIndexBinding );
+		}
+
 		session = em.unwrap( Session.class );
 		ss = session.getSessionFactory().openStatelessSession();
 		String idName = ContextHelper
@@ -206,5 +225,14 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 			logger.info( "no more result. read ends." );
 		}
 		return entity;
+	}
+
+	private void optimize(EntityIndexBinding entityIndexBinding) {
+		logger.infof( "optimizing %s ...", entityName );
+		IndexManager[] indexManagers = entityIndexBinding.getIndexManagers();
+		for ( IndexManager im : indexManagers ) {
+			im.performStreamOperation( OptimizeLuceneWork.INSTANCE, null, false );
+		}
+		logger.infof( "%s optimized.", entityName );
 	}
 }
