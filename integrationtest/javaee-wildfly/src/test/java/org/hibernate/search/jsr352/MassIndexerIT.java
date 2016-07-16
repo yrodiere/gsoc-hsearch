@@ -18,11 +18,14 @@ import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.JobExecution;
 import javax.batch.runtime.Metric;
+import javax.batch.runtime.Metric.MetricType;
 import javax.batch.runtime.StepExecution;
 import javax.inject.Inject;
 
 import org.hibernate.search.jsr352.test.entity.Company;
 import org.hibernate.search.jsr352.test.entity.CompanyManager;
+import org.hibernate.search.jsr352.test.entity.MyDate;
+import org.hibernate.search.jsr352.test.entity.MyDateManager;
 import org.hibernate.search.jsr352.test.util.BatchTestHelper;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -48,9 +51,13 @@ public class MassIndexerIT {
 	private final int PARTITION_CAPACITY = 1000;
 
 	private final long DB_COMP_ROWS = 5000;
+	private final long DB_DATE_ROWS = 31;  // 2016.07.01 - 2016.07.31
 
 	@Inject
 	private CompanyManager companyManager;
+
+	@Inject
+	private MyDateManager myDateManager;
 
 	private final String[][] str = new String[][]{
 			{ "Google", "Sundar", "Pichai" },
@@ -79,21 +86,22 @@ public class MassIndexerIT {
 	@Test
 	public void testJob() throws InterruptedException {
 
+		final String companyName = "google";
+		final String sunday = "sun";
+
 		// Before the job start, insert data and
 		// make sure search result is empty without index
-		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
-			companyManager.persist( new Company( str[i % 5][0] ) );
-		}
-		final String keyword = "google";
-		List<Company> companies = companyManager.findCompanyByName( keyword );
+		insertData();
+		List<Company> companies = companyManager.findCompanyByName( companyName );
+		List<MyDate> sundays = myDateManager.findDateByWeekday( sunday );
 		assertEquals( 0, companies.size() );
+		assertEquals( 0, sundays.size() );
 
 		// start job and test it
 		// with different metrics obtained
 		JobOperator jobOperator = BatchRuntime.getJobOperator();
 		MassIndexer massIndexer = createAndInitJob( jobOperator );
 		long executionId = massIndexer.start();
-
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
 		jobExecution = BatchTestHelper.keepTestAlive( jobExecution );
 		jobOperator.getStepExecutions( executionId )
@@ -101,8 +109,12 @@ public class MassIndexerIT {
 		assertEquals( jobExecution.getBatchStatus(), BatchStatus.COMPLETED );
 		logger.info( "Mass indexing finished" );
 
-		companies = companyManager.findCompanyByName( keyword );
+		// After the job execution, test again : results should be found this
+		// time. By the way, 5 Sundays will be found in July 2016
+		companies = companyManager.findCompanyByName( companyName );
+		sundays = myDateManager.findDateByWeekday( sunday );
 		assertEquals( DB_COMP_ROWS / 5, companies.size() );
+		assertEquals( 5, sundays.size() );
 	}
 
 	private void testBatchStatus(StepExecution stepExecution) {
@@ -155,9 +167,21 @@ public class MassIndexerIT {
 		}
 	}
 
-	private void testChunk(Map<Metric.MetricType, Long> metricsMap) {
-		assertEquals( DB_COMP_ROWS, metricsMap.get( Metric.MetricType.READ_COUNT ).longValue() );
-		assertEquals( DB_COMP_ROWS, metricsMap.get( Metric.MetricType.WRITE_COUNT ).longValue() );
+	private void insertData() {
+		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
+			companyManager.persist( new Company( str[i % 5][0] ) );
+		}
+		for ( int i = 1; i <= DB_DATE_ROWS; i++ ) {
+			logger.info( ( new MyDate(2016, 07, i) ).toString() );
+			myDateManager.persist( new MyDate(2016, 07, i) );
+		}
+	}
+
+	private void testChunk(Map<MetricType, Long> metrics) {
+		final long readCount = metrics.get( MetricType.READ_COUNT );
+		final long writeCount = metrics.get( MetricType.WRITE_COUNT );
+		assertEquals( DB_COMP_ROWS + DB_DATE_ROWS , readCount );
+		assertEquals( DB_COMP_ROWS + DB_DATE_ROWS, writeCount );
 	}
 
 	private MassIndexer createAndInitJob(JobOperator jobOperator) {
@@ -171,7 +195,7 @@ public class MassIndexerIT {
 				.maxThreads( MAX_THREADS )
 				.entityManagerProvider( "h2" )
 				.jobOperator( jobOperator )
-				.addRootEntities( Company.class );
+				.addRootEntities( Company.class, MyDate.class );
 		return massIndexer;
 	}
 }

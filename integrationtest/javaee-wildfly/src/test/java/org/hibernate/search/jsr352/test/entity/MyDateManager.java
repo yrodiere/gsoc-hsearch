@@ -21,23 +21,23 @@ import org.hibernate.search.jpa.Search;
  * @author Mincong Huang
  */
 @Stateless
-public class CompanyManager {
+public class MyDateManager {
 
 	@PersistenceContext(name = "h2")
 	private EntityManager em;
 
-	public void persist(Company company) {
-		em.persist( company );
+	public void persist(MyDate myDate) {
+		em.persist( myDate );
 	}
 
-	public List<Company> findCompanyByName(String name) {
+	public List<MyDate> findDateByWeekday(String weekday) {
 		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
 		Query luceneQuery = ftem.getSearchFactory().buildQueryBuilder()
-				.forEntity( Company.class ).get()
-				.keyword().onField( "name" ).matching( name )
+				.forEntity( MyDate.class ).get()
+				.keyword().onField( "weekday" ).matching( weekday )
 				.createQuery();
 		@SuppressWarnings("unchecked")
-		List<Company> result = ftem.createFullTextQuery( luceneQuery ).getResultList();
+		List<MyDate> result = ftem.createFullTextQuery( luceneQuery ).getResultList();
 		return result;
 	}
 
