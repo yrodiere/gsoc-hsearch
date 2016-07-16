@@ -24,6 +24,7 @@
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
                     <property name="optimizeAfterPurge" value="#{jobParameters['optimizeAfterPurge']}" />
+                    <property name="purgeAtStart" value="#{jobParameters['purgeAtStart']}" />
                     <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
                     <property name="scrollInterval" value="#{partitionPlan['scrollInterval']}" />
                     <property name="scrollOffset" value="#{partitionPlan['scrollOffset']}" />

@@ -7,6 +7,8 @@
 package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.runtime.context.JobContext;
@@ -21,13 +23,10 @@ import org.hibernate.Session;
 import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.search.backend.OptimizeLuceneWork;
-import org.hibernate.search.engine.spi.EntityIndexBinding;
+import org.hibernate.search.backend.PurgeAllLuceneWork;
+import org.hibernate.search.backend.spi.BatchBackend;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
-import org.hibernate.search.indexes.spi.IndexManager;
-import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.internal.JobContextData;
-import org.hibernate.search.spi.SearchIntegrator;
 import org.jboss.logging.Logger;
 
 /**
@@ -56,6 +55,10 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	@Inject
 	@BatchProperty
+	private boolean purgeAtStart;
+
+	@Inject
+	@BatchProperty
 	private int maxResults;
 
 	// The offset at the beginning of the entity scroll, starting from 0, e.g.
@@ -78,7 +81,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@Inject
 	@BatchProperty
 	private String persistenceUnitName;
-
 
 	private Class<?> entityClazz;
 	private Serializable checkpointId;
@@ -143,34 +145,37 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	/**
 	 * Initialize the environment. If checkpoint does not exist, then it should
-	 * be the first open. If checkpoint exist, then it isn't the first open,
-	 * save the input object "checkpoint" into "tempIDs".
+	 * be the first open. If checkpoint exists, then it isn't the first open,
+	 * re-use the input object "checkpoint" as the last ID already read.
 	 *
-	 * @param checkpoint The last checkpoint info saved in the batch runtime,
-	 * previously given by checkpointInfo(). If this is the first start, then
-	 * the checkpoint will be null, so does lastId.
+	 * @param checkpoint The last checkpoint info persisted in the batch
+	 * runtime, previously given by checkpointInfo(). If this is the first
+	 * start, then the checkpoint will be null.
 	 * @throws Exception thrown for any errors.
 	 */
 	@Override
 	public void open(Serializable checkpoint) throws Exception {
 
-		logger.infof( "open reader for entityName=%s", entityName );
+		logger.infof( "open reader for entity %s ...", entityName );
 		entityClazz = ( (JobContextData) jobContext.getTransientUserData() )
 				.getIndexedType( entityName );
-
 		String path = "java:comp/env/" + persistenceUnitName;
 		em = (EntityManager) InitialContext.doLookup( path );
+		session = em.unwrap( Session.class );
+		final BatchBackend backend = ContextHelper
+				.getSearchintegrator( session )
+				.makeBatchBackend( null );
 
-		if ( optimizeAfterPurge ) {
-			EntityIndexBinding entityIndexBinding = Search
-					.getFullTextEntityManager( em )
-					.getSearchFactory()
-					.unwrap( SearchIntegrator.class )
-					.getIndexBinding( entityClazz );
-			optimize( entityIndexBinding );
+		// enhancement before indexing
+		if ( this.purgeAtStart ) {
+			logger.infof( "purging %s ...", entityName );
+			backend.doWorkInSync( new PurgeAllLuceneWork( null, entityClazz ) );
+			if ( this.optimizeAfterPurge ) {
+				logger.infof( "optimizing %s ...", entityName );
+				backend.optimize( new HashSet<Class<?>>( Arrays.asList( entityClazz ) ) );
+			}
 		}
 
-		session = em.unwrap( Session.class );
 		ss = session.getSessionFactory().openStatelessSession();
 		String idName = ContextHelper
 				.getSearchintegrator( session )
@@ -225,14 +230,5 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 			logger.info( "no more result. read ends." );
 		}
 		return entity;
-	}
-
-	private void optimize(EntityIndexBinding entityIndexBinding) {
-		logger.infof( "optimizing %s ...", entityName );
-		IndexManager[] indexManagers = entityIndexBinding.getIndexManagers();
-		for ( IndexManager im : indexManagers ) {
-			im.performStreamOperation( OptimizeLuceneWork.INSTANCE, null, false );
-		}
-		logger.infof( "%s optimized.", entityName );
 	}
 }
