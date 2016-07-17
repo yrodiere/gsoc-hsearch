@@ -37,10 +37,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
+ * This integration test (IT) aims to test the mass-indexer job execution under
+ * Java EE environment, with step partitioning (parallelism), checkpointing, 
+ * restartability and entity composite PK handling mechanism.
+ *
  * @author Mincong Huang
  */
 @RunWith(Arquillian.class)
 public class MassIndexerIT {
+
+	private static final Logger logger = Logger.getLogger( MassIndexerIT.class );
 
 	private final boolean OPTIMIZE_AFTER_PURGE = true;
 	private final boolean OPTIMIZE_AT_END = true;
@@ -51,23 +57,13 @@ public class MassIndexerIT {
 	private final int PARTITION_CAPACITY = 1000;
 
 	private final long DB_COMP_ROWS = 5000;
-	private final long DB_DATE_ROWS = 31;  // 2016.07.01 - 2016.07.31
+	private final long DB_DATE_ROWS = 31; // 2016.07.01 - 2016.07.31
 
 	@Inject
 	private CompanyManager companyManager;
 
 	@Inject
 	private MyDateManager myDateManager;
-
-	private final String[][] str = new String[][]{
-			{ "Google", "Sundar", "Pichai" },
-			{ "Red Hat", "James", "M. Whitehurst" },
-			{ "Microsoft", "Satya", "Nadella" },
-			{ "Facebook", "Mark", "Zuckerberg" },
-			{ "Amazon", "Jeff", "Bezos" }
-	};
-
-	private static final Logger logger = Logger.getLogger( MassIndexerIT.class );
 
 	@Deployment
 	public static WebArchive createDeployment() {
@@ -86,13 +82,13 @@ public class MassIndexerIT {
 	@Test
 	public void testJob() throws InterruptedException {
 
-		final String companyName = "google";
+		final String google = "google";
 		final String sunday = "sun";
 
 		// Before the job start, insert data and
 		// make sure search result is empty without index
 		insertData();
-		List<Company> companies = companyManager.findCompanyByName( companyName );
+		List<Company> companies = companyManager.findCompanyByName( google );
 		List<MyDate> sundays = myDateManager.findDateByWeekday( sunday );
 		assertEquals( 0, companies.size() );
 		assertEquals( 0, sundays.size() );
@@ -107,11 +103,10 @@ public class MassIndexerIT {
 		jobOperator.getStepExecutions( executionId )
 				.forEach( stepExec -> testBatchStatus( stepExec ) );
 		assertEquals( jobExecution.getBatchStatus(), BatchStatus.COMPLETED );
-		logger.info( "Mass indexing finished" );
 
 		// After the job execution, test again : results should be found this
 		// time. By the way, 5 Sundays will be found in July 2016
-		companies = companyManager.findCompanyByName( companyName );
+		companies = companyManager.findCompanyByName( google );
 		sundays = myDateManager.findDateByWeekday( sunday );
 		assertEquals( DB_COMP_ROWS / 5, companies.size() );
 		assertEquals( 5, sundays.size() );
@@ -119,69 +114,37 @@ public class MassIndexerIT {
 
 	private void testBatchStatus(StepExecution stepExecution) {
 		BatchStatus batchStatus = stepExecution.getBatchStatus();
-		switch ( stepExecution.getStepName() ) {
-
-			case "loadId":
-				long expectedEntityCount = DB_COMP_ROWS;
-				// assertEquals( expectedEntityCount,
-				// indexingContext.getEntityCount() );
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "purgeDecision":
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "purgeIndex":
-				if ( PURGE_AT_START ) {
-					assertEquals( BatchStatus.COMPLETED, batchStatus );
-				}
-				break;
-
-			case "afterPurgeDecision":
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "optimizeAfterPurge":
-				if ( OPTIMIZE_AFTER_PURGE ) {
-					assertEquals( BatchStatus.COMPLETED, batchStatus );
-				}
-				break;
-
-			case "produceLuceneDoc":
-				Metric[] metrics = stepExecution.getMetrics();
-				testChunk( BatchTestHelper.getMetricsMap( metrics ) );
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "afterIndexDecision":
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "optimizeAfterIndex":
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			default:
-				break;
+		String stepName = stepExecution.getStepName();
+		if ( stepName.equals( "produceLuceneDoc" ) ) {
+			Metric[] metrics = stepExecution.getMetrics();
+			Map<MetricType, Long> map = BatchTestHelper.getMetricsMap( metrics );
+			final long readCount = map.get( MetricType.READ_COUNT );
+			final long writeCount = map.get( MetricType.WRITE_COUNT );
+			final long expected = DB_COMP_ROWS + DB_DATE_ROWS;
+			assertEquals( expected, readCount );
+			assertEquals( expected, writeCount );
+			assertEquals( BatchStatus.COMPLETED, batchStatus );
+		} else {
+			String msg = "Unknown step " + stepName;
+			throw new IllegalStateException( msg );
 		}
 	}
 
 	private void insertData() {
+		final String[][] str = new String[][]{
+				{ "Google", "Sundar", "Pichai" },
+				{ "Red Hat", "James", "M. Whitehurst" },
+				{ "Microsoft", "Satya", "Nadella" },
+				{ "Facebook", "Mark", "Zuckerberg" },
+				{ "Amazon", "Jeff", "Bezos" }
+		};
 		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
 			companyManager.persist( new Company( str[i % 5][0] ) );
 		}
-		for ( int i = 1; i <= DB_DATE_ROWS; i++ ) {
-			logger.info( ( new MyDate(2016, 07, i) ).toString() );
-			myDateManager.persist( new MyDate(2016, 07, i) );
+		for ( int day = 1; day <= DB_DATE_ROWS; day++ ) {
+			logger.info( ( new MyDate( 2016, 07, day ) ).toString() );
+			myDateManager.persist( new MyDate( 2016, 07, day ) );
 		}
-	}
-
-	private void testChunk(Map<MetricType, Long> metrics) {
-		final long readCount = metrics.get( MetricType.READ_COUNT );
-		final long writeCount = metrics.get( MetricType.WRITE_COUNT );
-		assertEquals( DB_COMP_ROWS + DB_DATE_ROWS , readCount );
-		assertEquals( DB_COMP_ROWS + DB_DATE_ROWS, writeCount );
 	}
 
 	private MassIndexer createAndInitJob(JobOperator jobOperator) {
