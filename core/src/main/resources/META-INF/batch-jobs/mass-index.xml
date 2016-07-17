@@ -27,7 +27,7 @@
         </batchlet>
     </step>
 
-    <step id="produceLuceneDoc">
+    <step id="produceLuceneDoc" next="afterChunk">
         <chunk checkpoint-policy="custom">
             <reader ref="itemReader">
                 <properties>
@@ -68,5 +68,14 @@
             <analyzer ref="partitionAnalyzer" />
             <reducer ref="partitionReducer" />
         </partition>
+    </step>
+
+    <step id="afterChunk">
+        <batchlet ref="afterChunkBatchlet">
+            <properties>
+                <property name="optimizeAtEnd" value="#{jobParameters['optimizeAtEnd']}" />
+                <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
+            </properties>
+        </batchlet>
     </step>
 </job>
