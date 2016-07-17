@@ -6,18 +6,26 @@
  */
 package org.hibernate.search.jsr352.test.util;
 
+import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.JobExecution;
 import javax.batch.runtime.Metric;
+import javax.batch.runtime.StepExecution;
+
+import org.jboss.logging.Logger;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Roberto Cortez
  */
 public final class BatchTestHelper {
+
+	private static final Logger logger = Logger.getLogger( BatchTestHelper.class );
 
 	private static final int MAX_TRIES = 240; // 240 second
 	private static final int THREAD_SLEEP = 1000;
@@ -38,19 +46,71 @@ public final class BatchTestHelper {
 	 */
 	public static JobExecution keepTestAlive(JobExecution jobExecution)
 			throws InterruptedException {
-		int maxTries = 0;
-		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED ) ) {
-			if ( maxTries < MAX_TRIES ) {
-				maxTries++;
-				Thread.sleep( THREAD_SLEEP );
-				jobExecution = BatchRuntime.getJobOperator()
-						.getJobExecution( jobExecution.getExecutionId() );
-			}
-			else {
-				break;
-			}
+
+		int tries = 0;
+		JobOperator jobOperator = BatchRuntime.getJobOperator();
+		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED )
+				&& !jobExecution.getBatchStatus().equals( BatchStatus.STOPPED )
+				&& tries < MAX_TRIES) {
+
+			long executionId = jobExecution.getExecutionId();
+			logger.infof(
+					"Job execution (id=%d) has status %s. Thread sleeps %d ms...",
+					executionId,
+					jobExecution.getBatchStatus(),
+					THREAD_SLEEP );
+			Thread.sleep( THREAD_SLEEP );
+			jobExecution = jobOperator.getJobExecution( executionId );
+			tries++;
 		}
 		return jobExecution;
+	}
+
+	/**
+	 * Stop job execution
+	 *
+	 * @param jobExecution
+	 * @throws InterruptedException
+	 */
+	public static void stopJobExecution(JobExecution jobExecution)
+			throws InterruptedException {
+
+		int tries = 0;
+		long executionId = jobExecution.getExecutionId();
+		JobOperator jobOperator = BatchRuntime.getJobOperator();
+		List<StepExecution> stepExecutions = jobOperator.getStepExecutions( executionId );
+		logger.infof( "%d steps found", stepExecutions.size() );
+		Iterator<StepExecution> cursor = stepExecutions.iterator();
+		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED )
+				|| !jobExecution.getBatchStatus().equals( BatchStatus.FAILED )
+				|| tries < MAX_TRIES ) {
+
+			Thread.sleep( 200 );
+
+			// find step "produceLuceneDoc"
+			while ( cursor.hasNext() ) {
+
+				StepExecution stepExecution = cursor.next();
+				String stepName = stepExecution.getStepName();
+				BatchStatus stepStatus = stepExecution.getBatchStatus();
+
+				if ( stepName.equals( "produceLuceneDoc" ) ) {
+					logger.info( "step produceLuceneDoc found." );
+					if ( stepStatus.equals( BatchStatus.STARTING ) ) {
+						logger.info( "step status is STARTING, wait it until STARTED to stop" );
+						break;
+					}
+					else {
+						logger.infof( "step status is %s, stopping now ...", stepStatus );
+						jobOperator.stop( executionId );
+						return;
+					}
+				}
+			}
+			tries++;
+			stepExecutions = jobOperator.getStepExecutions( executionId );
+			cursor = stepExecutions.iterator();
+		}
 	}
 
 	/**

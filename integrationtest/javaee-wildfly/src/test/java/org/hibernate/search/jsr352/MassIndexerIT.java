@@ -48,13 +48,14 @@ public class MassIndexerIT {
 
 	private static final Logger logger = Logger.getLogger( MassIndexerIT.class );
 
-	private final boolean OPTIMIZE_AFTER_PURGE = true;
-	private final boolean OPTIMIZE_AT_END = true;
-	private final boolean PURGE_AT_START = true;
-	private final int FETCH_SIZE = 100000;
-	private final int MAX_RESULTS = 200 * 1000;
-	private final int MAX_THREADS = 1;
-	private final int PARTITION_CAPACITY = 1000;
+	private final boolean JOB_OPTIMIZE_AFTER_PURGE = false;
+	private final boolean JOB_OPTIMIZE_AT_END = false;
+	private final boolean JOB_PURGE_AT_START = false;
+	private final int JOB_FETCH_SIZE = 100 * 1000;
+	private final int JOB_MAX_RESULTS = 200 * 1000;
+	private final int JOB_MAX_THREADS = 1;
+	private final int JOB_PARTITION_CAPACITY = 1000;
+	private final String JOB_PU_NAME = "h2";
 
 	private final long DB_COMP_ROWS = 5000;
 	private final long DB_DATE_ROWS = 31; // 2016.07.01 - 2016.07.31
@@ -93,21 +94,34 @@ public class MassIndexerIT {
 		assertEquals( 0, companies.size() );
 		assertEquals( 0, sundays.size() );
 
-		// start job and test it
-		// with different metrics obtained
+		// Start the job. This is the 1st execution.
 		JobOperator jobOperator = BatchRuntime.getJobOperator();
-		MassIndexer massIndexer = createAndInitJob( jobOperator );
-		long executionId = massIndexer.start();
-		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
-		jobExecution = BatchTestHelper.keepTestAlive( jobExecution );
-		jobOperator.getStepExecutions( executionId )
+		long execId1 = createAndStartJob( jobOperator );
+		JobExecution jobExec1 = jobOperator.getJobExecution( execId1 );
+
+		// Stop the job
+		BatchTestHelper.stopJobExecution( jobExec1 );
+		jobExec1 = BatchTestHelper.keepTestAlive( jobExec1 );
+		assertEquals( BatchStatus.STOPPED, jobExec1.getBatchStatus() );
+		companies = companyManager.findCompanyByName( google );
+		sundays = myDateManager.findDateByWeekday( sunday );
+		logger.infof( "After the 1st exec, %d companies found", companies.size() );
+		logger.infof( "After the 1st exec, %d dates found", sundays.size() );
+
+		// Restart the job. This is the 2nd execution.
+		long execId2 = jobOperator.restart( execId1, null );
+		JobExecution jobExec2 = jobOperator.getJobExecution( execId2 );
+		jobOperator.getStepExecutions( execId2 )
 				.forEach( stepExec -> testBatchStatus( stepExec ) );
-		assertEquals( jobExecution.getBatchStatus(), BatchStatus.COMPLETED );
+		jobExec2 = BatchTestHelper.keepTestAlive( jobExec2 );
+		assertEquals( BatchStatus.COMPLETED, jobExec2.getBatchStatus() );
 
 		// After the job execution, test again : results should be found this
 		// time. By the way, 5 Sundays will be found in July 2016
 		companies = companyManager.findCompanyByName( google );
 		sundays = myDateManager.findDateByWeekday( sunday );
+		logger.infof( "After the 2nd exec, %d companies found", companies.size() );
+		logger.infof( "After the 2nd exec, %d dates found", sundays.size() );
 		assertEquals( DB_COMP_ROWS / 5, companies.size() );
 		assertEquals( 5, sundays.size() );
 	}
@@ -147,18 +161,19 @@ public class MassIndexerIT {
 		}
 	}
 
-	private MassIndexer createAndInitJob(JobOperator jobOperator) {
+	private long createAndStartJob(JobOperator jobOperator) {
 		MassIndexer massIndexer = new MassIndexerImpl()
-				.fetchSize( FETCH_SIZE )
-				.maxResults( MAX_RESULTS )
-				.optimizeAfterPurge( OPTIMIZE_AFTER_PURGE )
-				.optimizeAtEnd( OPTIMIZE_AT_END )
-				.partitionCapacity( PARTITION_CAPACITY )
-				.purgeAtStart( PURGE_AT_START )
-				.maxThreads( MAX_THREADS )
-				.entityManagerProvider( "h2" )
+				.fetchSize( JOB_FETCH_SIZE )
+				.maxResults( JOB_MAX_RESULTS )
+				.optimizeAfterPurge( JOB_OPTIMIZE_AFTER_PURGE )
+				.optimizeAtEnd( JOB_OPTIMIZE_AT_END )
+				.partitionCapacity( JOB_PARTITION_CAPACITY )
+				.purgeAtStart( JOB_PURGE_AT_START )
+				.maxThreads( JOB_MAX_THREADS )
+				.entityManagerProvider( JOB_PU_NAME )
 				.jobOperator( jobOperator )
 				.addRootEntities( Company.class, MyDate.class );
-		return massIndexer;
+		long executionId = massIndexer.start();
+		return executionId;
 	}
 }
