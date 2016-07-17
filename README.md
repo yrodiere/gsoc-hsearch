@@ -83,4 +83,4 @@ If the given were partition-work-count, then the computed result will be a
 double-summarized progress, which is not desired.
 
 
-[1]: https://github.com/mincong-h/gsoc-hsearch/tree/master/img/mass-index.png
+[1]: https://raw.githubusercontent.com/mincong-h/gsoc-hsearch/master/img/mass-index.png
