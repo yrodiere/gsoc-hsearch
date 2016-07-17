@@ -7,6 +7,7 @@
 package org.hibernate.search.jsr352.internal;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,8 +27,12 @@ public class JobContextData {
 		entityClazzes.forEach( clz -> entityClazzMap.put( clz.toString(), clz ) );
 	}
 
-	public Set<String> getEntityNames() {
+	public Set<String> getEntityNameSet() {
 		return entityClazzMap.keySet();
+	}
+
+	public Set<Class<?>> getEntityClazzSet() {
+		return new HashSet<Class<?>>( entityClazzMap.values() );
 	}
 
 	public String[] getEntityNameArray() {

@@ -7,8 +7,6 @@
 package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashSet;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.runtime.context.JobContext;
@@ -23,8 +21,6 @@ import org.hibernate.Session;
 import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.search.backend.PurgeAllLuceneWork;
-import org.hibernate.search.backend.spi.BatchBackend;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
@@ -48,14 +44,6 @@ import org.jboss.logging.Logger;
 public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	private static final Logger logger = Logger.getLogger( ItemReader.class );
-
-	@Inject
-	@BatchProperty
-	private boolean optimizeAfterPurge;
-
-	@Inject
-	@BatchProperty
-	private boolean purgeAtStart;
 
 	@Inject
 	@BatchProperty
@@ -162,19 +150,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		String path = "java:comp/env/" + persistenceUnitName;
 		em = (EntityManager) InitialContext.doLookup( path );
 		session = em.unwrap( Session.class );
-		final BatchBackend backend = ContextHelper
-				.getSearchintegrator( session )
-				.makeBatchBackend( null );
-
-		// enhancement before indexing
-		if ( this.purgeAtStart ) {
-			logger.infof( "purging %s ...", entityName );
-			backend.doWorkInSync( new PurgeAllLuceneWork( null, entityClazz ) );
-			if ( this.optimizeAfterPurge ) {
-				logger.infof( "optimizing %s ...", entityName );
-				backend.optimize( new HashSet<Class<?>>( Arrays.asList( entityClazz ) ) );
-			}
-		}
 
 		ss = session.getSessionFactory().openStatelessSession();
 		String idName = ContextHelper

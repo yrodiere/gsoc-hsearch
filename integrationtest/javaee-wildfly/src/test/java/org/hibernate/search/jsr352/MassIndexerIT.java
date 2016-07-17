@@ -48,9 +48,9 @@ public class MassIndexerIT {
 
 	private static final Logger logger = Logger.getLogger( MassIndexerIT.class );
 
-	private final boolean JOB_OPTIMIZE_AFTER_PURGE = false;
+	private final boolean JOB_OPTIMIZE_AFTER_PURGE = true;
 	private final boolean JOB_OPTIMIZE_AT_END = false;
-	private final boolean JOB_PURGE_AT_START = false;
+	private final boolean JOB_PURGE_AT_START = true;
 	private final int JOB_FETCH_SIZE = 100 * 1000;
 	private final int JOB_MAX_RESULTS = 200 * 1000;
 	private final int JOB_MAX_THREADS = 1;
