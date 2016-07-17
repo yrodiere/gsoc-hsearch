@@ -21,10 +21,15 @@ This project redesigns the mass index job as a chunk-oriented, non-interactive,
 long-running, background execution process. Execution contains operational
 control (start/stop/restart), logging, checkpointing and parallelization.
 
+![Workflow of the job "mass-index"][1]
+
 *  **Parallelization**. The core step execution _produceLuceneDoc_ runs in
-   parallel. It runs as multiple instance of the same step definition across
-   multiple threads, one partition per thread. The number of partitions equals
-   to the size of root entities selected before the job start.
+   parallel. It runs as multiple instances of the same step definition across
+   multiple threads, one partition per thread. The number of partitions depends
+   on 2 factors : the target entity's quantity and the partition capacity. For
+   example, if target entity `Company.class` has 5000 rows to index and the
+   partition capacity is 2500 entity / partition, then theses rows will run in 2
+   partitions.
 
 
 ## Context data
@@ -77,3 +82,5 @@ summarize all elementary count from each partition and compute the progress.
 If the given were partition-work-count, then the computed result will be a
 double-summarized progress, which is not desired.
 
+
+[1]: https://github.com/mincong-h/gsoc-hsearch/tree/master/img/mass-index.png
