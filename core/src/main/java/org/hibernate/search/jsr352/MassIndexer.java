@@ -11,14 +11,34 @@ import java.util.Set;
 import javax.batch.operations.JobOperator;
 
 /**
+ * An alternative interface to the current mass indexer, using the Java Batch
+ * architecture as defined by JSR 352.
+ *
  * @author Mincong Huang
  */
 public interface MassIndexer {
 
+	/**
+	 * Start the job.
+	 *
+	 * @return
+	 */
 	public long start();
 
+	/**
+	 * Stop the job.
+	 *
+	 * @param executionId
+	 */
 	public void stop(long executionId);
 
+	/**
+	 * Add entity types to index. Currently, only root entities are accepted
+	 * because the lack of entity types retrievement inside the job.
+	 *
+	 * @param rootEntities
+	 * @return
+	 */
 	public MassIndexer addRootEntities(Class<?>... rootEntities);
 
 	/**
@@ -41,10 +61,29 @@ public interface MassIndexer {
 	 */
 	public MassIndexer entityManagerProvider(String persistenceUnitName);
 
+	/**
+	 * The fetch size for the result fetching.
+	 *
+	 * @param fetchSize
+	 * @return
+	 */
 	public MassIndexer fetchSize(int fetchSize);
 
+	/**
+	 * Job operator to start the batch job.
+	 *
+	 * @param jobOperator
+	 * @return
+	 */
 	public MassIndexer jobOperator(JobOperator jobOperator);
 
+	/**
+	 * The maximum number of results will be return from the HQL / criteria. It
+	 * is equivalent to keyword `LIMIT` in SQL.
+	 *
+	 * @param maxResults
+	 * @return
+	 */
 	public MassIndexer maxResults(int maxResults);
 
 	/**
@@ -59,12 +98,45 @@ public interface MassIndexer {
 	 */
 	public MassIndexer maxThreads(int maxThreads);
 
+	/**
+	 * Specify whether the mass indexer should be optimized at the beginning of
+	 * the job. This operation takes place after the purge operation and before
+	 * the step of lucene document production. The default value is false. TODO:
+	 * specify what is the optimization exactly
+	 *
+	 * @param optimizeAfterPurge
+	 * @return
+	 */
 	public MassIndexer optimizeAfterPurge(boolean optimizeAfterPurge);
 
+	/**
+	 * Specify whether the mass indexer should be optimized at the end of the
+	 * job. This operation takes place after the step of lucene document
+	 * production. The default value is false. TODO: specify what is the
+	 * optimization exactly
+	 *
+	 * @param optimizeAtEnd
+	 * @return
+	 */
 	public MassIndexer optimizeAtEnd(boolean optimizeAtEnd);
 
+	/**
+	 * The partition-capacity defines the max number of entities to be processed
+	 * inside a partition.
+	 * 
+	 * @param partitionCapacity
+	 * @return
+	 */
 	public MassIndexer partitionCapacity(int partitionCapacity);
 
+	/**
+	 * Specify whether the existing lucene index should be purged at the
+	 * beginning of the job. This operation takes place before the step of
+	 * lucene document production. The default value is false.
+	 *
+	 * @param purgeAtStart
+	 * @return
+	 */
 	public MassIndexer purgeAtStart(boolean purgeAtStart);
 
 	public int getFetchSize();
