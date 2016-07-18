@@ -15,7 +15,10 @@ import java.util.stream.Collectors;
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 
-
+/**
+ *
+ * @author Mincong Huang
+ */
 public class MassIndexerImpl implements MassIndexer {
 
 	private boolean optimizeAfterPurge = false;
@@ -36,36 +39,19 @@ public class MassIndexerImpl implements MassIndexer {
 
 	}
 
-	/**
-	 * Mass index the Address entity's.
-	 * <p>
-	 * Here're an example with parameters and expected results:
-	 * <ul>
-	 * <li><b>array capacity</b> = 500
-	 * <li><b>partition capacity</b> = 250
-	 * <li><b>max results</b> = 200 * 1000
-	 * <li><b>queue size</b> = Math.ceil(max results / array capacity) = Math.ceil(200 * 1000 / 500) = Math.ceil(400) =
-	 * 400
-	 * <li><b>number of partitions</b> = Math.ceil(queue size / partition capacity) = Math.ceil(400 / 250) =
-	 * Math.ceil(1.6) = 2
-	 * </ul>
-	 */
 	@Override
 	public long start() {
-//		registrerEntityManager( entityManager );
-
 		Properties jobParams = new Properties();
-		jobParams.setProperty( "fetchSize", String.valueOf( fetchSize ) );
-		jobParams.setProperty( "itemCount", String.valueOf( itemCount ) );
-		jobParams.setProperty( "maxResults", String.valueOf( maxResults ) );
-		jobParams.setProperty( "maxThreads", String.valueOf( maxThreads ) );
-		jobParams.setProperty( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
-		jobParams.setProperty( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
-		jobParams.setProperty( "partitionCapacity", String.valueOf( partitionCapacity ) );
-		jobParams.setProperty( "persistenceUnitName", persistenceUnitName );
-		jobParams.setProperty( "purgeAtStart", String.valueOf( purgeAtStart ) );
-		jobParams.put( "rootEntities", getEntitiesToIndexAsString() );
-		// JobOperator jobOperator = BatchRuntime.getJobOperator();
+		jobParams.put( "fetchSize", String.valueOf( fetchSize ) );
+		jobParams.put( "itemCount", String.valueOf( itemCount ) );
+		jobParams.put( "maxResults", String.valueOf( maxResults ) );
+		jobParams.put( "maxThreads", String.valueOf( maxThreads ) );
+		jobParams.put( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
+		jobParams.put( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
+		jobParams.put( "partitionCapacity", String.valueOf( partitionCapacity ) );
+		jobParams.put( "persistenceUnitName", persistenceUnitName );
+		jobParams.put( "purgeAtStart", String.valueOf( purgeAtStart ) );
+		jobParams.put( "rootEntities", getRootEntitiesAsString() );
 		Long executionId = jobOperator.start( JOB_NAME, jobParams );
 		return executionId;
 	}
@@ -206,15 +192,15 @@ public class MassIndexerImpl implements MassIndexer {
 		return rootEntities;
 	}
 
-	@Override
-	public int getItemCount() {
-		return itemCount;
-	}
-
-	private String getEntitiesToIndexAsString() {
+	private String getRootEntitiesAsString() {
 		return rootEntities.stream()
 				.map( (e) -> e.getName() )
 				.collect( Collectors.joining( "," ) );
+	}
+
+	@Override
+	public int getItemCount() {
+		return itemCount;
 	}
 
 	@Override
