@@ -20,6 +20,10 @@ import javax.persistence.EntityManager;
 import org.hibernate.search.jpa.Search;
 import org.jboss.logging.Logger;
 
+/**
+ *
+ * @author Mincong Huang
+ */
 @Named
 public class JobContextSetupListener extends AbstractJobListener {
 

@@ -19,7 +19,17 @@ import java.util.Set;
  */
 public class JobContextData {
 
+	/**
+	 * The map of key value pair (string, class-type), designed for storage of
+	 * name and class type of all root entities. In JSR 352 standard, only
+	 * string values can be propagated using job properties, but class types are
+	 * frequently used too. So this map facilites this kind of lookup.
+	 */
 	private Map<String, Class<?>> entityClazzMap;
+
+	/**
+	 * The total number of entities to index over all the entity types.
+	 */
 	private long totalEntityToIndex;
 
 	public JobContextData(Set<Class<?>> entityClazzes) {

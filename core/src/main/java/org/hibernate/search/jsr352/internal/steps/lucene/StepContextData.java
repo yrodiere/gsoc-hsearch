@@ -9,16 +9,11 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 import java.io.Serializable;
 
 /**
- * Container for data specific to the entity indexing batch step. There's 2
- * types of counter here : stepWorkCount and chunkWorkCount. Notice that the
- * batch runtime maintain one container-clone per partition. So the counters
- * are not shared with other threads / partitions.
- * <p>
- * <li>chunkWorkCount is the counter per chunk. One chunk is composed by N read
- * calls + N process calls + 1 write call.</li>
- * <li>partitionWorkCount is the counter per partition, sum of all the
- * chunkWorkCount.</li>
- *
+ * Container for data specific to the entity indexing batch step
+ * `produceLuceneDoc`. There're 2 types of counter here : partitionWorkCount and
+ * chunkWorkCount. Notice that the batch runtime maintain one container-clone
+ * per partition. So counters are not shared with other threads / partitions.
+ * 
  * @author Gunnar Morling
  * @author Mincong Huang
  */
@@ -26,8 +21,19 @@ public class StepContextData implements Serializable {
 
 	private static final long serialVersionUID = 1961574468720628080L;
 
+	/**
+	 * chunkWorkCount is an elementary count, the counter per chunk. It records
+	 * how many items have been written in the current chunk. This value is
+	 * overwritten be the item writer at the end of each #writeItems, since one
+	 * chunk is: N read-calls + N process-calls + 1 write-call.
+	 */
 	private long chunkWorkCount = 0;
-	private long partitionWorkCount = 0; // sum of chunkWorkCount
+
+	/**
+	 * partitionWorkCount is a total count, the counter per partition, sum of
+	 * all the chunkWorkCount.
+	 */
+	private long partitionWorkCount = 0;
 
 	public long getChunkWorkCount() {
 		return chunkWorkCount;

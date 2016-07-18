@@ -16,6 +16,9 @@ import javax.inject.Named;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
+/**
+ * @author Mincong Huang
+ */
 @Named
 public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAnalyzer {
 
@@ -31,15 +34,15 @@ public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAna
 	/**
 	 * Analyze data obtained from different partition plans via partition data
 	 * collectors. The current analyze is to summarize to their progresses :
-	 * workCount = workCount1 + workCount2 + ... + workCountN Then it shows the
+	 * workDone = workDone1 + workDone2 + ... + workDoneN. Then it displays the
 	 * total mass index progress in percentage. This method is very similar to
 	 * the current simple progress monitor. Note: concerning the number of total
-	 * entities loaded, it depends on 2 values : the number of row in the
-	 * database table and the max results to process, defined by user before the
-	 * job start. So the minimum between them will be used.
+	 * entities loaded, it depends on 2 values : the number of rows to index and
+	 * the max results limited by the criteria, defined by user before the job
+	 * start. So the minimum between them will be used.
 	 * 
-	 * @param fromCollector the workCount obtained from partition collector's
-	 * collectPartitionData
+	 * @param fromCollector the count of finished work of one partition,
+	 * obtained from partition collector's method #collectPartitionData()
 	 */
 	@Override
 	public void analyzeCollectorData(Serializable fromCollector)
@@ -50,8 +53,8 @@ public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAna
 		workDone += (long) fromCollector;
 
 		String percentStr = "??.?%";
-		if (workTodo != 0) {
-			percentStr = String.format( "%.1f%%", 100f * workDone / workTodo);
+		if ( workTodo != 0 ) {
+			percentStr = String.format( "%.1f%%", 100f * workDone / workTodo );
 		}
 		logger.infof( "%d works processed (%s).", workDone, percentStr );
 	}

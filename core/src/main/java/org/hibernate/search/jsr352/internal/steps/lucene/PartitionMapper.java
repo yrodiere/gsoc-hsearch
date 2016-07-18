@@ -27,18 +27,7 @@ import org.jboss.logging.Logger;
 /**
  * Lucene partition mapper provides a partition plan to the Lucene production
  * step: "produceLuceneDoc". The partition plan is defined dynamically,
- * according to the indexing context.
- * <p>
- * Several batch properties are used in this mapper:
- * <ul>
- * <li><b>partitionCapacity</b> defines the capacity of one partition: the
- * number of id arrays that will be treated in this partition. So the number of
- * partition is computed by the equation: <br>
- * {@code nbPartition = nbArray / partitionCapacity;}
- * <li><b>threads</b> defines the number of threads wished by the user. Default
- * value is defined in the job xml file. However, the valued used might be
- * smaller, depending on the number of partitions.
- * </ul>
+ * according to the partition capacity.
  *
  * @author Mincong Huang
  */
@@ -49,10 +38,19 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	private final JobContext jobContext;
 
+	/**
+	 * The partition-capacity defines the max number of entities to be processed
+	 * inside a partition. So the number of partitions used will be the division
+	 * of the entities to index and the partition capacity :
+	 * {@code partitions = entitiesToDo / partitionCapacity;}
+	 */
 	@Inject
 	@BatchProperty
 	private int partitionCapacity;
 
+	/**
+	 * The max number of threads used by the job
+	 */
 	@Inject
 	@BatchProperty
 	private int maxThreads;

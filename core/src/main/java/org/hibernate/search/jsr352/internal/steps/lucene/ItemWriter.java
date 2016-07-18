@@ -33,18 +33,13 @@ import org.jboss.logging.Logger;
  * Batch item writer writes a list of items into Lucene documents. Here, items
  * mean the luceneWorks, given by the processor. These items will be executed
  * using StreamingOperationExecutor.
- * <p>
- * <ul>
- * <li>{@code indexingContext} is used to store the shardingStrategy
- * <li>{@code monitor} mass indexer progress monitor helps to follow the mass
- * indexing progress and show it in the console.
- * </ul>
  *
  * @author Mincong Huang
  */
 @Named
 public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 
+	private static final Logger logger = Logger.getLogger( ItemWriter.class );
 	private final Boolean forceAsync = true;
 	private final JobContext jobContext;
 	private final StepContext stepContext;
@@ -65,8 +60,6 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 		this.stepContext = stepContext;
 	}
 
-	private static final Logger logger = Logger.getLogger( ItemWriter.class );
-
 	/**
 	 * The checkpointInfo method returns the current checkpoint data for this
 	 * writer. It is called before a chunk checkpoint is committed.
@@ -81,8 +74,10 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	}
 
 	/**
-	 * The close method marks the end of use of the ItemWriter. The writer is
-	 * used to do the cleanup.
+	 * The close method marks the end of use of the ItemWriter. This method is
+	 * called when the job stops for any reason. In case of job interruption,
+	 * the job might need to be restarted. That's why the step context data is
+	 * persisted.
 	 *
 	 * @throws Exception is thrown for any errors.
 	 */

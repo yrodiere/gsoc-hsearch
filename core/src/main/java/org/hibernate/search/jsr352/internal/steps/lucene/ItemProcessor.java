@@ -32,13 +32,18 @@ import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
 
 /**
+ * ItemProcessor processes item, entity received from a scrollable results in
+ * itemReader, into an AddLuceneWork.
+ * 
  * @author Mincong Huang
  */
 @Named
 public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 
 	private static final Logger logger = Logger.getLogger( ItemProcessor.class );
+	private final JobContext jobContext;
 	private boolean isSetup = false;
+	private Class<?> entityClazz;
 
 	@Inject
 	@BatchProperty
@@ -48,10 +53,6 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 	@BatchProperty
 	private String persistenceUnitName;
 
-	private Class<?> entityClazz;
-	private final JobContext jobContext;
-
-	// read entities and produce Lucene work
 	private EntityManager em;
 	private Session session;
 	private ExtendedSearchIntegrator searchIntegrator;
@@ -64,13 +65,11 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 	}
 
 	/**
-	 * Process an input item into an output item. Here, the input item is an
-	 * array of IDs and the output item is a list of Lucene works. During the
-	 * process, entities are found by an injected entity manager, then they are
-	 * used for building the correspondent Lucene works.
+	 * ItemProcessor processes item, entity received from a scrollable results
+	 * in itemReader, into an AddLuceneWork.
 	 *
-	 * @param item the input item, an array of IDs
-	 * @return a list of Lucene works
+	 * @param item entity
+	 * @return an addLuceneWork
 	 * @throws Exception thrown for any errors.
 	 */
 	public Object processItem(Object item) throws Exception {
