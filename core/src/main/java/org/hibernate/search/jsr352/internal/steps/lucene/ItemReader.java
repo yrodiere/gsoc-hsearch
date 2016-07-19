@@ -126,6 +126,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 			logger.error( e );
 		}
 		try {
+			em.clear();
 			em.close();
 		}
 		catch (Exception e) {
