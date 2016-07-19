@@ -21,6 +21,8 @@ import org.hibernate.search.jpa.Search;
 import org.jboss.logging.Logger;
 
 /**
+ * Listener before the start of the job. It aims to setup the job context data,
+ * shared by all the steps.
  *
  * @author Mincong Huang
  */
