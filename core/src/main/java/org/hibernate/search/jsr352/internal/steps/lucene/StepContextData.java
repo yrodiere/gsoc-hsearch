@@ -8,6 +8,8 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
 
+import org.hibernate.Session;
+
 /**
  * Container for data specific to the entity indexing batch step
  * `produceLuceneDoc`. There're 2 types of counter here : partitionWorkCount and
@@ -35,6 +37,15 @@ public class StepContextData implements Serializable {
 	 */
 	private long partitionWorkCount = 0;
 
+	/**
+	 * Hibernate session, unwrapped from EntityManager. It is stored for sharing
+	 * the session between item reader and item processor. Notice that item
+	 * reader and item processor of the same partition always run in the same
+	 * thread, so it should be OK. When the job stops, session object will be
+	 * released before persisting this class's instance.
+	 */
+	private Session session;
+
 	public long getChunkWorkCount() {
 		return chunkWorkCount;
 	}
@@ -50,5 +61,13 @@ public class StepContextData implements Serializable {
 
 	public long getPartitionWorkCount() {
 		return partitionWorkCount;
+	}
+
+	public Session getSession() {
+		return session;
+	}
+
+	public void setSession(Session session) {
+		this.session = session;
 	}
 }

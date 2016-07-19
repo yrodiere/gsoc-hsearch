@@ -12,7 +12,6 @@
         <listener ref="jobContextSetupListener">
             <properties>
                 <property name="rootEntities" value="#{jobParameters['rootEntities']}" />
-                <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
             </properties>
         </listener>
     </listeners>
@@ -21,7 +20,6 @@
         <batchlet ref="beforeChunkBatchlet">
             <properties>
                 <property name="optimizeAfterPurge" value="#{jobParameters['optimizeAfterPurge']}" />
-                <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
                 <property name="purgeAtStart" value="#{jobParameters['purgeAtStart']}" />
             </properties>
         </batchlet>
@@ -33,7 +31,6 @@
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
-                    <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
                     <property name="scrollInterval" value="#{partitionPlan['scrollInterval']}" />
                     <property name="scrollOffset" value="#{partitionPlan['scrollOffset']}" />
                 </properties>
@@ -61,7 +58,6 @@
                 <properties>
                     <property name="maxThreads" value="#{jobParameters['threads']}?:8;" />
                     <property name="partitionCapacity" value="#{jobParameters['partitionCapacity']}?:500;" />
-                    <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
                 </properties>
             </mapper>
             <collector ref="partitionCollector" />
@@ -73,7 +69,6 @@
         <batchlet ref="afterChunkBatchlet">
             <properties>
                 <property name="optimizeAtEnd" value="#{jobParameters['optimizeAtEnd']}" />
-                <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
             </properties>
         </batchlet>
     </step>

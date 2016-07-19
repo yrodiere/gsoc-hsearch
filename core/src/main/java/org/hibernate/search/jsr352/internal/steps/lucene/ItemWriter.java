@@ -14,8 +14,9 @@ import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import org.hibernate.search.backend.AddLuceneWork;
 import org.hibernate.search.backend.FlushLuceneWork;
@@ -46,13 +47,12 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	private EntityManager em;
 	private EntityIndexBinding entityIndexBinding;
 
-	@Inject
-	@BatchProperty
-	private String entityName;
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
 
 	@Inject
 	@BatchProperty
-	private String persistenceUnitName;
+	private String entityName;
 
 	@Inject
 	public ItemWriter(JobContext jobContext, StepContext stepContext) {
@@ -84,10 +84,12 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	@Override
 	public void close() throws Exception {
 		logger.info( "close() called." );
-		// reset the chunk work count to avoid over-count in item collector
-		StepContextData stepContextData = (StepContextData) stepContext.getTransientUserData();
-		stepContextData.setChunkWorkCount( 0 );
-		stepContext.setPersistentUserData( stepContextData );
+		try {
+			em.close();
+		}
+		catch (Exception e) {
+			logger.error( e );
+		}
 	}
 
 	/**
@@ -99,8 +101,7 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	public void open(Serializable checkpoint) throws Exception {
 
 		logger.info( "open(Seriliazable) called" );
-		String path = "java:comp/env/" + persistenceUnitName;
-		em = (EntityManager) InitialContext.doLookup( path );
+		em = emf.createEntityManager();
 
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		Class<?> entityClazz = jobData.getIndexedType( entityName );
@@ -109,10 +110,6 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 				.getSearchFactory()
 				.unwrap( SearchIntegrator.class )
 				.getIndexBinding( entityClazz );
-
-		StepContextData prevData = (StepContextData) stepContext.getPersistentUserData();
-		StepContextData currData = prevData != null ? prevData : new StepContextData();
-		stepContext.setTransientUserData( currData );
 	}
 
 	/**

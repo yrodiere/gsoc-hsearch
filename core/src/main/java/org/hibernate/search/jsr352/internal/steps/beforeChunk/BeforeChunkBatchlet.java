@@ -11,8 +11,9 @@ import javax.batch.api.Batchlet;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import org.hibernate.Session;
 import org.hibernate.search.backend.PurgeAllLuceneWork;
@@ -33,9 +34,9 @@ public class BeforeChunkBatchlet implements Batchlet {
 	private static final Logger logger = Logger.getLogger( BeforeChunkBatchlet.class );
 	private final JobContext jobContext;
 
-	@Inject
-	@BatchProperty
-	private String persistenceUnitName;
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
+	private EntityManager em;
 
 	@Inject
 	@BatchProperty
@@ -55,9 +56,7 @@ public class BeforeChunkBatchlet implements Batchlet {
 
 		if ( this.purgeAtStart ) {
 
-			logger.info( "purging index for all entities ..." );
-			String path = "java:comp/env/" + persistenceUnitName;
-			EntityManager em = (EntityManager) InitialContext.doLookup( path );
+			em = emf.createEntityManager();
 			Session session = em.unwrap( Session.class );
 			final BatchBackend backend = ContextHelper
 					.getSearchintegrator( session )
@@ -77,6 +76,6 @@ public class BeforeChunkBatchlet implements Batchlet {
 
 	@Override
 	public void stop() throws Exception {
-		// TODO Auto-generated method stub
+		em.close();
 	}
 }

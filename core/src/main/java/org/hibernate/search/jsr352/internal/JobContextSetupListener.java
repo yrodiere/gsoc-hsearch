@@ -14,8 +14,9 @@ import javax.batch.api.listener.AbstractJobListener;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import org.hibernate.search.jpa.Search;
 import org.jboss.logging.Logger;
@@ -32,13 +33,12 @@ public class JobContextSetupListener extends AbstractJobListener {
 	private static final Logger logger = Logger.getLogger( JobContextSetupListener.class );
 	private final JobContext jobContext;
 
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
+
 	@Inject
 	@BatchProperty
 	private String rootEntities;
-	
-	@Inject
-	@BatchProperty
-	private String persistenceUnitName;
 
 	@Inject
 	public JobContextSetupListener(JobContext jobContext) {
@@ -48,10 +48,8 @@ public class JobContextSetupListener extends AbstractJobListener {
 	@Override
 	public void beforeJob() throws Exception {
 
-		String path = "java:comp/env/" + persistenceUnitName;
-		logger.infof( "JNDI lookup for persistenceUnitName=\"%s\"...", path );
-
-		EntityManager em = (EntityManager) InitialContext.doLookup( path );
+		logger.debug( "Creating entity manager ..." );
+		EntityManager em = emf.createEntityManager();
 		String[] entityNamesToIndex = rootEntities.split( "," );
 		Set<Class<?>> entityClazzesToIndex = new HashSet<>();
 		Set<Class<?>> indexedTypes = Search
@@ -71,5 +69,6 @@ public class JobContextSetupListener extends AbstractJobListener {
 		}
 
 		jobContext.setTransientUserData( new JobContextData( entityClazzesToIndex ) );
+		em.close();
 	}
 }

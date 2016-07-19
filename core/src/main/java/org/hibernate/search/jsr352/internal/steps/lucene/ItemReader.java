@@ -10,10 +10,12 @@ import java.io.Serializable;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
@@ -45,6 +47,10 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	private static final Logger logger = Logger.getLogger( ItemReader.class );
 
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
+	private EntityManager em;
+
 	@Inject
 	@BatchProperty
 	private int maxResults;
@@ -66,24 +72,21 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@BatchProperty
 	private String entityName;
 
-	@Inject
-	@BatchProperty
-	private String persistenceUnitName;
-
 	private Class<?> entityClazz;
 	private Serializable checkpointId;
 	private final JobContext jobContext;
+	private final StepContext stepContext;
 
 	// read entities and produce Lucene work
-	private EntityManager em;
 	private Session session;
 	private StatelessSession ss;
 	private ScrollableResults scroll;
 	private boolean hasMoreItem = true;
 
 	@Inject
-	public ItemReader(JobContext jobContext) {
+	public ItemReader(JobContext jobContext, StepContext stepContext) {
 		this.jobContext = jobContext;
+		this.stepContext = stepContext;
 	}
 
 	/**
@@ -123,12 +126,17 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 			logger.error( e );
 		}
 		try {
-			session.close();
-			logger.info( "Session closed" );
+			em.close();
 		}
 		catch (Exception e) {
 			logger.error( e );
 		}
+		// reset the chunk work count to avoid over-count in item collector
+		// release session
+		StepContextData stepData = (StepContextData) stepContext.getTransientUserData();
+		stepData.setChunkWorkCount( 0 );
+		stepData.setSession( null );
+		stepContext.setPersistentUserData( stepData );
 	}
 
 	/**
@@ -147,9 +155,9 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		logger.infof( "open reader for entity %s ...", entityName );
 		entityClazz = ( (JobContextData) jobContext.getTransientUserData() )
 				.getIndexedType( entityName );
-		String path = "java:comp/env/" + persistenceUnitName;
-		em = (EntityManager) InitialContext.doLookup( path );
+		em = emf.createEntityManager();
 		session = em.unwrap( Session.class );
+		StepContextData stepData;
 
 		ss = session.getSessionFactory().openStatelessSession();
 		String idName = ContextHelper
@@ -168,6 +176,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
 			hasMoreItem = scroll.scroll( 1 + scrollOffset );
+			stepData = new StepContextData();
 		}
 		else {
 			checkpointId = checkpoint;
@@ -180,7 +189,11 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
 			hasMoreItem = scroll.scroll( scrollInterval );
+			stepData = (StepContextData) stepContext.getPersistentUserData();
 		}
+
+		stepData.setSession( session );
+		stepContext.setTransientUserData( stepData );
 	}
 
 	/**

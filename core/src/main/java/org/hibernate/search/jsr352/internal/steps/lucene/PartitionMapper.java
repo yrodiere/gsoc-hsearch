@@ -14,9 +14,10 @@ import javax.batch.api.partition.PartitionPlanImpl;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -38,6 +39,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	private final JobContext jobContext;
 
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
+
 	/**
 	 * The partition-capacity defines the max number of entities to be processed
 	 * inside a partition. So the number of partitions used will be the division
@@ -54,10 +58,6 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@Inject
 	@BatchProperty
 	private int maxThreads;
-
-	@Inject
-	@BatchProperty
-	private String persistenceUnitName;
 
 	@Inject
 	public PartitionMapper(JobContext jobContext) {
@@ -127,8 +127,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			throws NamingException, HibernateException, ClassNotFoundException {
 
 		EntityMetadata[] metas = new EntityMetadata[entityNames.length];
-		String path = "java:comp/env/" + persistenceUnitName;
-		EntityManager em = (EntityManager) InitialContext.doLookup( path );
+		EntityManager em = emf.createEntityManager();
 		Session session = em.unwrap( Session.class );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		long totalEntityToIndex = 0;
@@ -151,6 +150,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 		jobData.setTotalEntityToIndex( totalEntityToIndex );
 		logger.infof( "totalEntityToIndex=%d", totalEntityToIndex );
+		em.close();
 		return metas;
 	}
 

@@ -10,11 +10,12 @@ import java.io.Serializable;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -42,8 +43,12 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 
 	private static final Logger logger = Logger.getLogger( ItemProcessor.class );
 	private final JobContext jobContext;
+	private final StepContext stepContext;
 	private boolean isSetup = false;
 	private Class<?> entityClazz;
+
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
 
 	@Inject
 	@BatchProperty
@@ -53,15 +58,15 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 	@BatchProperty
 	private String persistenceUnitName;
 
-	private EntityManager em;
 	private Session session;
 	private ExtendedSearchIntegrator searchIntegrator;
 	private EntityIndexBinding entityIndexBinding;
 	private DocumentBuilderIndexedEntity docBuilder;
 
 	@Inject
-	public ItemProcessor(JobContext jobContext) {
+	public ItemProcessor(JobContext jobContext, StepContext stepContext) {
 		this.jobContext = jobContext;
+		this.stepContext = stepContext;
 	}
 
 	/**
@@ -93,11 +98,8 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 
 		entityClazz = ( (JobContextData) jobContext.getTransientUserData() )
 				.getIndexedType( entityName );
-
-		String path = "java:comp/env/" + persistenceUnitName;
-		em = (EntityManager) InitialContext.doLookup( path );
-
-		session = em.unwrap( Session.class );
+		StepContextData stepData = (StepContextData) stepContext.getTransientUserData();
+		session = stepData.getSession();
 		searchIntegrator = ContextHelper.getSearchintegrator( session );
 		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
 		docBuilder = entityIndexBinding.getDocumentBuilder();
@@ -124,9 +126,7 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 		final InstanceInitializer sessionInitializer = new HibernateSessionLoadingInitializer(
 				(SessionImplementor) session );
 
-		// Serializable id = session.getIdentifier(entity);
-		Serializable id = (Serializable) em.getEntityManagerFactory()
-				.getPersistenceUnitUtil()
+		Serializable id = (Serializable) emf.getPersistenceUnitUtil()
 				.getIdentifier( entity );
 		TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
 		conversionContext.pushProperty( docBuilder.getIdKeywordName() );
