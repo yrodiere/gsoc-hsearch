@@ -27,7 +27,7 @@ public final class BatchTestHelper {
 
 	private static final Logger logger = Logger.getLogger( BatchTestHelper.class );
 
-	private static final int MAX_TRIES = 240; // 240 second
+	private static final int MAX_TRIES = 40; // 240 second
 	private static final int THREAD_SLEEP = 1000;
 
 	private BatchTestHelper() {
@@ -75,6 +75,7 @@ public final class BatchTestHelper {
 	public static void stopJobExecution(JobExecution jobExecution)
 			throws InterruptedException {
 
+		Thread.sleep( 5000 );
 		int tries = 0;
 		long executionId = jobExecution.getExecutionId();
 		JobOperator jobOperator = BatchRuntime.getJobOperator();
@@ -85,7 +86,7 @@ public final class BatchTestHelper {
 				|| !jobExecution.getBatchStatus().equals( BatchStatus.FAILED )
 				|| tries < MAX_TRIES ) {
 
-			Thread.sleep( 200 );
+			Thread.sleep( 10000 );
 
 			// find step "produceLuceneDoc"
 			while ( cursor.hasNext() ) {

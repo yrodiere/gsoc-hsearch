@@ -44,7 +44,6 @@
             <writer ref="itemWriter">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
-                    <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
                 </properties>
             </writer>
             <checkpoint-algorithm ref="checkpointAlgorithm">
@@ -57,7 +56,7 @@
             <mapper ref="partitionMapper">
                 <properties>
                     <property name="maxThreads" value="#{jobParameters['threads']}?:8;" />
-                    <property name="partitionCapacity" value="#{jobParameters['partitionCapacity']}?:500;" />
+                    <property name="partitions" value="#{jobParameters['partitions']}?:0;" />
                 </properties>
             </mapper>
             <collector ref="partitionCollector" />

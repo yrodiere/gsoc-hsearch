@@ -16,7 +16,6 @@ import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 
 /**
- *
  * @author Mincong Huang
  */
 public class MassIndexerImpl implements MassIndexer {
@@ -28,6 +27,7 @@ public class MassIndexerImpl implements MassIndexer {
 	private int itemCount = 3;
 	private int maxResults = 1000 * 1000;
 	private int partitionCapacity = 250;
+	private int partitions = 0;
 	private int maxThreads = 1;
 	private String persistenceUnitName;
 	private final Set<Class<?>> rootEntities = new HashSet<>();
@@ -41,6 +41,19 @@ public class MassIndexerImpl implements MassIndexer {
 
 	@Override
 	public long start() {
+
+		if ( rootEntities == null ) {
+			throw new NullPointerException( "rootEntities cannot be null" );
+		}
+		else if ( rootEntities.size() > partitions ) {
+			String msg = String.format( "partitions is set to %d, "
+					+ "but it should be greater ou equal to %d, "
+					+ "the size of the rootEntities",
+					partitions,
+					rootEntities.size() );
+			throw new IllegalStateException( msg );
+		}
+
 		Properties jobParams = new Properties();
 		jobParams.put( "fetchSize", String.valueOf( fetchSize ) );
 		jobParams.put( "itemCount", String.valueOf( itemCount ) );
@@ -48,7 +61,8 @@ public class MassIndexerImpl implements MassIndexer {
 		jobParams.put( "maxThreads", String.valueOf( maxThreads ) );
 		jobParams.put( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
 		jobParams.put( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
-		jobParams.put( "partitionCapacity", String.valueOf( partitionCapacity ) );
+//		jobParams.put( "partitionCapacity", String.valueOf( partitionCapacity ) );
+		jobParams.put( "partitions", String.valueOf( partitions ) );
 		jobParams.put( "persistenceUnitName", persistenceUnitName );
 		jobParams.put( "purgeAtStart", String.valueOf( purgeAtStart ) );
 		jobParams.put( "rootEntities", getRootEntitiesAsString() );
@@ -92,6 +106,9 @@ public class MassIndexerImpl implements MassIndexer {
 		return this;
 	}
 
+	/**
+	 * @deprecated issue-107
+	 */
 	@Override
 	public MassIndexer partitionCapacity(int partitionCapacity) {
 		if ( partitionCapacity < 1 ) {
@@ -99,6 +116,15 @@ public class MassIndexerImpl implements MassIndexer {
 					"partitionCapacity must be at least 1" );
 		}
 		this.partitionCapacity = partitionCapacity;
+		return this;
+	}
+
+	@Override
+	public MassIndexer partitions(int partitions) {
+		if ( partitions < 0 ) {
+			throw new IllegalArgumentException( "partitions must be at least 1" );
+		}
+		this.partitions = partitions;
 		return this;
 	}
 
@@ -129,7 +155,7 @@ public class MassIndexerImpl implements MassIndexer {
 		this.rootEntities.addAll( Arrays.asList( rootEntities ) );
 		return this;
 	}
-	
+
 	@Override
 	public MassIndexer checkpointFreq(int itemCount) {
 		this.itemCount = itemCount;
@@ -176,6 +202,11 @@ public class MassIndexerImpl implements MassIndexer {
 	@Override
 	public int getPartitionCapacity() {
 		return partitionCapacity;
+	}
+
+	@Override
+	public int getPartitions() {
+		return partitions;
 	}
 
 	@Override
