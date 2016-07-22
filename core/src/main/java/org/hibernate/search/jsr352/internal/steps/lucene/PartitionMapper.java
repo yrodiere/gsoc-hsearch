@@ -6,9 +6,7 @@
  */
 package org.hibernate.search.jsr352.internal.steps.lucene;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Properties;
 
@@ -40,21 +38,10 @@ import org.jboss.logging.Logger;
 public class PartitionMapper implements javax.batch.api.partition.PartitionMapper {
 
 	private static final Logger logger = Logger.getLogger( PartitionMapper.class );
-
 	private final JobContext jobContext;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
-
-	/**
-	 * The partition-capacity defines the max number of entities to be processed
-	 * inside a partition. So the number of partitions used will be the division
-	 * of the entities to index and the partition capacity :
-	 * {@code partitions = entitiesToDo / partitionCapacity;}
-	 */
-//	@Inject
-//	@BatchProperty
-//	private int partitionCapacity;
 
 	/**
 	 * The number of partitions used for this partitioned chunk.
@@ -78,60 +65,42 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
 
+		// create the 1st priority queue for partition units, comparable by rows
+		PriorityQueue<_Unit> rowQueue = new PriorityQueue<>( partitions, new _RowComparator() );
+
+		// compute rows to index for each entity and enqueue their properties
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		List<_EntityMetadata> metas = getEntityMetadatas( jobData.getEntityNameArray() );
-
-		Comparator<_PartitionProperty> byRowDesc =
-				((_PartitionProperty x, _PartitionProperty y) -> (int)( y.rowsToDo - x.rowsToDo ));
-		PriorityQueue<_PartitionProperty> rowQueue = new PriorityQueue<>( metas.size(), byRowDesc );
-
-		for ( _EntityMetadata m : metas ) {
-			rowQueue.add( new _PartitionProperty( m.entityName, m.rowCount ) );
+		int partitionCounter = 0;
+		long totalEntityToIndex = 0;
+		for ( String entityName : jobData.getEntityNameArray() ) {
+			_Unit u = getPartitionUnit( entityName );
+			totalEntityToIndex += u.rowsToIndex;
+			logger.infof( "enqueue %s", u );
+			rowQueue.add( u );
+			partitionCounter++;
 		}
+		jobData.setTotalEntityToIndex( totalEntityToIndex );
+		logger.infof( "totalEntityToIndex=%d", totalEntityToIndex );
 
-		for ( int i = 0; i < partitions; i++ ) {
-			_PartitionProperty maxRowsPP = rowQueue.poll();
-			String entityName = maxRowsPP.entityName;
-			double half = maxRowsPP.rowsToDo / 2f;
-			_PartitionProperty x = new _PartitionProperty( entityName, (long) Math.floor( half ) );
-			_PartitionProperty y = new _PartitionProperty( entityName, (long) Math.ceil( half ) );
+		// enhance partitioning mechanism
+		while ( partitionCounter < partitions ) {
+			logger.info( "partitionCounter=" + partitionCounter );
+			_Unit maxRowsU = rowQueue.poll();
+			float half = maxRowsU.rowsToIndex / 2f;
+			_Unit x = new _Unit( maxRowsU.entityName, (long) Math.floor( half ) );
+			_Unit y = new _Unit( maxRowsU.entityName, (long) Math.ceil( half ) );
 			rowQueue.add( x );
 			rowQueue.add( y );
-			logger.info( "i=" + i );
-			rowQueue.forEach( e -> logger.info( e.entityName + " " + e.rowsToDo ) );
+			rowQueue.forEach( u -> logger.info( u ) );
+			partitionCounter++;
 		}
 
-		Comparator<_PartitionProperty> byEntityName =
-				((_PartitionProperty x, _PartitionProperty y) -> x.entityName.compareTo( y.entityName ));
-		PriorityQueue<_PartitionProperty> strQueue = new PriorityQueue<>( rowQueue.size(), byEntityName );
-		while( !rowQueue.isEmpty() ) {
-			_PartitionProperty pp = rowQueue.poll();
-			strQueue.add( pp );
+		// create the 2nd priority queue for partition units, comparable by entity name
+		PriorityQueue<_Unit> strQueue = new PriorityQueue<>( partitions, new _StringCompartor() );
+		while ( !rowQueue.isEmpty() ) {
+			strQueue.add( rowQueue.poll() );
 		}
-
-		int j = 0;
-		Properties[] props = new Properties[partitions];
-		logger.infof( "strQueue.size=%d", strQueue.size() );
-		while ( !strQueue.isEmpty() && j < partitions ) {
-			// each outer loop deals with one entity type (n partitions)
-			// each inner loop deals with remainder problem for one entity type
-			int remainder = 0;
-			while ( j < partitions && ((j > 0 && strQueue.peek().entityName.equals( props[j - 1].getProperty( "entityName" ) ))
-					|| j == 0)) {
-				logger.infof( "inner loop: j = %d, remainder = %d, entityName = %s", j, remainder, strQueue.peek().entityName );
-				props[j] = new Properties();
-				_PartitionProperty pp = strQueue.poll();
-				props[j].setProperty( "entityName", pp.entityName );
-				props[j].setProperty( "scrollOffset", String.valueOf( remainder ) );
-				remainder++;
-				j++;
-			}
-			int interval = remainder;
-			for (int i = j - interval; i < j; i++ ) {
-				logger.infof( "for loop: i=%d, j=%d, interval=%d", i, j, interval );
-				props[i].setProperty( "scrollInterval", String.valueOf( interval ) );
-			}
-		}
+		Properties[] props = buildProperties(strQueue);
 
 		return new PartitionPlanImpl() {
 
@@ -155,6 +124,40 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		};
 	}
 
+	private Properties[] buildProperties(PriorityQueue<_Unit> strQueue) {
+		int i = 0;
+		int partitions = strQueue.size();
+		Properties[] props = new Properties[partitions];
+		while ( !strQueue.isEmpty() && i < partitions ) {
+			// each outer loop deals with one entity type (n partitions)
+			// each inner loop deals with remainder problem for one entity type
+			int remainder = 0;
+			String prevEntityName = null;
+			do {
+				logger.infof( "inner loop: i=%d, remainder=%d, entityName=%s",
+						i,
+						remainder,
+						strQueue.peek().entityName );
+				_Unit u = strQueue.poll();
+				props[i] = new Properties();
+				props[i].setProperty( "entityName", u.entityName );
+				props[i].setProperty( "scrollOffset", String.valueOf( remainder ) );
+				prevEntityName = u.entityName;
+				remainder++;
+				i++;
+			} while ( 0 < i && i < partitions
+					&& !strQueue.isEmpty()
+					&& strQueue.peek().entityName.equals( prevEntityName ));
+
+			int interval = remainder;
+			for ( int x = i - interval; x < i; x++ ) {
+				logger.infof( "for loop: x=%d, i=%d, interval=%d", x, i, interval );
+				props[x].setProperty( "scrollInterval", String.valueOf( interval ) );
+			}
+		}
+		return props;
+	}
+
 	/**
 	 * Get a list of entity meta-data. This class is an inner class of
 	 * PartitionMapper.
@@ -166,52 +169,59 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	 * @throws ClassNotFoundException if the entity type not found
 	 * @throws HibernateException
 	 */
-	private List<_EntityMetadata> getEntityMetadatas(String[] entityNames)
+	private _Unit getPartitionUnit(String entityName)
 			throws NamingException, HibernateException, ClassNotFoundException {
 
-		List<_EntityMetadata> metas = new ArrayList<>();
 		EntityManager em = emf.createEntityManager();
 		Session session = em.unwrap( Session.class );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		long totalEntityToIndex = 0;
+		long rowCount = (long) session
+				.createCriteria( jobData.getIndexedType( entityName ) )
+				.setProjection( Projections.rowCount() )
+				.setCacheable( false )
+				.uniqueResult();
 
-		for ( String entityName : entityNames ) {
-			long rowCount = (long) session
-					.createCriteria( jobData.getIndexedType( entityName ) )
-					.setProjection( Projections.rowCount() )
-					.setCacheable( false )
-					.uniqueResult();
-			logger.infof( "entityName=%s, rowCount=%d, partitions=%d",
-					entityName,
-					rowCount,
-					partitions );
-			_EntityMetadata m = new _EntityMetadata();
-			m.entityName = entityName;
-			m.rowCount = rowCount;
-			metas.add( m );
-			totalEntityToIndex += rowCount;
+		em.close();
+		logger.infof( "entityName=%s, rowCount=%d", entityName, rowCount );
+		_Unit pp = new _Unit( entityName, rowCount );
+		return pp;
+	}
+
+	private class _Unit {
+
+		String entityName;
+		long rowsToIndex;
+
+		_Unit(String entityName, long rowsToIndex) {
+			this.entityName = entityName;
+			this.rowsToIndex = rowsToIndex;
 		}
 
-		jobData.setTotalEntityToIndex( totalEntityToIndex );
-		logger.infof( "totalEntityToIndex=%d", totalEntityToIndex );
-		em.close();
-		return metas;
+		@Override
+		public String toString() {
+			return "_Unit [entityName=" + entityName + ", rowsToIndex=" + rowsToIndex + "]";
+		}
 	}
 
-	private class _EntityMetadata {
+	private class _RowComparator implements Comparator<_Unit> {
 
-		String entityName;
-		long rowCount;
+		@Override
+		public int compare(_Unit x, _Unit y) {
+			if ( x.rowsToIndex < y.rowsToIndex ) {
+				return 1;
+			}
+			if ( x.rowsToIndex > y.rowsToIndex ) {
+				return -1;
+			}
+			return 0;
+		}
 	}
 
-	private class _PartitionProperty {
+	private class _StringCompartor implements Comparator<_Unit> {
 
-		String entityName;
-		long rowsToDo;
-
-		_PartitionProperty(String entityName, long rowsToDo) {
-			this.entityName = entityName;
-			this.rowsToDo = rowsToDo;
+		@Override
+		public int compare(_Unit x, _Unit y) {
+			return  x.entityName.compareTo( y.entityName );
 		}
 	}
 }
