@@ -16,7 +16,6 @@ import javax.batch.api.partition.PartitionPlanImpl;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
@@ -30,7 +29,7 @@ import org.jboss.logging.Logger;
 /**
  * Lucene partition mapper provides a partition plan to the Lucene production
  * step: "produceLuceneDoc". The partition plan is defined dynamically,
- * according to the partition capacity.
+ * according to the number of partitions given by the user.
  *
  * @author Mincong Huang
  */
@@ -124,6 +123,14 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		};
 	}
 
+	/**
+	 * Build a property array using string-comparable queue, which means units
+	 * are ordered by entity name. So units having the same entity name are
+	 * placed next to each other.
+	 *
+	 * @param strQueue string-comparable queue
+	 * @return a property array
+	 */
 	private Properties[] buildProperties(PriorityQueue<_Unit> strQueue) {
 		int i = 0;
 		int partitions = strQueue.size();
@@ -145,7 +152,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				prevEntityName = u.entityName;
 				remainder++;
 				i++;
-			} while ( 0 < i && i < partitions
+			} while ( i < partitions
 					&& !strQueue.isEmpty()
 					&& strQueue.peek().entityName.equals( prevEntityName ));
 
@@ -159,18 +166,17 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	}
 
 	/**
-	 * Get a list of entity meta-data. This class is an inner class of
-	 * PartitionMapper.
+	 * Get initial partition unit using the entity name. Partition unit is an
+	 * inner class of PartitionMapper.
 	 *
-	 * @param entityNames an array of entity names
-	 * @return a list of entity meta-data
-	 * @throws NamingException if the target path is not found in the JNDI look
-	 * up.
+	 * @param entityName entity name
+	 * @return initial partition unit, it can be enhanced by other method and
+	 * become a final partition unit.
 	 * @throws ClassNotFoundException if the entity type not found
 	 * @throws HibernateException
 	 */
 	private _Unit getPartitionUnit(String entityName)
-			throws NamingException, HibernateException, ClassNotFoundException {
+			throws HibernateException, ClassNotFoundException {
 
 		EntityManager em = emf.createEntityManager();
 		Session session = em.unwrap( Session.class );
@@ -183,8 +189,8 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 		em.close();
 		logger.infof( "entityName=%s, rowCount=%d", entityName, rowCount );
-		_Unit pp = new _Unit( entityName, rowCount );
-		return pp;
+		_Unit u = new _Unit( entityName, rowCount );
+		return u;
 	}
 
 	private class _Unit {
