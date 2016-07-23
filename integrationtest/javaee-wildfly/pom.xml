@@ -18,6 +18,11 @@
     <artifactId>hsearch-jsr352-integrationtest-wildfly</artifactId>
     <name>GSoC JSR352 - Integration Tests in WildFly</name>
 
+    <properties>
+        <byteman.version>3.0.6</byteman.version>
+        <path.tools_jar>${java.home}/../lib/tools.jar</path.tools_jar>
+    </properties>
+
     <dependencies>
         <!-- This integration test refers to classes in his parent -->
         <dependency>
@@ -58,6 +63,43 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
+        </dependency>
+        <!-- byteman -->
+        <dependency>
+            <groupId>com.sun</groupId>
+            <artifactId>tools</artifactId>
+            <version>1.6.0</version>
+            <scope>system</scope>
+            <systemPath>${path.tools_jar}</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman</artifactId>
+            <scope>test</scope>
+            <version>${byteman.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-submit</artifactId>
+            <scope>test</scope>
+            <version>${byteman.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-install</artifactId>
+            <scope>test</scope>
+            <version>${byteman.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-bmunit</artifactId>
+            <scope>test</scope>
+            <version>${byteman.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.extension</groupId>
+            <artifactId>arquillian-extension-byteman</artifactId>
+            <version>1.0.0.Alpha3</version>
         </dependency>
     </dependencies>
 

@@ -29,6 +29,8 @@ import org.hibernate.search.jsr352.test.entity.MyDateManager;
 import org.hibernate.search.jsr352.test.util.BatchTestHelper;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.byteman.contrib.bmunit.BMRule;
+import org.jboss.byteman.contrib.bmunit.BMRules;
 import org.jboss.logging.Logger;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -38,12 +40,18 @@ import org.junit.runner.RunWith;
 
 /**
  * This integration test (IT) aims to test the mass-indexer job execution under
- * Java EE environment, with step partitioning (parallelism), checkpointing, 
+ * Java EE environment, with step partitioning (parallelism), checkpointing,
  * restartability and entity composite PK handling mechanism.
  *
  * @author Mincong Huang
  */
 @RunWith(Arquillian.class)
+@BMRules(rules = {
+		@BMRule(name = "interrupts the item reader",
+				targetClass = "org.hibernate.search.jsr352.internal.steps.lucene.ItemReader",
+				targetMethod = "open(Serializable)",
+				action = "traceln(\"Byteman : open detected\")")
+})
 public class MassIndexerIT {
 
 	private static final Logger logger = Logger.getLogger( MassIndexerIT.class );
@@ -138,7 +146,8 @@ public class MassIndexerIT {
 			assertEquals( expected, readCount );
 			assertEquals( expected, writeCount );
 			assertEquals( BatchStatus.COMPLETED, batchStatus );
-		} else {
+		}
+		else {
 			String msg = "Unknown step " + stepName;
 			throw new IllegalStateException( msg );
 		}

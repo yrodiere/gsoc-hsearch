@@ -28,7 +28,19 @@
         <!-- <property name="javaVmArguments">-javaagent:${byteman.agent.path}=script:${byteman.script.path} -Xmx512m -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1</property> -->
         <!-- To debug the Arquillian managed application server: -->
         <!-- property name="javaVmArguments">-javaagent:${byteman.agent.path}=script:${byteman.script.path} -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y -Xmx512m -Dorg.jboss.remoting-jmx.timeout=300  -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1</property -->
+          <!-- When using autoInstallAgent with WildFly, the com.sun.tools.attach
+               package has to be exposed as a system package and tools.jar added
+               to the bootstrap classpath. -->
+          <property name="javaVmArguments">-Djboss.modules.system.pkgs=com.sun.tools.attach,org.jboss.byteman
+                -Xbootclasspath/a:${path.tools_jar}
+          </property>
       </configuration>
     </container>
   </group>
+
+    <!-- Byteman extension -->
+    <extension qualifier="byteman">
+        <property name="autoInstallAgent">true</property>
+        <property name="agentProperties">org.jboss.byteman.verbose=true</property>
+    </extension>
 </arquillian>
