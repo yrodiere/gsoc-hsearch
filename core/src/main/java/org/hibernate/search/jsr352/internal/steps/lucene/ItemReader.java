@@ -55,18 +55,20 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@BatchProperty
 	private int maxResults;
 
-	// The offset at the beginning of the entity scroll, starting from 0, e.g.
-	// if scroll-offset is 0, then reader starts reading at entity 1.
-	// if scroll-offset is 1, then reader starts reading at entity 2.
+	/**
+	 * The remainder for the scrollable results
+	 */
 	@Inject
 	@BatchProperty
-	private int scrollOffset;
+	private int remainder;
 
-	// The interval of for the next scroll, e.g. if scrollInverval is 3, then
-	// reader will read entity [ 1, 4, 7, ... ]
+	/**
+	 * The divisor for the scrollable results, e.g. if the divisor is 3 and the
+	 * remainder is 1, then this reader will read entity [ 1, 4, 7, ... ]
+	 */
 	@Inject
 	@BatchProperty
-	private int scrollInterval;
+	private int divisor;
 
 	@Inject
 	@BatchProperty
@@ -81,8 +83,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private Session session;
 	private StatelessSession ss;
 	private ScrollableResults scroll;
-	private boolean hasMoreItem = true;
-
 	@Inject
 	public ItemReader(JobContext jobContext, StepContext stepContext) {
 		this.jobContext = jobContext;
@@ -166,21 +166,26 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 				.get( entityClazz )
 				.getDocumentBuilder()
 				.getIdentifierName();
+		String hql = String.format( "MOD( %s, %d ) = %d",
+				idName,
+				divisor,
+				remainder );
 
 		if ( checkpoint == null ) {
 			scroll = ss.createCriteria( entityClazz )
+					.add( Restrictions.sqlRestriction( hql ) )
 					.addOrder( Order.asc( idName ) )
 					.setReadOnly( true )
 					.setCacheable( true )
 					.setFetchSize( 1000 )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
-			hasMoreItem = scroll.scroll( 1 + scrollOffset );
 			stepData = new StepContextData();
 		}
 		else {
 			checkpointId = checkpoint;
 			scroll = ss.createCriteria( entityClazz )
+					.add( Restrictions.sqlRestriction( hql ) )
 					.add( Restrictions.ge( idName, checkpointId ) )
 					.addOrder( Order.asc( idName ) )
 					.setReadOnly( true )
@@ -188,7 +193,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.setFetchSize( 1000 )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
-			hasMoreItem = scroll.scroll( scrollInterval );
 			stepData = (StepContextData) stepContext.getPersistentUserData();
 		}
 
@@ -207,12 +211,13 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		logger.debug( "Reading item ..." );
 		Object entity = null;
 
-		if ( hasMoreItem ) {
+//		if ( hasMoreItem ) {
+		if ( scroll.next() ) {
 			entity = scroll.get( 0 );
 			checkpointId = (Serializable) em.getEntityManagerFactory()
 					.getPersistenceUnitUtil()
 					.getIdentifier( entity );
-			hasMoreItem = scroll.scroll( scrollInterval );
+//			hasMoreItem = scroll.scroll( scrollInterval );
 		}
 		else {
 			logger.info( "no more result. read ends." );

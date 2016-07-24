@@ -148,7 +148,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				_Unit u = strQueue.poll();
 				props[i] = new Properties();
 				props[i].setProperty( "entityName", u.entityName );
-				props[i].setProperty( "scrollOffset", String.valueOf( remainder ) );
+				props[i].setProperty( "remainder", String.valueOf( remainder ) );
 				prevEntityName = u.entityName;
 				remainder++;
 				i++;
@@ -156,10 +156,12 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 					&& !strQueue.isEmpty()
 					&& strQueue.peek().entityName.equals( prevEntityName ));
 
-			int interval = remainder;
-			for ( int x = i - interval; x < i; x++ ) {
-				logger.infof( "for loop: x=%d, i=%d, interval=%d", x, i, interval );
-				props[x].setProperty( "scrollInterval", String.valueOf( interval ) );
+			// In the last loop, remainder had been incremented. So it isn't
+			// remainder anymore, but the divisor, the max(remainder) + 1.
+			int divisor = remainder;
+			for ( int x = i - divisor; x < i; x++ ) {
+				logger.infof( "for loop: x=%d, i=%d, divisor=%d", x, i, divisor );
+				props[x].setProperty( "divisor", String.valueOf( divisor ) );
 			}
 		}
 		return props;

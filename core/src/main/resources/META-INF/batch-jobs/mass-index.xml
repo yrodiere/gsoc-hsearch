@@ -31,8 +31,8 @@
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
-                    <property name="scrollInterval" value="#{partitionPlan['scrollInterval']}" />
-                    <property name="scrollOffset" value="#{partitionPlan['scrollOffset']}" />
+                    <property name="divisor" value="#{partitionPlan['divisor']}" />
+                    <property name="remainder" value="#{partitionPlan['remainder']}" />
                 </properties>
             </reader>
             <processor ref="itemProcessor">
