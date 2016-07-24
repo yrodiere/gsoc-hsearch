@@ -29,8 +29,6 @@ import org.hibernate.search.jsr352.test.entity.MyDateManager;
 import org.hibernate.search.jsr352.test.util.BatchTestHelper;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.byteman.contrib.bmunit.BMRule;
-import org.jboss.byteman.contrib.bmunit.BMRules;
 import org.jboss.logging.Logger;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -46,12 +44,6 @@ import org.junit.runner.RunWith;
  * @author Mincong Huang
  */
 @RunWith(Arquillian.class)
-@BMRules(rules = {
-		@BMRule(name = "interrupts the item reader",
-				targetClass = "org.hibernate.search.jsr352.internal.steps.lucene.ItemReader",
-				targetMethod = "open(Serializable)",
-				action = "traceln(\"Byteman : open detected\")")
-})
 public class MassIndexerIT {
 
 	private static final Logger logger = Logger.getLogger( MassIndexerIT.class );
