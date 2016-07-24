@@ -7,6 +7,8 @@
 package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
 
@@ -21,7 +23,10 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
 import org.hibernate.HibernateException;
+import org.hibernate.ScrollMode;
+import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
+import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Projections;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
@@ -38,6 +43,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	private static final Logger logger = Logger.getLogger( PartitionMapper.class );
 	private final JobContext jobContext;
+	private EntityManager em;
+	private Session session;
+	private Map<String, Long> entityCountMap = new HashMap<>();
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
@@ -64,6 +72,10 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
 
+		// prepare the environment related the persistence
+		em = emf.createEntityManager();
+		session = em.unwrap( Session.class );
+
 		// create the 1st priority queue for partition units, comparable by rows
 		PriorityQueue<_Unit> rowQueue = new PriorityQueue<>( partitions, new _RowComparator() );
 
@@ -73,6 +85,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		long totalEntityToIndex = 0;
 		for ( String entityName : jobData.getEntityNameArray() ) {
 			_Unit u = getPartitionUnit( entityName );
+			entityCountMap.put( u.entityName, u.rowsToIndex );
 			totalEntityToIndex += u.rowsToIndex;
 			logger.infof( "enqueue %s", u );
 			rowQueue.add( u );
@@ -100,6 +113,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			strQueue.add( rowQueue.poll() );
 		}
 		Properties[] props = buildProperties(strQueue);
+		em.close();
 
 		return new PartitionPlanImpl() {
 
@@ -130,40 +144,67 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	 *
 	 * @param strQueue string-comparable queue
 	 * @return a property array
+	 * @throws ClassNotFoundException if target entity class type is not found
+	 * during the creation of the scrollable result
+	 * @throws HibernateException if any hibernate occurs during the creation
+	 * of scrollable results
 	 */
-	private Properties[] buildProperties(PriorityQueue<_Unit> strQueue) {
+	private Properties[] buildProperties(PriorityQueue<_Unit> strQueue)
+			throws HibernateException, ClassNotFoundException {
+
+		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
+		StatelessSession ss = this.session
+				.getSessionFactory()
+				.openStatelessSession();
 		int i = 0;
-		int partitions = strQueue.size();
+		final int partitions = strQueue.size();
 		Properties[] props = new Properties[partitions];
 		while ( !strQueue.isEmpty() && i < partitions ) {
 			// each outer loop deals with one entity type (n partitions)
 			// each inner loop deals with remainder problem for one entity type
-			int remainder = 0;
+			int partitionCounter = 0;
 			String prevEntityName = null;
 			do {
 				logger.infof( "inner loop: i=%d, remainder=%d, entityName=%s",
 						i,
-						remainder,
+						partitionCounter,
 						strQueue.peek().entityName );
 				_Unit u = strQueue.poll();
 				props[i] = new Properties();
 				props[i].setProperty( "entityName", u.entityName );
-				props[i].setProperty( "remainder", String.valueOf( remainder ) );
 				prevEntityName = u.entityName;
-				remainder++;
+				partitionCounter++;
 				i++;
 			} while ( i < partitions
 					&& !strQueue.isEmpty()
 					&& strQueue.peek().entityName.equals( prevEntityName ));
 
-			// In the last loop, remainder had been incremented. So it isn't
-			// remainder anymore, but the divisor, the max(remainder) + 1.
-			int divisor = remainder;
-			for ( int x = i - divisor; x < i; x++ ) {
-				logger.infof( "for loop: x=%d, i=%d, divisor=%d", x, i, divisor );
-				props[x].setProperty( "divisor", String.valueOf( divisor ) );
+			final long rowCount = entityCountMap.get( prevEntityName );
+			final int partitionCapacity = (int) ( rowCount / partitionCounter );
+			ScrollableResults scroll = ss
+					.createCriteria( jobData.getIndexedType( prevEntityName ) )
+					.setProjection( Projections.id() )
+					.setCacheable( false )
+					.setReadOnly( true )
+					.scroll( ScrollMode.FORWARD_ONLY );
+			for ( int x = i - partitionCounter; x < i; x++ ) {
+				if ( scroll.next() ) {
+					String firstID = scroll.get( 0 ).toString();
+					logger.infof( "round=%s, firstID(String)=%s", x, firstID );
+					props[x].setProperty( "firstID", firstID );
+				} else {
+					break;
+				}
+				if ( scroll.scroll( partitionCapacity - 1 ) ) {
+					String lastID = scroll.get( 0 ).toString();
+					logger.infof( "round=%s, lastID(String)=%s", x, lastID );
+					props[x].setProperty( "lastID", lastID );
+				} else {
+					break;
+				}
 			}
 		}
+		ss.close();
 		return props;
 	}
 
@@ -180,16 +221,12 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	private _Unit getPartitionUnit(String entityName)
 			throws HibernateException, ClassNotFoundException {
 
-		EntityManager em = emf.createEntityManager();
-		Session session = em.unwrap( Session.class );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		long rowCount = (long) session
 				.createCriteria( jobData.getIndexedType( entityName ) )
 				.setProjection( Projections.rowCount() )
 				.setCacheable( false )
 				.uniqueResult();
-
-		em.close();
 		logger.infof( "entityName=%s, rowCount=%d", entityName, rowCount );
 		_Unit u = new _Unit( entityName, rowCount );
 		return u;
