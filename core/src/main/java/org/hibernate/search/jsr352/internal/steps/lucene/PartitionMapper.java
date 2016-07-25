@@ -139,8 +139,11 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			};
 		}
 		finally {
-			if ( em != null ) {
+			try {
 				em.close();
+			}
+			catch ( Exception e ) {
+				logger.error( e );
 			}
 		}
 	}
@@ -229,17 +232,13 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		}
 		finally {
 			try {
-				if ( scroll != null ) {
-					scroll.close();
-				}
+				scroll.close();
 			}
 			catch ( Exception e ) {
 				logger.error( e );
 			}
 			try {
-				if ( ss != null ) {
-					ss.close();
-				}
+				ss.close();
 			}
 			catch ( Exception e ) {
 				logger.error( e );

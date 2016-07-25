@@ -71,6 +71,11 @@ public class AfterChunkBatchlet implements Batchlet {
 
 	@Override
 	public void stop() throws Exception {
-		em.close();
+		try {
+			em.close();
+		}
+		catch ( Exception e ) {
+			logger.error( e );
+		}
 	}
 }

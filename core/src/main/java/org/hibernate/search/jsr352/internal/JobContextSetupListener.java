@@ -48,27 +48,38 @@ public class JobContextSetupListener extends AbstractJobListener {
 	@Override
 	public void beforeJob() throws Exception {
 
-		logger.debug( "Creating entity manager ..." );
-		EntityManager em = emf.createEntityManager();
-		String[] entityNamesToIndex = rootEntities.split( "," );
-		Set<Class<?>> entityClazzesToIndex = new HashSet<>();
-		Set<Class<?>> indexedTypes = Search
-				.getFullTextEntityManager( em )
-				.getSearchFactory()
-				.getIndexedTypes();
+		EntityManager em = null;
 
-		// check the root entities selected do exist
-		// in full-text entity session
-		for ( String entityName : entityNamesToIndex ) {
-			for ( Class<?> indexedType : indexedTypes ) {
-				if ( indexedType.getName().equals( entityName.trim() ) ) {
-					entityClazzesToIndex.add( indexedType );
-					continue;
+		try {
+			logger.debug( "Creating entity manager ..." );
+			em = emf.createEntityManager();
+			String[] entityNamesToIndex = rootEntities.split( "," );
+			Set<Class<?>> entityClazzesToIndex = new HashSet<>();
+			Set<Class<?>> indexedTypes = Search
+					.getFullTextEntityManager( em )
+					.getSearchFactory()
+					.getIndexedTypes();
+
+			// check the root entities selected do exist
+			// in full-text entity session
+			for ( String entityName : entityNamesToIndex ) {
+				for ( Class<?> indexedType : indexedTypes ) {
+					if ( indexedType.getName().equals( entityName.trim() ) ) {
+						entityClazzesToIndex.add( indexedType );
+						continue;
+					}
 				}
 			}
-		}
 
-		jobContext.setTransientUserData( new JobContextData( entityClazzesToIndex ) );
-		em.close();
+			jobContext.setTransientUserData( new JobContextData( entityClazzesToIndex ) );
+		}
+		finally {
+			try {
+				em.close();
+			}
+			catch ( Exception e ) {
+				logger.error( e );
+			}
+		}
 	}
 }
