@@ -53,6 +53,14 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	@Inject
 	@BatchProperty
+	private boolean cacheable;
+
+	@Inject
+	@BatchProperty
+	private int fetchSize;
+
+	@Inject
+	@BatchProperty
 	private int maxResults;
 
 	@Inject
@@ -166,8 +174,8 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.add( Restrictions.le( idName, lastID ) )
 					.addOrder( Order.asc( idName ) )
 					.setReadOnly( true )
-					.setCacheable( true )
-					.setFetchSize( 1000 )
+					.setCacheable( cacheable )
+					.setFetchSize( fetchSize )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
 			stepData = new StepContextData();
@@ -179,8 +187,8 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 					.add( Restrictions.le( idName, lastID ) )
 					.addOrder( Order.asc( idName ) )
 					.setReadOnly( true )
-					.setCacheable( true )
-					.setFetchSize( 1000 )
+					.setCacheable( cacheable )
+					.setFetchSize( fetchSize )
 					.setMaxResults( maxResults )
 					.scroll( ScrollMode.FORWARD_ONLY );
 			stepData = (StepContextData) stepContext.getPersistentUserData();

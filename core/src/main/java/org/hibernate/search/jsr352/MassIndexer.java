@@ -52,6 +52,15 @@ public interface MassIndexer {
 	public MassIndexer checkpointFreq(int itemCount);
 
 	/**
+	 * Whether the Hibernate queries are cacheable. This setting will be applied
+	 * to all the queries. The default value is false.
+	 *
+	 * @param cacheable
+	 * @return
+	 */
+	public MassIndexer cacheable(boolean cacheable);
+
+	/**
 	 * EntityManager will be assigned inside the mass indexer with the JNDI
 	 * lookup.
 	 *
@@ -160,6 +169,8 @@ public interface MassIndexer {
 	public int getPartitionCapacity();
 
 	public int getPartitions();
+
+	public boolean cacheable();
 
 	public boolean isOptimizeAfterPurge();
 

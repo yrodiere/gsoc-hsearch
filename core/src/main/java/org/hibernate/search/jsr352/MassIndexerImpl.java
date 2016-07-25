@@ -20,6 +20,7 @@ import javax.batch.runtime.BatchRuntime;
  */
 public class MassIndexerImpl implements MassIndexer {
 
+	private boolean cacheable = false;
 	private boolean optimizeAfterPurge = false;
 	private boolean optimizeAtEnd = false;
 	private boolean purgeAtStart = false;
@@ -61,7 +62,6 @@ public class MassIndexerImpl implements MassIndexer {
 		jobParams.put( "maxThreads", String.valueOf( maxThreads ) );
 		jobParams.put( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
 		jobParams.put( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
-//		jobParams.put( "partitionCapacity", String.valueOf( partitionCapacity ) );
 		jobParams.put( "partitions", String.valueOf( partitions ) );
 		jobParams.put( "persistenceUnitName", persistenceUnitName );
 		jobParams.put( "purgeAtStart", String.valueOf( purgeAtStart ) );
@@ -91,6 +91,12 @@ public class MassIndexerImpl implements MassIndexer {
 			throw new IllegalArgumentException( "maxResults must be at least 1" );
 		}
 		this.maxResults = maxResults;
+		return this;
+	}
+
+	@Override
+	public MassIndexer cacheable(boolean cacheable) {
+		this.cacheable = cacheable;
 		return this;
 	}
 
@@ -172,6 +178,11 @@ public class MassIndexerImpl implements MassIndexer {
 	public MassIndexer jobOperator(JobOperator jobOperator) {
 		this.jobOperator = jobOperator;
 		return this;
+	}
+
+	@Override
+	public boolean cacheable() {
+		return cacheable;
 	}
 
 	@Override

@@ -31,6 +31,8 @@
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
                     <property name="partitionIndex" value="#{partitionPlan['partitionIndex']}" />
+                    <property name="cacheable" value="#{jobParameters['cacheable']}?:false;" />
+                    <property name="fetchSize" value="#{jobParameters['fetchSize']}?:200000;" />
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
                 </properties>
             </reader>
@@ -54,6 +56,8 @@
         <partition>
             <mapper ref="partitionMapper">
                 <properties>
+                    <property name="cacheable" value="#{jobParameters['cacheable']}?:false;" />
+                    <property name="fetchSize" value="#{jobParameters['fetchSize']}?:200000;" />
                     <property name="maxThreads" value="#{jobParameters['threads']}?:8;" />
                     <property name="partitions" value="#{jobParameters['partitions']}?:0;" />
                 </properties>

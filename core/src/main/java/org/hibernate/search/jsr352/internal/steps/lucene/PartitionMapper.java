@@ -48,6 +48,14 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
 
+	@Inject
+	@BatchProperty
+	private boolean cacheable;
+
+	@Inject
+	@BatchProperty
+	private int fetchSize;
+
 	/**
 	 * The number of partitions used for this partitioned chunk.
 	 */
@@ -186,7 +194,8 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 					.createCriteria( jobData.getIndexedType( currEntityName ) )
 					.addOrder( Order.asc( fieldID ) )
 					.setProjection( Projections.id() )
-					.setCacheable( false )
+					.setCacheable( cacheable )
+					.setFetchSize( fetchSize )
 					.setReadOnly( true )
 					.scroll( ScrollMode.FORWARD_ONLY );
 
