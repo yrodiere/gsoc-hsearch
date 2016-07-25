@@ -90,17 +90,17 @@ public class MassIndexerIT {
 	public void testJob() throws InterruptedException {
 
 		final String google = "google";
-//		final String sunday = "sun";
+		final String sunday = "sun";
 		final String googleCEO = "Sundar";
 
 		// Before the job start, insert data and
 		// make sure search result is empty without index
 		insertData();
 		List<Company> companies = companyManager.findCompanyByName( google );
-//		List<MyDate> sundays = myDateManager.findDateByWeekday( sunday );
+		List<MyDate> sundays = myDateManager.findDateByWeekday( sunday );
 		List<Person> ceos = personManager.findPerson( googleCEO );
 		assertEquals( 0, companies.size() );
-//		assertEquals( 0, sundays.size() );
+		assertEquals( 0, sundays.size() );
 		assertEquals( 0, ceos.size() );
 
 		// Start the job. This is the 1st execution.
@@ -128,13 +128,13 @@ public class MassIndexerIT {
 		// After the job execution, test again : results should be found this
 		// time. By the way, 5 Sundays will be found in July 2016
 		companies = companyManager.findCompanyByName( google );
-//		sundays = myDateManager.findDateByWeekday( sunday );
+		sundays = myDateManager.findDateByWeekday( sunday );
 		ceos = personManager.findPerson( googleCEO );
 		logger.infof( "After the 2nd exec, %d companies found", companies.size() );
-//		logger.infof( "After the 2nd exec, %d dates found", sundays.size() );
-		logger.infof( "After the 2nd exec, %d ceos found", ceos.size() );
+		logger.infof( "After the 2nd exec, %d dates found", sundays.size() );
+		logger.infof( "After the 2nd exec, %d CEOs found", ceos.size() );
 		assertEquals( DB_COMP_ROWS / 5, companies.size() );
-//		assertEquals( 5, sundays.size() );
+		assertEquals( 5, sundays.size() );
 		assertEquals( DB_CEOS_ROWS / 5, ceos.size() );
 	}
 
@@ -190,8 +190,7 @@ public class MassIndexerIT {
 				.maxThreads( JOB_MAX_THREADS )
 				.entityManagerProvider( JOB_PU_NAME )
 				.jobOperator( jobOperator )
-				.addRootEntities( Company.class, Person.class );
-//				.addRootEntities( Company.class, MyDate.class );
+				.addRootEntities( Company.class, MyDate.class, Person.class );
 		long executionId = massIndexer.start();
 		return executionId;
 	}
