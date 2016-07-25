@@ -32,6 +32,16 @@ public class JobContextData {
 	 */
 	private long totalEntityToIndex;
 
+	/**
+	 * The array of first ID
+	 */
+	private Object[] firstIDArray;
+
+	/**
+	 * The array of last ID
+	 */
+	private Object[] lastIDArray;
+
 	public JobContextData(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
 		entityClazzes.forEach( clz -> entityClazzMap.put( clz.toString(), clz ) );
@@ -65,5 +75,29 @@ public class JobContextData {
 
 	public void setTotalEntityToIndex(long totalEntityToIndex) {
 		this.totalEntityToIndex = totalEntityToIndex;
+	}
+
+	public Object[] getFirstIDArray() {
+		return firstIDArray;
+	}
+
+	public Object getFirstID(int index) {
+		return firstIDArray[index];
+	}
+
+	public void setFirstIDArray(Object[] firstIDArray) {
+		this.firstIDArray = firstIDArray;
+	}
+
+	public Object[] getLastIDArray() {
+		return lastIDArray;
+	}
+
+	public Object getLastID(int index) {
+		return lastIDArray[index];
+	}
+
+	public void setLastIDArray(Object[] lastIDArray) {
+		this.lastIDArray = lastIDArray;
 	}
 }

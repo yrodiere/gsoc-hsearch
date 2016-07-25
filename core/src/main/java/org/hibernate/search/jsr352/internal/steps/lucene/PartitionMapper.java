@@ -159,6 +159,8 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		int i = 0;
 		final int partitions = strQueue.size();
 		Properties[] props = new Properties[partitions];
+		Object[] firstIDArray = new Object[partitions];
+		Object[] lastIDArray = new Object[partitions];
 		while ( !strQueue.isEmpty() && i < partitions ) {
 			// each outer loop deals with one entity type (n partitions)
 			// each inner loop deals with remainder problem for one entity type
@@ -172,6 +174,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				_Unit u = strQueue.poll();
 				props[i] = new Properties();
 				props[i].setProperty( "entityName", u.entityName );
+				props[i].setProperty( "partitionIndex", String.valueOf( i ) );
 				prevEntityName = u.entityName;
 				partitionCounter++;
 				i++;
@@ -188,22 +191,23 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 					.setReadOnly( true )
 					.scroll( ScrollMode.FORWARD_ONLY );
 			for ( int x = i - partitionCounter; x < i; x++ ) {
+				
 				if ( scroll.next() ) {
-					String firstID = scroll.get( 0 ).toString();
-					logger.infof( "round=%s, firstID(String)=%s", x, firstID );
-					props[x].setProperty( "firstID", firstID );
+					firstIDArray[x] = scroll.get( 0 );
+					logger.infof( "firstIDArray[%d]=%s", x, firstIDArray[x] );
 				} else {
 					break;
 				}
 				if ( scroll.scroll( partitionCapacity - 1 ) ) {
-					String lastID = scroll.get( 0 ).toString();
-					logger.infof( "round=%s, lastID(String)=%s", x, lastID );
-					props[x].setProperty( "lastID", lastID );
+					lastIDArray[x] = scroll.get( 0 );
+					logger.infof( "lastIDArray[%d]=%s", x, lastIDArray[x] );
 				} else {
 					break;
 				}
 			}
 		}
+		jobData.setFirstIDArray( firstIDArray );
+		jobData.setLastIDArray( lastIDArray );
 		ss.close();
 		return props;
 	}

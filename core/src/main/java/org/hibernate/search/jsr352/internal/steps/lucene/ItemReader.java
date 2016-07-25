@@ -57,11 +57,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	@Inject
 	@BatchProperty
-	private int firstID;
-
-	@Inject
-	@BatchProperty
-	private int lastID;
+	private int partitionIndex;
 
 	@Inject
 	@BatchProperty
@@ -147,8 +143,11 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	public void open(Serializable checkpoint) throws Exception {
 
 		logger.infof( "open reader for entity %s ...", entityName );
-		entityClazz = ( (JobContextData) jobContext.getTransientUserData() )
-				.getIndexedType( entityName );
+		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
+		entityClazz = jobData.getIndexedType( entityName );
+		Object firstID = jobData.getFirstID( partitionIndex );
+		Object lastID = jobData.getLastID( partitionIndex );
+		logger.infof( "firstID=%s, lastID=%s", firstID, lastID );
 		em = emf.createEntityManager();
 		session = em.unwrap( Session.class );
 		StepContextData stepData;
@@ -161,7 +160,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 				.getDocumentBuilder()
 				.getIdentifierName();
 
-		logger.infof( "firstID=%d, lastID=%d", firstID, lastID );
 		if ( checkpoint == null ) {
 			scroll = ss.createCriteria( entityClazz )
 					.add( Restrictions.ge( idName, firstID ) )

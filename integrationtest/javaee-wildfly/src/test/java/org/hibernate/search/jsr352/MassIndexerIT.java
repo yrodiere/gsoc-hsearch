@@ -26,6 +26,8 @@ import org.hibernate.search.jsr352.test.entity.Company;
 import org.hibernate.search.jsr352.test.entity.CompanyManager;
 import org.hibernate.search.jsr352.test.entity.MyDate;
 import org.hibernate.search.jsr352.test.entity.MyDateManager;
+import org.hibernate.search.jsr352.test.entity.Person;
+import org.hibernate.search.jsr352.test.entity.PersonManager;
 import org.hibernate.search.jsr352.test.util.BatchTestHelper;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -57,6 +59,7 @@ public class MassIndexerIT {
 	private final int JOB_PARTITIONS = 5;
 	private final String JOB_PU_NAME = "h2";
 
+	private final long DB_CEOS_ROWS = 5;
 	private final long DB_COMP_ROWS = 5000;
 	private final long DB_DATE_ROWS = 31; // 2016.07.01 - 2016.07.31
 
@@ -65,6 +68,9 @@ public class MassIndexerIT {
 
 	@Inject
 	private MyDateManager myDateManager;
+
+	@Inject
+	private PersonManager personManager;
 
 	@Deployment
 	public static WebArchive createDeployment() {
@@ -85,14 +91,17 @@ public class MassIndexerIT {
 
 		final String google = "google";
 //		final String sunday = "sun";
+		final String googleCEO = "Sundar";
 
 		// Before the job start, insert data and
 		// make sure search result is empty without index
 		insertData();
 		List<Company> companies = companyManager.findCompanyByName( google );
 //		List<MyDate> sundays = myDateManager.findDateByWeekday( sunday );
+		List<Person> ceos = personManager.findPerson( googleCEO );
 		assertEquals( 0, companies.size() );
 //		assertEquals( 0, sundays.size() );
+		assertEquals( 0, ceos.size() );
 
 		// Start the job. This is the 1st execution.
 		JobOperator jobOperator = BatchRuntime.getJobOperator();
@@ -120,10 +129,13 @@ public class MassIndexerIT {
 		// time. By the way, 5 Sundays will be found in July 2016
 		companies = companyManager.findCompanyByName( google );
 //		sundays = myDateManager.findDateByWeekday( sunday );
+		ceos = personManager.findPerson( googleCEO );
 		logger.infof( "After the 2nd exec, %d companies found", companies.size() );
 //		logger.infof( "After the 2nd exec, %d dates found", sundays.size() );
+		logger.infof( "After the 2nd exec, %d ceos found", ceos.size() );
 		assertEquals( DB_COMP_ROWS / 5, companies.size() );
 //		assertEquals( 5, sundays.size() );
+		assertEquals( DB_CEOS_ROWS / 5, ceos.size() );
 	}
 
 	private void testBatchStatus(StepExecution stepExecution) {
@@ -153,6 +165,10 @@ public class MassIndexerIT {
 				{ "Facebook", "Mark", "Zuckerberg" },
 				{ "Amazon", "Jeff", "Bezos" }
 		};
+		for ( int i = 0; i < DB_CEOS_ROWS; i++ ) {
+			Person p = new Person( str[i][0], str[i][1], str[i][2] );
+			personManager.persist( p );
+		}
 		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
 			companyManager.persist( new Company( str[i % 5][0] ) );
 		}
@@ -173,7 +189,7 @@ public class MassIndexerIT {
 				.maxThreads( JOB_MAX_THREADS )
 				.entityManagerProvider( JOB_PU_NAME )
 				.jobOperator( jobOperator )
-				.addRootEntities( Company.class );
+				.addRootEntities( Company.class, Person.class );
 //				.addRootEntities( Company.class, MyDate.class );
 		long executionId = massIndexer.start();
 		return executionId;

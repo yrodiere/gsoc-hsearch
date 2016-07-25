@@ -30,11 +30,8 @@
             <reader ref="itemReader">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
+                    <property name="partitionIndex" value="#{partitionPlan['partitionIndex']}" />
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
-                    <property name="divisor" value="#{partitionPlan['divisor']}" />
-                    <property name="remainder" value="#{partitionPlan['remainder']}" />
-                    <property name="firstID" value="#{partitionPlan['firstID']}" />
-                    <property name="lastID" value="#{partitionPlan['lastID']}" />
                 </properties>
             </reader>
             <processor ref="itemProcessor">
