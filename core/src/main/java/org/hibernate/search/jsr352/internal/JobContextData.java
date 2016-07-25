@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.jsr352.internal;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -26,6 +27,12 @@ public class JobContextData {
 	 * frequently used too. So this map facilites this kind of lookup.
 	 */
 	private Map<String, Class<?>> entityClazzMap;
+
+	/**
+	 * The map of key value pair (string, long), designed for storage of name
+	 * and number of rows to index of all root entities.
+	 */
+	private Map<String, Long> entityCountMap = new HashMap<>();
 
 	/**
 	 * The total number of entities to index over all the entity types.
@@ -77,6 +84,15 @@ public class JobContextData {
 		this.totalEntityToIndex = totalEntityToIndex;
 	}
 
+	/**
+	 * Increment to total entity number to index
+	 *
+	 * @param increment the entity number to index for one entity type
+	 */
+	public void incrementTotalEntity( long increment ) {
+		totalEntityToIndex += increment;
+	}
+
 	public Object[] getFirstIDArray() {
 		return firstIDArray;
 	}
@@ -99,5 +115,21 @@ public class JobContextData {
 
 	public void setLastIDArray(Object[] lastIDArray) {
 		this.lastIDArray = lastIDArray;
+	}
+
+	public long getRowsToIndex(String entityName) {
+		return entityCountMap.get( entityName );
+	}
+
+	public void setRowsToIndex(String entityName, long rowsToIndex) {
+		entityCountMap.put( entityName, rowsToIndex );
+	}
+
+	@Override
+	public String toString() {
+		return "JobContextData [entityClazzMap=" + entityClazzMap + ", entityCountMap="
+				+ entityCountMap + ", totalEntityToIndex=" + totalEntityToIndex
+				+ ", firstIDArray=" + Arrays.toString( firstIDArray ) + ", lastIDArray="
+				+ Arrays.toString( lastIDArray ) + "]";
 	}
 }
