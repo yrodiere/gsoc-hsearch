@@ -82,7 +82,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		try {
 			em = emf.createEntityManager();
 			Session session = em.unwrap( Session.class );
-	
+
 			// Create the 1st priority queue for partition units, order by rows.
 			// Then construct these units and enqueue them.
 			PriorityQueue<_Unit> rowQueue = new PriorityQueue<>( partitions, new _RowComparator() );
@@ -94,7 +94,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				logger.infof( "enqueue %s", u );
 				rowQueue.add( u );
 			}
-	
+
 			// Enhance partitioning mechanism
 			int partitionCounter = jobData.getEntityNameArray().length;
 			while ( partitionCounter < partitions ) {
@@ -108,7 +108,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				partitionCounter++;
 			}
 			rowQueue.forEach( u -> logger.info( u ) );
-	
+
 			// Create the 2nd priority queue to reorder these partition units, order
 			// by entity name
 			PriorityQueue<_Unit> strQueue = new PriorityQueue<>( partitions, new _StringCompartor() );
@@ -162,71 +162,89 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		StatelessSession ss = session.getSessionFactory().openStatelessSession();
+		ScrollableResults scroll = null;
 		int i = 0;
 		Properties[] props = new Properties[partitions];
 		Object[] firstIDArray = new Object[partitions];
 		Object[] lastIDArray = new Object[partitions];
 
-		while ( !strQueue.isEmpty() && i < partitions ) {
-			// each outer loop deals with one entity type (n partitions)
-			// each inner loop deals with remainder problem for one entity type
-			int partitionCounter = 0;
-			String currEntityName = null;
+		try {
+			while ( !strQueue.isEmpty() && i < partitions ) {
+				// each outer loop deals with one entity type (n partitions)
+				// each inner loop deals with remainder problem for one entity type
+				int partitionCounter = 0;
+				String currEntityName = null;
 
-			do {
-				logger.infof( "inner loop: i=%d, partitionCounter=%d, entityName=%s",
-						i,
-						partitionCounter,
-						strQueue.peek().entityName );
-				_Unit u = strQueue.poll();
-				props[i] = new Properties();
-				props[i].setProperty( "entityName", u.entityName );
-				props[i].setProperty( "partitionIndex", String.valueOf( i ) );
-				currEntityName = u.entityName;
-				partitionCounter++;
-				i++;
-			} while ( i < partitions
-					&& !strQueue.isEmpty()
-					&& strQueue.peek().entityName.equals( currEntityName ) );
+				do {
+					logger.infof( "inner loop: i=%d, partitionCounter=%d, entityName=%s",
+							i,
+							partitionCounter,
+							strQueue.peek().entityName );
+					_Unit u = strQueue.poll();
+					props[i] = new Properties();
+					props[i].setProperty( "entityName", u.entityName );
+					props[i].setProperty( "partitionIndex", String.valueOf( i ) );
+					currEntityName = u.entityName;
+					partitionCounter++;
+					i++;
+				} while ( i < partitions
+						&& !strQueue.isEmpty()
+						&& strQueue.peek().entityName.equals( currEntityName ) );
 
-			final long rows = jobData.getRowsToIndex( currEntityName );
-			final int partitionCapacity = (int) ( rows / partitionCounter );
-			final String fieldID = ContextHelper
-					.getSearchintegrator( session )
-					.getIndexBindings()
-					.get( jobData.getIndexedType( currEntityName ) )
-					.getDocumentBuilder()
-					.getIdentifierName();
-			ScrollableResults scroll = ss
-					.createCriteria( jobData.getIndexedType( currEntityName ) )
-					.addOrder( Order.asc( fieldID ) )
-					.setProjection( Projections.id() )
-					.setCacheable( cacheable )
-					.setFetchSize( fetchSize )
-					.setReadOnly( true )
-					.scroll( ScrollMode.FORWARD_ONLY );
+				final long rows = jobData.getRowsToIndex( currEntityName );
+				final int partitionCapacity = (int) ( rows / partitionCounter );
+				final String fieldID = ContextHelper
+						.getSearchintegrator( session )
+						.getIndexBindings()
+						.get( jobData.getIndexedType( currEntityName ) )
+						.getDocumentBuilder()
+						.getIdentifierName();
+				scroll = ss.createCriteria( jobData.getIndexedType( currEntityName ) )
+						.addOrder( Order.asc( fieldID ) )
+						.setProjection( Projections.id() )
+						.setCacheable( cacheable )
+						.setFetchSize( fetchSize )
+						.setReadOnly( true )
+						.scroll( ScrollMode.FORWARD_ONLY );
 
-			for ( int x = i - partitionCounter; x < i; x++ ) {
-				if ( scroll.scroll( 1 ) ) {
-					firstIDArray[x] = scroll.get( 0 );
-				}
-				else {
-					break;
-				}
-				if ( scroll.scroll( partitionCapacity - 1 ) ) {
-					lastIDArray[x] = scroll.get( 0 );
-				}
-				else {
-					break;
+				for ( int x = i - partitionCounter; x < i; x++ ) {
+					if ( scroll.scroll( 1 ) ) {
+						firstIDArray[x] = scroll.get( 0 );
+					}
+					else {
+						break;
+					}
+					if ( scroll.scroll( partitionCapacity - 1 ) ) {
+						lastIDArray[x] = scroll.get( 0 );
+					}
+					else {
+						break;
+					}
 				}
 			}
+			jobData.setFirstIDArray( firstIDArray );
+			jobData.setLastIDArray( lastIDArray );
+			logger.info( Arrays.toString( firstIDArray ) );
+			logger.info( Arrays.toString( lastIDArray ) );
 		}
-		jobData.setFirstIDArray( firstIDArray );
-		jobData.setLastIDArray( lastIDArray );
-		ss.close();
-
-		logger.info( Arrays.toString( firstIDArray ) );
-		logger.info( Arrays.toString( lastIDArray ) );
+		finally {
+			try {
+				if ( scroll != null ) {
+					scroll.close();
+				}
+			}
+			catch ( Exception e ) {
+				logger.error( e );
+			}
+			try {
+				if ( ss != null ) {
+					ss.close();
+				}
+			}
+			catch ( Exception e ) {
+				logger.error( e );
+			}
+		}
 		return props;
 	}
 
