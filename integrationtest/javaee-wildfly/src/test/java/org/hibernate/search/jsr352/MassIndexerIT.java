@@ -167,6 +167,7 @@ public class MassIndexerIT {
 		};
 		for ( int i = 0; i < DB_CEOS_ROWS; i++ ) {
 			Person p = new Person( str[i][0], str[i][1], str[i][2] );
+			logger.info( p );
 			personManager.persist( p );
 		}
 		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {

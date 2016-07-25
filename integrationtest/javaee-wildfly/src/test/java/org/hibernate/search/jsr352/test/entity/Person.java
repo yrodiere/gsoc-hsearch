@@ -62,4 +62,10 @@ public class Person {
 	public void setFamillyName(String famillyName) {
 		this.famillyName = famillyName;
 	}
+
+	@Override
+	public String toString() {
+		return "Person [id=" + id + ", firstName=" + firstName + ", famillyName="
+				+ famillyName + "]";
+	}
 }
