@@ -27,7 +27,9 @@ import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.StatelessSession;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
+import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
@@ -184,8 +186,16 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 			final long rowCount = entityCountMap.get( prevEntityName );
 			final int partitionCapacity = (int) ( rowCount / partitionCounter );
+			final Class<?> entityClazz = jobData.getIndexedType( prevEntityName );
+			final String idName = ContextHelper
+					.getSearchintegrator( session )
+					.getIndexBindings()
+					.get( entityClazz )
+					.getDocumentBuilder()
+					.getIdentifierName();
 			ScrollableResults scroll = ss
 					.createCriteria( jobData.getIndexedType( prevEntityName ) )
+					.addOrder( Order.asc( idName ) )
 					.setProjection( Projections.id() )
 					.setCacheable( false )
 					.setReadOnly( true )
