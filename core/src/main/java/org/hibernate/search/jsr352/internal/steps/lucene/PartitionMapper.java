@@ -78,64 +78,71 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
 
-		EntityManager em = emf.createEntityManager();
-		Session session = em.unwrap( Session.class );
-
-		// Create the 1st priority queue for partition units, order by rows.
-		// Then construct these units and enqueue them.
-		PriorityQueue<_Unit> rowQueue = new PriorityQueue<>( partitions, new _RowComparator() );
-		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		for ( String entityName : jobData.getEntityNameArray() ) {
-			_Unit u = getPartitionUnit( entityName, session );
-			jobData.setRowsToIndex( u.entityName, u.rowsToIndex );
-			jobData.incrementTotalEntity( u.rowsToIndex );
-			logger.infof( "enqueue %s", u );
-			rowQueue.add( u );
-		}
-
-		// Enhance partitioning mechanism
-		int partitionCounter = jobData.getEntityNameArray().length;
-		while ( partitionCounter < partitions ) {
-			logger.infof( "partitionCounter=%d", partitionCounter );
-			_Unit maxRowsU = rowQueue.poll();
-			float half = maxRowsU.rowsToIndex / 2f;
-			_Unit x = new _Unit( maxRowsU.entityName, (long) Math.floor( half ) );
-			_Unit y = new _Unit( maxRowsU.entityName, (long) Math.ceil( half ) );
-			rowQueue.add( x );
-			rowQueue.add( y );
-			partitionCounter++;
-		}
-		rowQueue.forEach( u -> logger.info( u ) );
-
-		// Create the 2nd priority queue to reorder these partition units, order
-		// by entity name
-		PriorityQueue<_Unit> strQueue = new PriorityQueue<>( partitions, new _StringCompartor() );
-		while ( !rowQueue.isEmpty() ) {
-			strQueue.add( rowQueue.poll() );
-		}
-		Properties[] props = buildProperties( strQueue, session );
-		em.close();
-
-		return new PartitionPlanImpl() {
-
-			@Override
-			public int getPartitions() {
-				logger.infof( "#mapPartitions(): %d partitions.", partitions );
-				return partitions;
+		EntityManager em = null;
+		try {
+			em = emf.createEntityManager();
+			Session session = em.unwrap( Session.class );
+	
+			// Create the 1st priority queue for partition units, order by rows.
+			// Then construct these units and enqueue them.
+			PriorityQueue<_Unit> rowQueue = new PriorityQueue<>( partitions, new _RowComparator() );
+			JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
+			for ( String entityName : jobData.getEntityNameArray() ) {
+				_Unit u = getPartitionUnit( entityName, session );
+				jobData.setRowsToIndex( u.entityName, u.rowsToIndex );
+				jobData.incrementTotalEntity( u.rowsToIndex );
+				logger.infof( "enqueue %s", u );
+				rowQueue.add( u );
 			}
-
-			@Override
-			public int getThreads() {
-				int threads = Math.min( maxThreads, partitions );
-				logger.infof( "#getThreads(): %d threads.", threads );
-				return threads;
+	
+			// Enhance partitioning mechanism
+			int partitionCounter = jobData.getEntityNameArray().length;
+			while ( partitionCounter < partitions ) {
+				logger.infof( "partitionCounter=%d", partitionCounter );
+				_Unit maxRowsU = rowQueue.poll();
+				float half = maxRowsU.rowsToIndex / 2f;
+				_Unit x = new _Unit( maxRowsU.entityName, (long) Math.floor( half ) );
+				_Unit y = new _Unit( maxRowsU.entityName, (long) Math.ceil( half ) );
+				rowQueue.add( x );
+				rowQueue.add( y );
+				partitionCounter++;
 			}
-
-			@Override
-			public Properties[] getPartitionProperties() {
-				return props;
+			rowQueue.forEach( u -> logger.info( u ) );
+	
+			// Create the 2nd priority queue to reorder these partition units, order
+			// by entity name
+			PriorityQueue<_Unit> strQueue = new PriorityQueue<>( partitions, new _StringCompartor() );
+			while ( !rowQueue.isEmpty() ) {
+				strQueue.add( rowQueue.poll() );
 			}
-		};
+			Properties[] props = buildProperties( strQueue, session );
+
+			return new PartitionPlanImpl() {
+
+				@Override
+				public int getPartitions() {
+					logger.infof( "#mapPartitions(): %d partitions.", partitions );
+					return partitions;
+				}
+
+				@Override
+				public int getThreads() {
+					int threads = Math.min( maxThreads, partitions );
+					logger.infof( "#getThreads(): %d threads.", threads );
+					return threads;
+				}
+
+				@Override
+				public Properties[] getPartitionProperties() {
+					return props;
+				}
+			};
+		}
+		finally {
+			if ( em != null ) {
+				em.close();
+			}
+		}
 	}
 
 	/**
