@@ -19,8 +19,10 @@
     <name>GSoC JSR352 - Integration Tests in WildFly</name>
 
     <properties>
-        <byteman.version>3.0.6</byteman.version>
         <path.tools_jar>${java.home}/../lib/tools.jar</path.tools_jar>
+        <byteman.version>3.0.6</byteman.version>
+        <byteman.agent.path>${org.jboss.byteman:byteman:jar}</byteman.agent.path>
+        <byteman.script.path>${basedir}${file.separator}src${file.separator}test${file.separator}resources${file.separator}JobController.btm</byteman.script.path>
     </properties>
 
     <dependencies>
@@ -64,6 +66,13 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- byteman -->
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman</artifactId>
+            <scope>test</scope>
+            <version>${byteman.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -80,6 +89,29 @@
             </testResource>
         </testResources>
         <plugins>
+            <plugin>
+                <!-- Allows to find the absolute path to dependencies -->
+                <groupId>org.bitstrings.maven.plugins</groupId>
+                <artifactId>dependencypath-maven-plugin</artifactId>
+                <version>1.1.1</version>
+                <executions>
+                    <execution>
+                        <id>set-all</id>
+                        <goals>
+                            <goal>set</goal>
+                        </goals>
+                        <configuration>
+                        <propertySets>
+                            <propertySet>
+                                <includes>
+                                    <include>org.jboss.byteman:byteman:jar</include>
+                                </includes>
+                            </propertySet>
+                        </propertySets>
+                    </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.3</version>
