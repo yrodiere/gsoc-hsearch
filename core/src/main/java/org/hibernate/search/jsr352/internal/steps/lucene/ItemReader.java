@@ -13,13 +13,13 @@ import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
@@ -49,7 +49,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
-	private EntityManager em;
 
 	@Inject
 	@BatchProperty
@@ -80,6 +79,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private Session session;
 	private StatelessSession ss;
 	private ScrollableResults scroll;
+	private SessionFactory sessionFactory;
 
 	@Inject
 	public ItemReader(JobContext jobContext, StepContext stepContext) {
@@ -124,7 +124,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 			logger.error( e );
 		}
 		try {
-			em.close();
+			session.close();
 		}
 		catch (Exception e) {
 			logger.error( e );
@@ -156,11 +156,12 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		Object firstID = jobData.getFirstID( partitionIndex );
 		Object lastID = jobData.getLastID( partitionIndex );
 		logger.infof( "firstID=%s, lastID=%s", firstID, lastID );
-		em = emf.createEntityManager();
-		session = em.unwrap( Session.class );
-		StepContextData stepData;
 
-		ss = session.getSessionFactory().openStatelessSession();
+		sessionFactory = emf.unwrap( SessionFactory.class );
+		ss = sessionFactory.openStatelessSession();
+		session = sessionFactory.openSession();
+
+		StepContextData stepData = null;
 		String idName = ContextHelper
 				.getSearchintegrator( session )
 				.getIndexBindings()
@@ -211,8 +212,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 		if ( scroll.next() ) {
 			entity = scroll.get( 0 );
-			checkpointID = (Serializable) em.getEntityManagerFactory()
-					.getPersistenceUnitUtil()
+			checkpointID = (Serializable) emf.getPersistenceUnitUtil()
 					.getIdentifier( entity );
 		}
 		else {

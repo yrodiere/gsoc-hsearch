@@ -17,7 +17,6 @@ import javax.batch.api.partition.PartitionPlanImpl;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
@@ -25,6 +24,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
@@ -78,10 +78,11 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
 
-		EntityManager em = null;
+		SessionFactory sessionFactory = null;
+		Session session = null;
 		try {
-			em = emf.createEntityManager();
-			Session session = em.unwrap( Session.class );
+			sessionFactory = emf.unwrap( SessionFactory.class );
+			session = sessionFactory.openSession();
 
 			// Create the 1st priority queue for partition units, order by rows.
 			// Then construct these units and enqueue them.
@@ -140,7 +141,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		}
 		finally {
 			try {
-				em.close();
+				session.close();
 			}
 			catch ( Exception e ) {
 				logger.error( e );
@@ -154,6 +155,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	 * placed next to each other.
 	 *
 	 * @param strQueue string-comparable queue
+	 * @param session Hibernate session
 	 * @return a property array
 	 * @throws ClassNotFoundException if target entity class type is not found
 	 * during the creation of the scrollable result
