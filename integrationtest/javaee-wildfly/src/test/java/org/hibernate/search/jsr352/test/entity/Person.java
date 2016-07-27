@@ -28,15 +28,18 @@ public class Person {
 	private String firstName;
 
 	@Field
-	private String famillyName;
+	private String familyName;
 
 	public Person() {
 	}
 
-	public Person(String id, String firstName, String famillyName) {
-		this.id = id;
+	public Person(int id, String firstName, String familyName) {
+		this.id = String.format( "%c%c%d",
+				firstName.charAt( 0 ),
+				familyName.charAt( 0 ),
+				id );
 		this.firstName = firstName;
-		this.famillyName = famillyName;
+		this.familyName = familyName;
 	}
 
 	public String getId() {
@@ -55,17 +58,17 @@ public class Person {
 		this.firstName = firstName;
 	}
 
-	public String getFamillyName() {
-		return famillyName;
+	public String getFamilyName() {
+		return familyName;
 	}
 
-	public void setFamillyName(String famillyName) {
-		this.famillyName = famillyName;
+	public void setFamilyName(String famillyName) {
+		this.familyName = famillyName;
 	}
 
 	@Override
 	public String toString() {
-		return "Person [id=" + id + ", firstName=" + firstName + ", famillyName="
-				+ famillyName + "]";
+		return "Person [id=" + id + ", firstName=" + firstName + ", familyName="
+				+ familyName + "]";
 	}
 }
