@@ -1,7 +1,0 @@
-RULE Item reader detector
-CLASS org.hibernate.search.jsr352.internal.steps.lucene.ItemReader
-METHOD open
-AT ENTRY
-IF true
-DO traceln( "byteman : open detected !!!" )
-ENDRULE

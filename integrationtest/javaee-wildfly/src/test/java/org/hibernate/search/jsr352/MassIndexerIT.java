@@ -112,17 +112,17 @@ public class MassIndexerIT {
 //		BatchTestHelper.stopJobExecution( jobExec1 );
 		jobExec1 = BatchTestHelper.keepTestAlive( jobExec1 );
 //		assertEquals( BatchStatus.STOPPED, jobExec1.getBatchStatus() );
-//		companies = companyManager.findCompanyByName( google );
-//		sundays = myDateManager.findDateByWeekday( sunday );
-//		logger.infof( "After the 1st exec, %d companies found", companies.size() );
-//		logger.infof( "After the 1st exec, %d dates found", sundays.size() );
+		companies = companyManager.findCompanyByName( google );
+		sundays = myDateManager.findDateByWeekday( sunday );
+		logger.infof( "After the 1st exec, %d companies found", companies.size() );
+		logger.infof( "After the 1st exec, %d dates found", sundays.size() );
 
 		// Restart the job. This is the 2nd execution.
-//		long execId2 = jobOperator.restart( execId1, null );
-//		JobExecution jobExec2 = jobOperator.getJobExecution( execId2 );
+		long execId2 = jobOperator.restart( execId1, null );
+		JobExecution jobExec2 = jobOperator.getJobExecution( execId2 );
 //		jobOperator.getStepExecutions( execId2 )
 //				.forEach( stepExec -> testBatchStatus( stepExec ) );
-//		jobExec2 = BatchTestHelper.keepTestAlive( jobExec2 );
+		jobExec2 = BatchTestHelper.keepTestAlive( jobExec2 );
 //		assertEquals( BatchStatus.COMPLETED, jobExec2.getBatchStatus() );
 
 		// After the job execution, test again : results should be found this
