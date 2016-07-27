@@ -11,6 +11,8 @@ import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 
 import org.apache.lucene.search.Query;
 import org.hibernate.search.jpa.FullTextEntityManager;
@@ -38,6 +40,13 @@ public class PersonManager {
 		@SuppressWarnings("unchecked")
 		List<Person> result = ftem.createFullTextQuery( luceneQuery ).getResultList();
 		return result;
+	}
+
+	public long rowCount() {
+		CriteriaBuilder builder = em.getCriteriaBuilder();
+		CriteriaQuery<Long> cq = builder.createQuery( Long.class );
+		cq.select( builder.count( cq.from( Person.class ) ) );
+		return em.createQuery( cq ).getSingleResult();
 	}
 
 	public EntityManager getEntityManager() {

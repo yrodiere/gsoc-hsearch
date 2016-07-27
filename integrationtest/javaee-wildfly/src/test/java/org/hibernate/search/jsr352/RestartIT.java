@@ -53,7 +53,7 @@ public class RestartIT {
 	private final String JOB_PU_NAME = "h2";
 
 	private final long DB_COMP_ROWS = 2500;
-	private final long DB_CEOS_ROWS = 2500;
+	private final long DB_PERS_ROWS = 2500;
 
 	@Inject
 	private CompanyManager companyManager;
@@ -81,10 +81,10 @@ public class RestartIT {
 		final String googleCEO = "Sundar";
 
 		insertData();
-		List<Company> companies = companyManager.findCompanyByName( google );
-		List<Person> ceos = personManager.findPerson( googleCEO );
-		assertEquals( 0, companies.size() );
-		assertEquals( 0, ceos.size() );
+		List<Company> googles = companyManager.findCompanyByName( google );
+		List<Person> googleCEOs = personManager.findPerson( googleCEO );
+		assertEquals( 0, googles.size() );
+		assertEquals( 0, googleCEOs.size() );
 
 		// Start the job. This is the 1st execution.
 		// Keep the execution alive and wait Byteman to stop the job
@@ -99,10 +99,15 @@ public class RestartIT {
 		jobExec2 = BatchTestHelper.keepTestAlive( jobExec2 );
 		assertEquals( BatchStatus.COMPLETED, jobExec2.getBatchStatus() );
 
-		companies = companyManager.findCompanyByName( google );
-		ceos = personManager.findPerson( googleCEO );
-		assertEquals( DB_COMP_ROWS / 5, companies.size() );
-		assertEquals( DB_CEOS_ROWS / 5, ceos.size() );
+		googles = companyManager.findCompanyByName( google );
+		googleCEOs = personManager.findPerson( googleCEO );
+		assertEquals( DB_COMP_ROWS / 5, googles.size() );
+		assertEquals( DB_PERS_ROWS / 5, googleCEOs.size() );
+
+		final long nbCompanies = companyManager.rowCount();
+		final long nbPeople = personManager.rowCount();
+		assertEquals( DB_COMP_ROWS, nbCompanies );
+		assertEquals( DB_PERS_ROWS, nbPeople );
 	}
 
 	private void insertData() {
@@ -113,7 +118,7 @@ public class RestartIT {
 				{ "Facebook", "Mark", "Zuckerberg" },
 				{ "Amazon", "Jeff", "Bezos" }
 		};
-		for ( int i = 0; i < DB_CEOS_ROWS; i++ ) {
+		for ( int i = 0; i < DB_PERS_ROWS; i++ ) {
 			Person p = new Person( i, str[i % 5][1], str[i % 5][2] );
 			personManager.persist( p );
 		}
