@@ -22,7 +22,7 @@
         <path.tools_jar>${java.home}/../lib/tools.jar</path.tools_jar>
         <byteman.version>3.0.6</byteman.version>
         <byteman.agent.path>${org.jboss.byteman:byteman:jar}</byteman.agent.path>
-        <byteman.script.path>${basedir}${file.separator}src${file.separator}test${file.separator}resources${file.separator}JobController.btm</byteman.script.path>
+        <byteman.script.path>${basedir}${file.separator}src${file.separator}test${file.separator}resources${file.separator}JobInterruptor.btm</byteman.script.path>
     </properties>
 
     <dependencies>
