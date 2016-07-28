@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.search.jsr352.internal.util.PartitionBoundary;
+
 /**
  * Container for data shared across the entire batch job.
  *
@@ -40,14 +42,9 @@ public class JobContextData {
 	private long totalEntityToIndex;
 
 	/**
-	 * The array of first ID
+	 * The array of boundary for each partition.
 	 */
-	private Object[] firstIDArray;
-
-	/**
-	 * The array of last ID
-	 */
-	private Object[] lastIDArray;
+	private PartitionBoundary[] partitionBoundaries;
 
 	public JobContextData(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
@@ -93,28 +90,12 @@ public class JobContextData {
 		totalEntityToIndex += increment;
 	}
 
-	public Object[] getFirstIDArray() {
-		return firstIDArray;
+	public void setPartitionBoundaries(PartitionBoundary[] partitionBoundaries) {
+		this.partitionBoundaries = partitionBoundaries;
 	}
 
-	public Object getFirstID(int index) {
-		return firstIDArray[index];
-	}
-
-	public void setFirstIDArray(Object[] firstIDArray) {
-		this.firstIDArray = firstIDArray;
-	}
-
-	public Object[] getLastIDArray() {
-		return lastIDArray;
-	}
-
-	public Object getLastID(int index) {
-		return lastIDArray[index];
-	}
-
-	public void setLastIDArray(Object[] lastIDArray) {
-		this.lastIDArray = lastIDArray;
+	public PartitionBoundary getPartitionBoundary(int partitionID) {
+		return partitionBoundaries[partitionID];
 	}
 
 	public long getRowsToIndex(String entityName) {
@@ -127,9 +108,9 @@ public class JobContextData {
 
 	@Override
 	public String toString() {
-		return "JobContextData [entityClazzMap=" + entityClazzMap + ", entityCountMap="
-				+ entityCountMap + ", totalEntityToIndex=" + totalEntityToIndex
-				+ ", firstIDArray=" + Arrays.toString( firstIDArray ) + ", lastIDArray="
-				+ Arrays.toString( lastIDArray ) + "]";
+		return "JobContextData [entityClazzMap=" + entityClazzMap
+				+ ", entityCountMap=" + entityCountMap + ", totalEntityToIndex="
+				+ totalEntityToIndex + ", partitionBoundaries="
+				+ Arrays.toString( partitionBoundaries ) + "]";
 	}
 }

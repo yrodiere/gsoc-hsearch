@@ -16,6 +16,7 @@ import javax.inject.Named;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
+import org.hibernate.Criteria;
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
@@ -25,6 +26,7 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
+import org.hibernate.search.jsr352.internal.util.PartitionBoundary;
 import org.jboss.logging.Logger;
 
 /**
@@ -148,55 +150,64 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	 * @throws Exception thrown for any errors.
 	 */
 	@Override
-	public void open(Serializable checkpoint) throws Exception {
+	public void open(Serializable checkpointID) throws Exception {
 
 		logger.infof( "open reader for entity %s ...", entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		entityClazz = jobData.getIndexedType( entityName );
-		Object firstID = jobData.getFirstID( partitionIndex );
-		Object lastID = jobData.getLastID( partitionIndex );
-		logger.infof( "firstID=%s, lastID=%s", firstID, lastID );
+		PartitionBoundary boundary = jobData.getPartitionBoundary( partitionIndex );
+		logger.info( boundary );
 
 		sessionFactory = emf.unwrap( SessionFactory.class );
 		ss = sessionFactory.openStatelessSession();
 		session = sessionFactory.openSession();
+		scroll = buildScroll( ss, session, boundary, checkpointID );
 
 		StepContextData stepData = null;
+		if ( checkpointID == null ) {
+			stepData = new StepContextData();
+		}
+		else {
+			stepData = (StepContextData) stepContext.getPersistentUserData();
+		}
+
+		stepData.setSession( session );
+		stepContext.setTransientUserData( stepData );
+	}
+
+	private ScrollableResults buildScroll(StatelessSession ss, Session session,
+			PartitionBoundary boundary, Object checkpointID) {
+
 		String idName = ContextHelper
 				.getSearchintegrator( session )
 				.getIndexBindings()
 				.get( entityClazz )
 				.getDocumentBuilder()
 				.getIdentifierName();
+		Criteria criteria = ss.createCriteria( entityClazz );
+		if ( checkpointID != null ) {
+			criteria.add( Restrictions.ge( idName, checkpointID ) );
+		}
 
-		if ( checkpoint == null ) {
-			scroll = ss.createCriteria( entityClazz )
-					.add( Restrictions.ge( idName, firstID ) )
-					.add( Restrictions.le( idName, lastID ) )
-					.addOrder( Order.asc( idName ) )
-					.setReadOnly( true )
-					.setCacheable( cacheable )
-					.setFetchSize( fetchSize )
-					.setMaxResults( maxResults )
-					.scroll( ScrollMode.FORWARD_ONLY );
-			stepData = new StepContextData();
+		if ( boundary.isUniquePartition() ) {
+			// do nothing
+		}
+		else if ( boundary.isFirstPartition() ) {
+			criteria.add( Restrictions.lt( idName, boundary.getUpperID() ) );
+		}
+		else if ( boundary.isLastPartition() ) {
+			criteria.add( Restrictions.ge( idName, boundary.getLowerID() ) );
 		}
 		else {
-			checkpointID = checkpoint;
-			scroll = ss.createCriteria( entityClazz )
-					.add( Restrictions.ge( idName, checkpointID ) )
-					.add( Restrictions.le( idName, lastID ) )
-					.addOrder( Order.asc( idName ) )
-					.setReadOnly( true )
-					.setCacheable( cacheable )
-					.setFetchSize( fetchSize )
-					.setMaxResults( maxResults )
-					.scroll( ScrollMode.FORWARD_ONLY );
-			stepData = (StepContextData) stepContext.getPersistentUserData();
+			criteria.add( Restrictions.ge( idName, boundary.getLowerID() ) )
+					.add( Restrictions.lt( idName, boundary.getUpperID() ) );
 		}
-
-		stepData.setSession( session );
-		stepContext.setTransientUserData( stepData );
+		return criteria.addOrder( Order.asc( idName ) )
+				.setReadOnly( true )
+				.setCacheable( cacheable )
+				.setFetchSize( fetchSize )
+				.setMaxResults( maxResults )
+				.scroll( ScrollMode.FORWARD_ONLY );
 	}
 
 	/**

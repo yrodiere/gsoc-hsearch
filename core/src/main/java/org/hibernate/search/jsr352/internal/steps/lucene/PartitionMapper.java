@@ -30,6 +30,7 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
+import org.hibernate.search.jsr352.internal.util.PartitionBoundary;
 import org.jboss.logging.Logger;
 
 /**
@@ -170,8 +171,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		ScrollableResults scroll = null;
 		int i = 0;
 		Properties[] props = new Properties[partitions];
-		Object[] firstIDArray = new Object[partitions];
-		Object[] lastIDArray = new Object[partitions];
+		PartitionBoundary[] boundaries = new PartitionBoundary[partitions];
 
 		try {
 			while ( !strQueue.isEmpty() && i < partitions ) {
@@ -212,25 +212,24 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 						.setReadOnly( true )
 						.scroll( ScrollMode.FORWARD_ONLY );
 
-				for ( int x = i - partitionCounter; x < i; x++ ) {
-					if ( scroll.scroll( 1 ) ) {
-						firstIDArray[x] = scroll.get( 0 );
+				int x = i - partitionCounter;
+				Object lowerID = null;
+				Object upperID = null;
+				while ( x < i ) {
+					if ( scroll.scroll( partitionCapacity ) ) {
+						lowerID = upperID;
+						upperID = scroll.get( 0 );
+						boundaries[x] = new PartitionBoundary( lowerID, upperID );
 					}
 					else {
-						break;
+						lowerID = upperID;
+						boundaries[x] = new PartitionBoundary( lowerID, null );
 					}
-					if ( scroll.scroll( partitionCapacity - 1 ) ) {
-						lastIDArray[x] = scroll.get( 0 );
-					}
-					else {
-						break;
-					}
+					x++;
 				}
 			}
-			jobData.setFirstIDArray( firstIDArray );
-			jobData.setLastIDArray( lastIDArray );
-			logger.info( Arrays.toString( firstIDArray ) );
-			logger.info( Arrays.toString( lastIDArray ) );
+			jobData.setPartitionBoundaries( boundaries );
+			logger.info( Arrays.toString( boundaries ) );
 		}
 		finally {
 			try {
