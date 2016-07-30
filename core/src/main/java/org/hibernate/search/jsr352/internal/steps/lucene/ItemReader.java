@@ -189,18 +189,15 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 			criteria.add( Restrictions.ge( idName, checkpointID ) );
 		}
 
-		if ( boundary.isUniquePartition() ) {
-			// do nothing
-		}
-		else if ( boundary.isFirstPartition() ) {
-			criteria.add( Restrictions.le( idName, boundary.getUpperID() ) );
+		if ( boundary.isFirstPartition() ) {
+			criteria.add( Restrictions.lt( idName, boundary.getUpperID() ) );
 		}
 		else if ( boundary.isLastPartition() ) {
 			criteria.add( Restrictions.ge( idName, boundary.getLowerID() ) );
 		}
 		else {
 			criteria.add( Restrictions.ge( idName, boundary.getLowerID() ) )
-					.add( Restrictions.le( idName, boundary.getUpperID() ) );
+					.add( Restrictions.lt( idName, boundary.getUpperID() ) );
 		}
 		return criteria.addOrder( Order.asc( idName ) )
 				.setReadOnly( true )

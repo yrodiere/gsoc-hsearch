@@ -12,7 +12,6 @@ public class PartitionBoundary {
 
 	private final boolean isFirstPartition;
 	private final boolean isLastPartition;
-	private final boolean isUniquePartition;
 	private final Object upperID;
 	private final Object lowerID;
 
@@ -23,12 +22,10 @@ public class PartitionBoundary {
 
 		boolean isFirstPartition = false;
 		boolean isLastPartition = false;
-		boolean isUniquePartition = false;
 
 		if ( lowerID == null && upperID == null ) {
-			isFirstPartition = true;
-			isLastPartition = true;
-			isUniquePartition = true;
+			String msg = "lowerID and upperID cannot be null at the same time.";
+			throw new NullPointerException( msg );
 		}
 		if ( lowerID == null && upperID != null ) {
 			isFirstPartition = true;
@@ -39,7 +36,6 @@ public class PartitionBoundary {
 
 		this.isFirstPartition = isFirstPartition;
 		this.isLastPartition = isLastPartition;
-		this.isUniquePartition = isUniquePartition;
 	}
 
 	public boolean isFirstPartition() {
@@ -48,10 +44,6 @@ public class PartitionBoundary {
 
 	public boolean isLastPartition() {
 		return isLastPartition;
-	}
-
-	public boolean isUniquePartition() {
-		return isUniquePartition;
 	}
 
 	public Object getUpperID() {
