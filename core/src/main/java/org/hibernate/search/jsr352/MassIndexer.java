@@ -133,20 +133,10 @@ public interface MassIndexer {
 	 * The partition-capacity defines the max number of entities to be processed
 	 * inside a partition.
 	 *
-	 * @deprecated issue-107
 	 * @param partitionCapacity
 	 * @return
 	 */
 	public MassIndexer partitionCapacity(int partitionCapacity);
-
-	/**
-	 * Number of partitions. This number should be greater or egual to the
-	 * number of root entities to index.
-	 *
-	 * @param partitions
-	 * @return
-	 */
-	public MassIndexer partitions(int partitions);
 
 	/**
 	 * Specify whether the existing lucene index should be purged at the
@@ -167,8 +157,6 @@ public interface MassIndexer {
 	public int getMaxThreads();
 
 	public int getPartitionCapacity();
-
-	public int getPartitions();
 
 	public boolean cacheable();
 

@@ -6,9 +6,9 @@
  */
 package org.hibernate.search.jsr352.internal;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,9 +42,9 @@ public class JobContextData {
 	private long totalEntityToIndex;
 
 	/**
-	 * The array of units containing properties for each partition.
+	 * The list of units containing properties for each partition.
 	 */
-	private PartitionUnit[] partitionUnits;
+	private List<PartitionUnit> partitionUnits;
 
 	public JobContextData(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
@@ -90,12 +90,12 @@ public class JobContextData {
 		totalEntityToIndex += increment;
 	}
 
-	public void setPartitionUnits(PartitionUnit[] partitionUnits) {
+	public void setPartitionUnits(List<PartitionUnit> partitionUnits) {
 		this.partitionUnits = partitionUnits;
 	}
 
 	public PartitionUnit getPartitionUnit(int partitionID) {
-		return partitionUnits[partitionID];
+		return partitionUnits.get( partitionID );
 	}
 
 	public long getRowsToIndex(String entityName) {
@@ -108,9 +108,8 @@ public class JobContextData {
 
 	@Override
 	public String toString() {
-		return "JobContextData [entityClazzMap=" + entityClazzMap
-				+ ", entityCountMap=" + entityCountMap + ", totalEntityToIndex="
-				+ totalEntityToIndex + ", partitionUnits="
-				+ Arrays.toString( partitionUnits ) + "]";
+		return "JobContextData [entityClazzMap=" + entityClazzMap + ", entityCountMap="
+				+ entityCountMap + ", totalEntityToIndex=" + totalEntityToIndex
+				+ ", partitionUnits=" + partitionUnits + "]";
 	}
 }
