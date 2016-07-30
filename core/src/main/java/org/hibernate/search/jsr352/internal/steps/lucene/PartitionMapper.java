@@ -7,7 +7,6 @@
 package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Properties;
 
@@ -30,7 +29,9 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
-import org.hibernate.search.jsr352.internal.util.PartitionBoundary;
+import org.hibernate.search.jsr352.internal.util.PartitionUnit;
+import org.hibernate.search.jsr352.internal.util.RowComparator;
+import org.hibernate.search.jsr352.internal.util.StringComparator;
 import org.jboss.logging.Logger;
 
 /**
@@ -93,13 +94,13 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			finalPartitions = initialPartitions * maxThreads + endPartitions;
 
 			// Use priority queue to order partition units by rows.
-			PriorityQueue<_Unit> rowQueue =	new PriorityQueue<>(
+			PriorityQueue<PartitionUnit> rowQueue =	new PriorityQueue<>(
 					initialPartitions * maxThreads,
-					new _RowComparator() );
+					new RowComparator() );
 			for ( String entityName : jobData.getEntityNameArray() ) {
-				_Unit u = buildPartitionUnit( entityName, session );
-				jobData.setRowsToIndex( u.entityName, u.rowsToIndex );
-				jobData.incrementTotalEntity( u.rowsToIndex );
+				PartitionUnit u = buildPartitionUnit( entityName, session );
+				jobData.setRowsToIndex( u.getEntityName(), (int) u.getRowsToIndex() );
+				jobData.incrementTotalEntity( (int) u.getRowsToIndex() );
 				logger.infof( "partitions=%d", partitions );
 				logger.infof( "enqueue %s", u );
 				rowQueue.add( u );
@@ -109,10 +110,11 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			// Enhance partitioning mechanism
 			while ( partitions < initialPartitions * maxThreads ) {
 				logger.infof( "partitions=%d", partitions );
-				_Unit maxRowsU = rowQueue.poll();
-				float half = maxRowsU.rowsToIndex / 2f;
-				_Unit x = new _Unit( maxRowsU.entityName, (long) Math.floor( half ) );
-				_Unit y = new _Unit( maxRowsU.entityName, (long) Math.ceil( half ) );
+				PartitionUnit maxRowsU = rowQueue.poll();
+				Class<?> clazz = maxRowsU.getEntityClazz();
+				float half = maxRowsU.getRowsToIndex() / 2f;
+				PartitionUnit x = new PartitionUnit( clazz, (long) Math.floor( half ) );
+				PartitionUnit y = new PartitionUnit( clazz, (long) Math.ceil( half ) );
 				rowQueue.add( x );
 				rowQueue.add( y );
 				partitions++;
@@ -120,9 +122,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			rowQueue.forEach( u -> logger.info( u ) );
 
 			// Use priority queue to reorder partition units by entity name
-			PriorityQueue<_Unit> strQueue = new PriorityQueue<>(
+			PriorityQueue<PartitionUnit> strQueue = new PriorityQueue<>(
 					initialPartitions * maxThreads,
-					new _StringCompartor() );
+					new StringComparator() );
 			while ( !rowQueue.isEmpty() ) {
 				strQueue.add( rowQueue.poll() );
 			}
@@ -160,15 +162,15 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	 * @throws HibernateException if any hibernate occurs during the creation of
 	 * scrollable results
 	 */
-	private Properties[] buildProperties(PriorityQueue<_Unit> strQueue, Session session )
-			throws HibernateException, ClassNotFoundException {
+	private Properties[] buildProperties(PriorityQueue<PartitionUnit> strQueue,
+			Session session ) throws HibernateException, ClassNotFoundException {
 
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		StatelessSession ss = session.getSessionFactory().openStatelessSession();
 		ScrollableResults scroll = null;
 		int i = 0;
 		Properties[] props = new Properties[finalPartitions];
-		PartitionBoundary[] boundaries = new PartitionBoundary[finalPartitions];
+		PartitionUnit[] units = new PartitionUnit[finalPartitions];
 
 		try {
 			while ( !strQueue.isEmpty() && i < finalPartitions ) {
@@ -182,18 +184,18 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 					logger.infof( "inner loop: i=%d, partitionCounter=%d, entityName=%s",
 							i,
 							partitionCounter,
-							strQueue.peek().entityName );
-					_Unit u = strQueue.poll();
+							strQueue.peek().getEntityName() );
+					PartitionUnit u = strQueue.poll();
 					props[i] = new Properties();
-					props[i].setProperty( "entityName", u.entityName );
-					props[i].setProperty( "partitionIndex", String.valueOf( i ) );
-					currEntityName = u.entityName;
+					props[i].setProperty( "entityName", u.getEntityName() );
+					props[i].setProperty( "partitionID", String.valueOf( i ) );
+					currEntityName = u.getEntityName();
 					partitionCounter++;
 					i++;
 
 				} while ( i < finalPartitions &&
 						!strQueue.isEmpty() &&
-						strQueue.peek().entityName.equals( currEntityName ) );
+						strQueue.peek().getEntityName().equals( currEntityName ) );
 
 				final long rows = jobData.getRowsToIndex( currEntityName );
 				final int partitionCapacity = (int) ( rows / partitionCounter );
@@ -208,10 +210,11 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				// start of the job
 				props[i] = new Properties();
 				props[i].setProperty( "entityName", currEntityName );
-				props[i].setProperty( "partitionIndex", String.valueOf( i ) );
+				props[i].setProperty( "partitionID", String.valueOf( i ) );
 				i++;
 
-				scroll = ss.createCriteria( jobData.getIndexedType( currEntityName ) )
+				Class<?> entityClazz = jobData.getIndexedType( currEntityName );
+				scroll = ss.createCriteria( entityClazz )
 						.addOrder( Order.asc( fieldID ) )
 						.setProjection( Projections.id() )
 						.setCacheable( cacheable )
@@ -223,21 +226,26 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				Object lowerID = null;
 				Object upperID = null;
 				while ( x < i ) {
+					// swift boundary
 					if ( scroll.scroll( partitionCapacity ) ) {
-						// swift boundary
 						lowerID = upperID;
 						upperID = scroll.get( 0 );
-						boundaries[x] = new PartitionBoundary( lowerID, upperID );
 					}
 					else {
 						lowerID = upperID;
-						boundaries[x] = new PartitionBoundary( lowerID, null );
+						upperID = null;
 					}
+
+					units[x] = new PartitionUnit(
+							entityClazz,
+							partitionCapacity,
+							lowerID,
+							upperID	);
 					x++;
 				}
 			}
-			jobData.setPartitionBoundaries( boundaries );
-			logger.info( Arrays.toString( boundaries ) );
+			jobData.setPartitionUnits( units );
+			logger.info( Arrays.toString( units ) );
 		}
 		finally {
 			try {
@@ -267,55 +275,18 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	 * @throws ClassNotFoundException if the entity type not found
 	 * @throws HibernateException
 	 */
-	private _Unit buildPartitionUnit(String entityName, Session session)
+	private PartitionUnit buildPartitionUnit(String entityName, Session session)
 			throws HibernateException, ClassNotFoundException {
 
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
+		Class<?> entityClazz = jobData.getIndexedType( entityName );
 		long rowCount = (long) session
-				.createCriteria( jobData.getIndexedType( entityName ) )
+				.createCriteria( entityClazz )
 				.setProjection( Projections.rowCount() )
 				.setCacheable( false )
 				.uniqueResult();
-		_Unit u = new _Unit( entityName, rowCount );
+		PartitionUnit u = new PartitionUnit( entityClazz, rowCount );
 		logger.info( u );
 		return u;
-	}
-
-	private class _Unit {
-
-		String entityName;
-		long rowsToIndex;
-
-		_Unit(String entityName, long rowsToIndex) {
-			this.entityName = entityName;
-			this.rowsToIndex = rowsToIndex;
-		}
-
-		@Override
-		public String toString() {
-			return "_Unit [entityName=" + entityName + ", rowsToIndex=" + rowsToIndex + "]";
-		}
-	}
-
-	private class _RowComparator implements Comparator<_Unit> {
-
-		@Override
-		public int compare(_Unit x, _Unit y) {
-			if ( x.rowsToIndex < y.rowsToIndex ) {
-				return 1;
-			}
-			if ( x.rowsToIndex > y.rowsToIndex ) {
-				return -1;
-			}
-			return 0;
-		}
-	}
-
-	private class _StringCompartor implements Comparator<_Unit> {
-
-		@Override
-		public int compare(_Unit x, _Unit y) {
-			return x.entityName.compareTo( y.entityName );
-		}
 	}
 }

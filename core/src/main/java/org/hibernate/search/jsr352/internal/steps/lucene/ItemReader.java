@@ -26,7 +26,7 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
-import org.hibernate.search.jsr352.internal.util.PartitionBoundary;
+import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 import org.jboss.logging.Logger;
 
 /**
@@ -66,7 +66,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 	@Inject
 	@BatchProperty
-	private int partitionIndex;
+	private int partitionID;
 
 	@Inject
 	@BatchProperty
@@ -155,13 +155,13 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		logger.infof( "open reader for entity %s ...", entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		entityClazz = jobData.getIndexedType( entityName );
-		PartitionBoundary boundary = jobData.getPartitionBoundary( partitionIndex );
-		logger.info( boundary );
+		PartitionUnit unit = jobData.getPartitionUnit( partitionID );
+		logger.info( unit );
 
 		sessionFactory = emf.unwrap( SessionFactory.class );
 		ss = sessionFactory.openStatelessSession();
 		session = sessionFactory.openSession();
-		scroll = buildScroll( ss, session, boundary, checkpointID );
+		scroll = buildScroll( ss, unit, checkpointID );
 
 		StepContextData stepData = null;
 		if ( checkpointID == null ) {
@@ -175,8 +175,8 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		stepContext.setTransientUserData( stepData );
 	}
 
-	private ScrollableResults buildScroll(StatelessSession ss, Session session,
-			PartitionBoundary boundary, Object checkpointID) {
+	private ScrollableResults buildScroll(StatelessSession ss,
+			PartitionUnit unit, Object checkpointID) {
 
 		String idName = ContextHelper
 				.getSearchintegrator( session )
@@ -189,15 +189,15 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 			criteria.add( Restrictions.ge( idName, checkpointID ) );
 		}
 
-		if ( boundary.isFirstPartition() ) {
-			criteria.add( Restrictions.lt( idName, boundary.getUpperID() ) );
+		if ( unit.isFirstPartition() ) {
+			criteria.add( Restrictions.lt( idName, unit.getUpperBound() ) );
 		}
-		else if ( boundary.isLastPartition() ) {
-			criteria.add( Restrictions.ge( idName, boundary.getLowerID() ) );
+		else if ( unit.isLastPartition() ) {
+			criteria.add( Restrictions.ge( idName, unit.getLowerBound() ) );
 		}
 		else {
-			criteria.add( Restrictions.ge( idName, boundary.getLowerID() ) )
-					.add( Restrictions.lt( idName, boundary.getUpperID() ) );
+			criteria.add( Restrictions.ge( idName, unit.getLowerBound() ) )
+					.add( Restrictions.lt( idName, unit.getUpperBound() ) );
 		}
 		return criteria.addOrder( Order.asc( idName ) )
 				.setReadOnly( true )

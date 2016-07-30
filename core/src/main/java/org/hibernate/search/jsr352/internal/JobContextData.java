@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.search.jsr352.internal.util.PartitionBoundary;
+import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 
 /**
  * Container for data shared across the entire batch job.
@@ -42,9 +42,9 @@ public class JobContextData {
 	private long totalEntityToIndex;
 
 	/**
-	 * The array of boundary for each partition.
+	 * The array of units containing properties for each partition.
 	 */
-	private PartitionBoundary[] partitionBoundaries;
+	private PartitionUnit[] partitionUnits;
 
 	public JobContextData(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
@@ -90,12 +90,12 @@ public class JobContextData {
 		totalEntityToIndex += increment;
 	}
 
-	public void setPartitionBoundaries(PartitionBoundary[] partitionBoundaries) {
-		this.partitionBoundaries = partitionBoundaries;
+	public void setPartitionUnits(PartitionUnit[] partitionUnits) {
+		this.partitionUnits = partitionUnits;
 	}
 
-	public PartitionBoundary getPartitionBoundary(int partitionID) {
-		return partitionBoundaries[partitionID];
+	public PartitionUnit getPartitionUnit(int partitionID) {
+		return partitionUnits[partitionID];
 	}
 
 	public long getRowsToIndex(String entityName) {
@@ -110,7 +110,7 @@ public class JobContextData {
 	public String toString() {
 		return "JobContextData [entityClazzMap=" + entityClazzMap
 				+ ", entityCountMap=" + entityCountMap + ", totalEntityToIndex="
-				+ totalEntityToIndex + ", partitionBoundaries="
-				+ Arrays.toString( partitionBoundaries ) + "]";
+				+ totalEntityToIndex + ", partitionUnits="
+				+ Arrays.toString( partitionUnits ) + "]";
 	}
 }
