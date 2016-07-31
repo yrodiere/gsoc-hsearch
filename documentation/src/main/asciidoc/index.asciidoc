@@ -1,0 +1,9 @@
+= GSoC: Hibernate Search with JSR352 (building...)
+Mincong Huang; Gunnar Morling; Emmanuel Bernard
+:revdate: {hibernateSearchVersion}
+:toc:
+:docinfo:
+
+include::preface.asciidoc[]
+
+:numbered:

@@ -26,11 +26,15 @@
         <com.h2database>1.4.192</com.h2database>
         <puppycrawl.checkstyle.version>6.16</puppycrawl.checkstyle.version>
         <org.hibernate>5.1.0.Final</org.hibernate>
+        <!-- documentation module -->
+        <luceneVersion>5.5.2</luceneVersion>
+        <infinispanVersion>8.1.0.Final</infinispanVersion>
     </properties>
 
     <modules>
         <module>build-config</module>
         <module>core</module>
+        <module>documentation</module>
         <module>integrationtest/javaee-wildfly</module>
     </modules>
 
@@ -108,15 +112,96 @@
 
     <build>
         <finalName>${project.artifactId}-${project.version}</finalName>
-        <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.3</version>
+                    <configuration>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <!-- This plugin's configuration is used in m2e only. -->
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-dependency-plugin</artifactId>
+                                        <versionRange>[2.1,)</versionRange>
+                                        <goals>
+                                            <goal>unpack</goal>
+                                            <goal>build-classpath</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.felix</groupId>
+                                        <artifactId>maven-bundle-plugin</artifactId>
+                                        <versionRange>[2.3.7,)</versionRange>
+                                        <goals>
+                                            <goal>manifest</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.servicemix.tooling</groupId>
+                                        <artifactId>depends-maven-plugin</artifactId>
+                                        <versionRange>[1.2,)</versionRange>
+                                        <goals>
+                                            <goal>generate-depends-file</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>build-helper-maven-plugin</artifactId>
+                                        <versionRange>[1.9.1,)</versionRange>
+                                        <goals>
+                                            <goal>parse-version</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>de.thetaphi</groupId>
+                                        <artifactId>forbiddenapis</artifactId>
+                                        <versionRange>[1.8,)</versionRange>
+                                        <goals>
+                                            <goal>check</goal>
+                                            <goal>testCheck</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 </project>
