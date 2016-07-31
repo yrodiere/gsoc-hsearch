@@ -53,7 +53,7 @@ public class RestartIT {
 	private final String JOB_PU_NAME = "h2";
 
 	private final long DB_COMP_ROWS = 2500;
-	private final long DB_PERS_ROWS = 2500;
+	private final long DB_PERS_ROWS = 2600;
 
 	@Inject
 	private CompanyManager companyManager;
@@ -104,10 +104,10 @@ public class RestartIT {
 		assertEquals( DB_COMP_ROWS / 5, googles.size() );
 		assertEquals( DB_PERS_ROWS / 5, googleCEOs.size() );
 
-		final long nbCompanies = companyManager.rowCount();
-		final long nbPeople = personManager.rowCount();
-		assertEquals( DB_COMP_ROWS, nbCompanies );
-		assertEquals( DB_PERS_ROWS, nbPeople );
+		// TODO this method should not belong to company manager
+		// but how to create an all context query ?
+		int totalDocs = companyManager.findAll().size();
+		assertEquals( (int) ( DB_COMP_ROWS + DB_PERS_ROWS ), totalDocs );
 	}
 
 	private void insertData() {
