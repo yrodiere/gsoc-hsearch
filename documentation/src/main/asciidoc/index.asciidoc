@@ -1,4 +1,4 @@
-= GSoC: Hibernate Search with JSR352 (building...)
+= JSR 352 batch job for re-indexing entities (building...)
 Mincong Huang; Gunnar Morling; Emmanuel Bernard
 :revdate: {hibernateSearchVersion}
 :toc:
@@ -7,3 +7,4 @@ Mincong Huang; Gunnar Morling; Emmanuel Bernard
 include::preface.asciidoc[]
 
 :numbered:
+include::massindexer352.asciidoc[]

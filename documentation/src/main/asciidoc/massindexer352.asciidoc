@@ -1,0 +1,92 @@
+[[massindexer352]]
+== Using a MassIndexer under JSR352
+
+Hibernate Seach’s new MassIndexer uses the Batch approach introduced by JSR352.
+It contains the same functionalities as the previous indexer, but benefits the
+advantages of the java batch platform, such as checkpoint, standardization. This
+approach is optimized for best performance but requires to set the application
+in maintenance mode. Running a mass indexer in busy hours is not recommended.
+
+.How to use the new MassIndexer?
+====
+[source, JAVA]
+JobOperator jobOperator = BatchRuntime.getJobOperator();
+MassIndexer massIndexer = new MassIndexerImpl()
+        .jobOperator( jobOperator )
+        .addRootEntities( MyEntity.class );
+massIndexer.start();
+====
+
+=== Selection of entities
+The mass indexer accepts selection of entity types through method
+`addRootEntities(Class<?>… rootEntities)`.
+
+[NOTE]
+====
+Please notice that for instant, only the root entity types are accepted. It
+should have no relationship between 2 root entities. Because entity types with
+one-to-many, many-to-many or other relationships are not implemented yet.
+====
+
+=== Parallelism
+In order to maximize the performance, we highly recommend you to speed up the
+mass indexer using parallelism. Under the standard JSR 352, the exact word is
+partitioning. The indexing step may run as multiple partitions, one per thread.
+Each partition has its own partition ID and parameters. If there’re more
+partitions than threads, partitions are considered as a queue to consume:
+each thread can only consume / run one partition at a time and won’t consume the
+next partition until the previous one is finished.
+
+==== Threads
+The number of threads can be defined through method `maxThreads(int)`. It
+determines how many threads will be used for the partitions’ execution. The
+default number is 9.
+
+====
+[source, JAVA]
+massIndexer = massIndexer.maxThreads( 5 );
+====
+
+
+[NOTE]
+====
+Note that the batch runtime cannot guarantee the requested number of threads are
+available, it will use as it can up to the requested maximum. (JSR352 v1.0 Final
+Release, page 34)
+====
+
+==== Partitions
+You need to define a partition capacity, which shows the maximum rows to be
+processed inside a partition. According to this value, mass indexer defines
+dynamically the number of partitions.
+
+====
+[source, JAVA]
+massIndexer = massIndexer.partitionCapacity( 5000 );
+====
+
+Each partition deals with one root entity type, so 2 different entity types will
+never run under the same partition. For a specific entity type, mass indexer 
+creates partitions as much as needed until the whole selection is covered. The
+mechanism is a range approach: the mass indexer iteratively scrolls a fixe
+position `P` in the target table to find entity IDs and use them to serve as the
+boundary for each range. One range matches to one partition. And the value `P`
+is the partionCapacity.
+
+==== Checkpoint
+Mass indexer supports checkpoint algorithm. Checkpoint a partition-scope
+algorithm: it will be called every `N` items processed in that partition. `N` is
+the value of the checkpoint interval size and you can overwrite it to adapt your
+business requirement. By default, it is set to 3.
+
+====
+[source, JAVA]
+massIndexer = massIndexer.checkpointFreq( 1000 );
+====
+
+=== Session configuration
+Paragraph under construction :)
+
+==== Persistence unit
+Paragraph under construction :)
+

@@ -26,9 +26,6 @@
         <com.h2database>1.4.192</com.h2database>
         <puppycrawl.checkstyle.version>6.16</puppycrawl.checkstyle.version>
         <org.hibernate>5.1.0.Final</org.hibernate>
-        <!-- documentation module -->
-        <luceneVersion>5.5.2</luceneVersion>
-        <infinispanVersion>8.1.0.Final</infinispanVersion>
     </properties>
 
     <modules>
