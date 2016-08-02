@@ -34,7 +34,7 @@ public class Company implements Serializable {
 	@Field
 	private String name;
 
-	Company() {
+	public Company() {
 
 	}
 
