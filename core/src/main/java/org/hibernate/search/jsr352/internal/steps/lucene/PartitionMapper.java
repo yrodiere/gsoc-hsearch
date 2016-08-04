@@ -43,7 +43,9 @@ import org.jboss.logging.Logger;
 public class PartitionMapper implements javax.batch.api.partition.PartitionMapper {
 
 	private static final Logger logger = Logger.getLogger( PartitionMapper.class );
-	private final JobContext jobContext;
+
+	@Inject
+	private JobContext jobContext;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
@@ -70,11 +72,6 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@BatchProperty
 	private int maxThreads;
 
-	@Inject
-	public PartitionMapper(JobContext jobContext) {
-		this.jobContext = jobContext;
-	}
-
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
 
@@ -85,7 +82,13 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		ScrollableResults scroll = null;
 
 		try {
-
+			if ( emf != null ) {
+				logger.info( "emf is not null" );
+				emf.unwrap( SessionFactory.class );
+			} else {
+				logger.warn( "emf is null" );
+				emf.unwrap( SessionFactory.class );
+			}
 			sessionFactory = emf.unwrap( SessionFactory.class );
 			session = sessionFactory.openSession();
 			ss = sessionFactory.openStatelessSession();
@@ -95,7 +98,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 			for ( Class<?> clazz : rootEntities ) {
 				setMonitor( clazz, session );
-				final String fieldID = ContextHelper
+				String fieldID = ContextHelper
 						.getSearchintegrator( session )
 						.getIndexBindings()
 						.get( clazz )
@@ -113,12 +116,16 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				while ( scroll.scroll( partitionCapacity ) ) {
 					lowerID = upperID;
 					upperID = scroll.get( 0 );
+					logger.infof( "lowerID=%s", lowerID );
+					logger.infof( "upperID=%s", upperID );
 					partitionUnits.add( new PartitionUnit( clazz,
 							partitionCapacity, lowerID, upperID ) );
 				}
 				// add an additional partition on the tail
 				lowerID = upperID;
 				upperID = null;
+				logger.infof( "lowerID=%s", lowerID );
+				logger.infof( "upperID=%s", upperID );
 				partitionUnits.add( new PartitionUnit( clazz,
 						partitionCapacity, lowerID, upperID ) );
 			}
@@ -164,7 +171,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		}
 	}
 
-	private void setMonitor( Class<?> clazz, Session session ) {
+	private void setMonitor(Class<?> clazz, Session session) {
 		long rowCount = (long) session.createCriteria( clazz )
 				.setProjection( Projections.rowCount() )
 				.setCacheable( false )
