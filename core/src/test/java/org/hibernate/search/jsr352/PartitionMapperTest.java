@@ -1,3 +1,9 @@
+/*
+ * Hibernate Search, full-text search for your domain model
+ *
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
+ */
 package org.hibernate.search.jsr352;
 
 import static org.junit.Assert.assertEquals;
@@ -38,6 +44,11 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+/**
+ * Unit test for partition plan validation.
+ *
+ * @author Mincong Huang
+ */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(ContextHelper.class)
 public class PartitionMapperTest {
