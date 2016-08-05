@@ -22,7 +22,6 @@ import org.hibernate.search.jsr352.test.entity.Company;
 import org.hibernate.search.jsr352.test.entity.CompanyManager;
 import org.hibernate.search.jsr352.test.entity.Person;
 import org.hibernate.search.jsr352.test.entity.PersonManager;
-import org.hibernate.search.jsr352.test.util.BatchTestHelper;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.logging.Logger;
@@ -54,6 +53,9 @@ public class RestartIT {
 
 	private final long DB_COMP_ROWS = 2500;
 	private final long DB_PERS_ROWS = 2600;
+
+	private final int MAX_TRIES = 40;
+	private final int THREAD_SLEEP = 1000;
 
 	@Inject
 	private CompanyManager companyManager;
@@ -91,12 +93,12 @@ public class RestartIT {
 		JobOperator jobOperator = BatchRuntime.getJobOperator();
 		long execId1 = createAndStartJob( jobOperator );
 		JobExecution jobExec1 = jobOperator.getJobExecution( execId1 );
-		jobExec1 = BatchTestHelper.keepTestAlive( jobExec1 );
+		jobExec1 = keepTestAlive( jobExec1 );
 
 		// Restart the job. This is the 2nd execution.
 		long execId2 = jobOperator.restart( execId1, null );
 		JobExecution jobExec2 = jobOperator.getJobExecution( execId2 );
-		jobExec2 = BatchTestHelper.keepTestAlive( jobExec2 );
+		jobExec2 = keepTestAlive( jobExec2 );
 		assertEquals( BatchStatus.COMPLETED, jobExec2.getBatchStatus() );
 
 		googles = companyManager.findCompanyByName( google );
@@ -140,5 +142,28 @@ public class RestartIT {
 				.addRootEntities( Company.class, Person.class );
 		long executionId = massIndexer.start();
 		return executionId;
+	}
+
+	private JobExecution keepTestAlive(JobExecution jobExecution)
+			throws InterruptedException {
+
+		int tries = 0;
+		JobOperator jobOperator = BatchRuntime.getJobOperator();
+		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED )
+				&& !jobExecution.getBatchStatus().equals( BatchStatus.STOPPED )
+				&& !jobExecution.getBatchStatus().equals( BatchStatus.FAILED )
+				&& tries < MAX_TRIES) {
+
+			long executionId = jobExecution.getExecutionId();
+			logger.infof(
+					"Job execution (id=%d) has status %s. Thread sleeps %d ms...",
+					executionId,
+					jobExecution.getBatchStatus(),
+					THREAD_SLEEP );
+			Thread.sleep( THREAD_SLEEP );
+			jobExecution = jobOperator.getJobExecution( executionId );
+			tries++;
+		}
+		return jobExecution;
 	}
 }
