@@ -58,12 +58,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@BatchProperty
 	private int fetchSize;
 
-	/**
-	 * The maximal number of entities that can be processed inside a partition
-	 */
 	@Inject
 	@BatchProperty
-	private int partitionCapacity;
+	private int rowsPerPartition;
 
 	/**
 	 * The max number of threads used by the job
@@ -113,13 +110,13 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 						.scroll( ScrollMode.FORWARD_ONLY );
 				Object lowerID = null;
 				Object upperID = null;
-				while ( scroll.scroll( partitionCapacity ) ) {
+				while ( scroll.scroll( rowsPerPartition ) ) {
 					lowerID = upperID;
 					upperID = scroll.get( 0 );
 					logger.infof( "lowerID=%s", lowerID );
 					logger.infof( "upperID=%s", upperID );
 					partitionUnits.add( new PartitionUnit( clazz,
-							partitionCapacity, lowerID, upperID ) );
+							rowsPerPartition, lowerID, upperID ) );
 				}
 				// add an additional partition on the tail
 				lowerID = upperID;
@@ -127,7 +124,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				logger.infof( "lowerID=%s", lowerID );
 				logger.infof( "upperID=%s", upperID );
 				partitionUnits.add( new PartitionUnit( clazz,
-						partitionCapacity, lowerID, upperID ) );
+						rowsPerPartition, lowerID, upperID ) );
 			}
 			jobData.setPartitionUnits( partitionUnits );
 

@@ -25,7 +25,7 @@ public class MassIndexerTest {
 	private final int FETCH_SIZE = 100000;
 	private final int MAX_RESULTS = 1000000;
 	private final int MAX_THREADS = 2;
-	private final int PARTITION_CAPACITY = 500;
+	private final int ROWS_PER_PARTITION = 500;
 
 	/*
 	 * Test if all params are correctly set
@@ -39,14 +39,14 @@ public class MassIndexerTest {
 				.maxThreads( MAX_THREADS )
 				.optimizeAfterPurge( OPTIMIZE_AFTER_PURGE )
 				.optimizeAtEnd( OPTIMIZE_AT_END )
-				.partitionCapacity( PARTITION_CAPACITY )
+				.rowsPerPartition( ROWS_PER_PARTITION )
 				.purgeAtStart( PURGE_AT_START );
 
 		assertEquals( FETCH_SIZE, massIndexer.getFetchSize() );
 		assertEquals( MAX_RESULTS, massIndexer.getMaxResults() );
 		assertEquals( OPTIMIZE_AFTER_PURGE, massIndexer.isOptimizeAfterPurge() );
 		assertEquals( OPTIMIZE_AT_END, massIndexer.isOptimizeAtEnd() );
-		assertEquals( PARTITION_CAPACITY, massIndexer.getPartitionCapacity() );
+		assertEquals( ROWS_PER_PARTITION, massIndexer.getRowsPerPartition() );
 		assertEquals( PURGE_AT_START, massIndexer.isPurgeAtStart() );
 		assertEquals( MAX_THREADS, massIndexer.getMaxThreads() );
 	}

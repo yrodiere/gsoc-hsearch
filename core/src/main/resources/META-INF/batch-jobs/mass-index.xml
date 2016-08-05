@@ -59,7 +59,7 @@
                     <property name="cacheable" value="#{jobParameters['cacheable']}?:false;" />
                     <property name="fetchSize" value="#{jobParameters['fetchSize']}?:200000;" />
                     <property name="maxThreads" value="#{jobParameters['threads']}?:8;" />
-                    <property name="partitionCapacity" value="#{jobParameters['partitionCapacity']}?:0;" />
+                    <property name="rowsPerPartition" value="#{jobParameters['rowsPerPartition']}?:0;" />
                 </properties>
             </mapper>
             <collector ref="partitionCollector" />

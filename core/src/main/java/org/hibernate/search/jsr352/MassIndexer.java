@@ -138,15 +138,6 @@ public interface MassIndexer {
 	public MassIndexer optimizeAtEnd(boolean optimizeAtEnd);
 
 	/**
-	 * The partition-capacity defines the max number of entities to be processed
-	 * inside a partition.
-	 *
-	 * @param partitionCapacity
-	 * @return
-	 */
-	public MassIndexer partitionCapacity(int partitionCapacity);
-
-	/**
 	 * Specify whether the existing lucene index should be purged at the
 	 * beginning of the job. This operation takes place before the step of
 	 * lucene document production. The default value is false.
@@ -156,6 +147,14 @@ public interface MassIndexer {
 	 */
 	public MassIndexer purgeAtStart(boolean purgeAtStart);
 
+	/**
+	 * Define the max number of rows to process per partition.
+	 *
+	 * @param partitionCapacity
+	 * @return
+	 */
+	public MassIndexer rowsPerPartition(int rowsPerPartition);
+
 	public int getFetchSize();
 
 	public int getItemCount();
@@ -164,7 +163,7 @@ public interface MassIndexer {
 
 	public int getMaxThreads();
 
-	public int getPartitionCapacity();
+	public int getRowsPerPartition();
 
 	public boolean cacheable();
 

@@ -27,7 +27,7 @@ public class MassIndexerImpl implements MassIndexer {
 	private int fetchSize = 200 * 1000;
 	private int itemCount = 3;
 	private int maxResults = 1000 * 1000;
-	private int partitionCapacity = 250;
+	private int rowsPerPartition = 250;
 	private int maxThreads = 1;
 	private String persistenceUnitName;
 	private final Set<Class<?>> rootEntities = new HashSet<>();
@@ -53,10 +53,10 @@ public class MassIndexerImpl implements MassIndexer {
 		jobParams.put( "maxThreads", String.valueOf( maxThreads ) );
 		jobParams.put( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
 		jobParams.put( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
-		jobParams.put( "partitionCapacity", String.valueOf( partitionCapacity ) );
 		jobParams.put( "persistenceUnitName", persistenceUnitName );
 		jobParams.put( "purgeAtStart", String.valueOf( purgeAtStart ) );
 		jobParams.put( "rootEntities", getRootEntitiesAsString() );
+		jobParams.put( "rowsPerPartition", String.valueOf( rowsPerPartition ) );
 		Long executionId = jobOperator.start( JOB_NAME, jobParams );
 		return executionId;
 	}
@@ -104,12 +104,12 @@ public class MassIndexerImpl implements MassIndexer {
 	}
 
 	@Override
-	public MassIndexer partitionCapacity(int partitionCapacity) {
-		if ( partitionCapacity < 1 ) {
+	public MassIndexer rowsPerPartition(int rowsPerPartition) {
+		if ( rowsPerPartition < 1 ) {
 			throw new IllegalArgumentException(
-					"partitionCapacity must be at least 1" );
+					"rowsPerPartition must be at least 1" );
 		}
-		this.partitionCapacity = partitionCapacity;
+		this.rowsPerPartition = rowsPerPartition;
 		return this;
 	}
 
@@ -199,13 +199,13 @@ public class MassIndexerImpl implements MassIndexer {
 	}
 
 	@Override
-	public int getPartitionCapacity() {
-		return partitionCapacity;
+	public int getMaxThreads() {
+		return maxThreads;
 	}
 
 	@Override
-	public int getMaxThreads() {
-		return maxThreads;
+	public int getRowsPerPartition() {
+		return rowsPerPartition;
 	}
 
 	public String getJOB_NAME() {
