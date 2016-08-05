@@ -33,6 +33,14 @@ public interface MassIndexer {
 	public void stop(long executionId);
 
 	/**
+	 * Add entity type to index.
+	 *
+	 * @param rootEntitiy
+	 * @return
+	 */
+	public MassIndexer addRootEntity(Class<?> rootEntitiy);
+
+	/**
 	 * Add entity types to index. Currently, only root entities are accepted
 	 * because the lack of entity types retrieve inside the job.
 	 *

@@ -129,6 +129,15 @@ public class MassIndexerImpl implements MassIndexer {
 	}
 
 	@Override
+	public MassIndexer addRootEntity(Class<?> rootEntity) {
+		if ( rootEntity == null ) {
+			throw new NullPointerException( "rootEntity cannot be NULL." );
+		}
+		this.rootEntities.add( rootEntity );
+		return this;
+	}
+
+	@Override
 	public MassIndexer addRootEntities(Class<?>... rootEntities) {
 		if ( rootEntities == null ) {
 			throw new NullPointerException( "rootEntities cannot be NULL." );
