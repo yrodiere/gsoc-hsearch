@@ -72,10 +72,14 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@BatchProperty
 	private String entityName;
 
+	@Inject
+	private JobContext jobContext;
+
+	@Inject
+	private StepContext stepContext;
+
 	private Class<?> entityClazz;
 	private Serializable checkpointID;
-	private final JobContext jobContext;
-	private final StepContext stepContext;
 
 	// read entities and produce Lucene work
 	private Session session;
@@ -83,10 +87,8 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private ScrollableResults scroll;
 	private SessionFactory sessionFactory;
 
-	@Inject
-	public ItemReader(JobContext jobContext, StepContext stepContext) {
-		this.jobContext = jobContext;
-		this.stepContext = stepContext;
+	public ItemReader() {
+
 	}
 
 	/**
