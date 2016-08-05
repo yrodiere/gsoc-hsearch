@@ -34,7 +34,7 @@ public interface MassIndexer {
 
 	/**
 	 * Add entity types to index. Currently, only root entities are accepted
-	 * because the lack of entity types retrievement inside the job.
+	 * because the lack of entity types retrieve inside the job.
 	 *
 	 * @param rootEntities
 	 * @return
