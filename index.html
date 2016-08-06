@@ -478,30 +478,46 @@ the full-text index from these.</p>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Hibernate Seach’s new MassIndexer uses the Batch approach introduced by JSR352.
-It contains the same functionalities as the previous indexer, but benefits the
-advantages of the java batch platform, such as checkpoint, standardization. This
-approach is optimized for best performance but requires to set the application
-in maintenance mode. Running a mass indexer in busy hours is not recommended.</p>
+It covers not only the existing functionalities of the previous indexer, but
+also benefits the powerful standard based facilities of the java batch platform
+(JSR352), such as checkpoint and step partitioning. It requires a batch runtime
+for the execution. For Java EE users, the default batch runtime included in the
+container will be used. For Java SE users, we’ve chosen JBeret SE for you.</p>
 </div>
 <div class="exampleblock">
 <div class="title">Example 1. How to use the new MassIndexer?</div>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">JobOperator jobOperator = BatchRuntime.getJobOperator();
-MassIndexer massIndexer = new MassIndexerImpl()
-        .jobOperator( jobOperator )
-        .addRootEntities( MyEntity.class );
-massIndexer.start();</code></pre>
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">Long executionID = new MassIndexerImpl()
+        .addRootEntity( MyEntity.class );
+        .start();</code></pre>
 </div>
 </div>
 </div>
+</div>
+<div class="paragraph">
+<p>This approach is optimized for best performance but requires to set the
+application in maintenance mode. Running a mass indexer in busy hours is not
+recommended. You also need to ensure the batch runtime has enough available
+threads for the execution, because all the batch use the same thread pool.</p>
 </div>
 <div class="sect2">
 <h3 id="_selection_of_entities">1.1. Selection of entities</h3>
 <div class="paragraph">
-<p>The mass indexer accepts selection of entity types through method
-<code>addRootEntities(Class&lt;?&gt;… rootEntities)</code>.</p>
+<p>The mass indexer accepts selection of entity types through different methods,
+which allows you to add one or multiple class types.</p>
+</div>
+<div class="exampleblock">
+<div class="title">Example 2. How to add entity type(s) to selection?</div>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer.addRootEntity( Company.class );
+massIndexer.addRootEntities( Company.class, Employee.class );</code></pre>
+</div>
+</div>
+</div>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -512,8 +528,8 @@ massIndexer.start();</code></pre>
 <td class="content">
 <div class="paragraph">
 <p>Please notice that for instant, only the root entity types are accepted. It
-should have no relationship between 2 root entities. Because entity types with
-one-to-many, many-to-many or other relationships are not implemented yet.</p>
+should have no relationship between 2 root entities. Because relationships are
+not implemented in the framework yet, such as one-to-many, many-to-many.</p>
 </div>
 </td>
 </tr>
@@ -524,19 +540,22 @@ one-to-many, many-to-many or other relationships are not implemented yet.</p>
 <h3 id="_parallelism">1.2. Parallelism</h3>
 <div class="paragraph">
 <p>In order to maximize the performance, we highly recommend you to speed up the
-mass indexer using parallelism. Under the standard JSR 352, the exact word is
-partitioning. The indexing step may run as multiple partitions, one per thread.
-Each partition has its own partition ID and parameters. If there’re more
-partitions than threads, partitions are considered as a queue to consume:
-each thread can only consume / run one partition at a time and won’t consume the
-next partition until the previous one is finished.</p>
+mass indexer using parallelism. Parallelism is activated by default. Under the
+standard JSR 352, the exact word is “partitioning”. The indexing step may run as
+multiple partitions, one per thread. Each partition has its own partition ID and
+parameters. If there’re more partitions than threads, partitions are considered
+as a queue to consume: each thread can only run one partition at a time and
+won’t consume the next partition until the previous one is finished.</p>
 </div>
 <div class="sect3">
 <h4 id="_threads">1.2.1. Threads</h4>
 <div class="paragraph">
-<p>The number of threads can be defined through method <code>maxThreads(int)</code>. It
-determines how many threads will be used for the partitions’ execution. The
-default number is 9.</p>
+<p>The maximum number of threads used by the job execution is defined through
+method <code>maxThreads()</code>. Within the N threads given, there’s 1 thread reserved for
+the core, so only N - 1 threads are available for different partitions. The
+default number is 10, which correspond to the default max number of threads in
+JBeret, the WildFly batch runtime. However, you can overwrite it with your own
+value.</p>
 </div>
 <div class="exampleblock">
 <div class="content">
@@ -567,36 +586,31 @@ Release, page 34)</p>
 <div class="sect3">
 <h4 id="_partitions">1.2.2. Partitions</h4>
 <div class="paragraph">
-<p>You need to define a partition capacity, which shows the maximum rows to be
-processed inside a partition. According to this value, mass indexer defines
-dynamically the number of partitions.</p>
+<p>Mass indexer defines dynamically the number of partitions, but you need to tell
+it the number of rows per partitions so that it can calculate the partitions by
+division.</p>
 </div>
 <div class="exampleblock">
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer = massIndexer.partitionCapacity( 5000 );</code></pre>
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer = massIndexer.rowsPerPartition( 5000 );</code></pre>
 </div>
 </div>
 </div>
 </div>
 <div class="paragraph">
 <p>Each partition deals with one root entity type, so 2 different entity types will
-never run under the same partition. For a specific entity type, mass indexer
-creates partitions as much as needed until the whole selection is covered. The
-mechanism is a range approach: the mass indexer iteratively scrolls a fixe
-position <code>P</code> in the target table to find entity IDs and use them to serve as the
-boundary for each range. One range matches to one partition. And the value <code>P</code>
-is the partionCapacity.</p>
+never run under the same partition.</p>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_checkpoint">1.2.3. Checkpoint</h4>
 <div class="paragraph">
-<p>Mass indexer supports checkpoint algorithm. Checkpoint a partition-scope
-algorithm: it will be called every <code>N</code> items processed in that partition. <code>N</code> is
-the value of the checkpoint interval size and you can overwrite it to adapt your
-business requirement. By default, it is set to 3.</p>
+<p>Mass indexer supports checkpoint algorithm. Assume that N is the value of
+checkpoint frequency, then a partition will reach at checkpoint every N items
+processed inside the partition. You can overwrite it to adapt your business
+requirement. By default, it is set to 3.</p>
 </div>
 <div class="exampleblock">
 <div class="content">
@@ -606,6 +620,10 @@ business requirement. By default, it is set to 3.</p>
 </div>
 </div>
 </div>
+</div>
+<div class="paragraph">
+<p>Checkpoint a partition-scope algorithm, which means each partition has its own
+checkpoint counter and it is not shared with other partitions.</p>
 </div>
 </div>
 </div>
@@ -626,7 +644,7 @@ business requirement. By default, it is set to 3.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-08-01 16:42:59 CEST
+Last updated 2016-08-01 16:53:02 CEST
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/github.min.css">
@@ -634,4 +652,3 @@ Last updated 2016-08-01 16:42:59 CEST
 <script>hljs.initHighlighting()</script>
 </body>
 </html>
-
