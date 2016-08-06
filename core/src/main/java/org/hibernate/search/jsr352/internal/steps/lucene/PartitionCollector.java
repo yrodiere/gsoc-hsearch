@@ -31,13 +31,13 @@ public class PartitionCollector implements javax.batch.api.partition.PartitionCo
 	/**
 	 * The collectPartitionData method receives control periodically during
 	 * partition processing. This method receives control on each thread
-	 * processing a partition as IdProducerBatchlet, once at the end of the
-	 * process.
+	 * processing a partition as lucene document production, once at the end of
+	 * the process.
 	 */
 	@Override
 	public Serializable collectPartitionData() throws Exception {
 		logger.info( "Collecting partition data ..." );
 		return ( (StepContextData) stepContext.getTransientUserData() )
-				.getChunkWorkCount();
+				.getPartitionProgress();
 	}
 }

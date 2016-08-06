@@ -141,6 +141,6 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 
 		// update work count
 		StepContextData stepContextData = (StepContextData) stepContext.getTransientUserData();
-		stepContextData.setChunkWorkCount( items.size() );
+		stepContextData.documentAdded( items.size() );
 	}
 }

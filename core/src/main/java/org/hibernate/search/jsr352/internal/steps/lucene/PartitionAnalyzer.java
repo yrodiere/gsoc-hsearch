@@ -7,6 +7,8 @@
 package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.context.JobContext;
@@ -23,8 +25,8 @@ import org.jboss.logging.Logger;
 public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAnalyzer {
 
 	private static final Logger logger = Logger.getLogger( PartitionAnalyzer.class );
+	private Map<Integer, Long> globalProgress = new HashMap<>();
 	private final JobContext jobContext;
-	private long workDone;
 
 	@Inject
 	public PartitionAnalyzer(JobContext jobContext) {
@@ -36,27 +38,44 @@ public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAna
 	 * collectors. The current analyze is to summarize to their progresses :
 	 * workDone = workDone1 + workDone2 + ... + workDoneN. Then it displays the
 	 * total mass index progress in percentage. This method is very similar to
-	 * the current simple progress monitor. Note: concerning the number of total
-	 * entities loaded, it depends on 2 values : the number of rows to index and
-	 * the max results limited by the criteria, defined by user before the job
-	 * start. So the minimum between them will be used.
+	 * the current simple progress monitor.
 	 * 
 	 * @param fromCollector the count of finished work of one partition,
 	 * obtained from partition collector's method #collectPartitionData()
 	 */
 	@Override
-	public void analyzeCollectorData(Serializable fromCollector)
-			throws Exception {
+	public void analyzeCollectorData(Serializable fromCollector) throws Exception {
 
+		// receive progress update from partition
+		PartitionProgress progress = (PartitionProgress) fromCollector;
+		int PID = progress.getPartitionID();
+		long done = progress.getWorkDone();
+		globalProgress.put( PID, done );
+
+		// compute the global progress.
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		long workTodo = jobData.getTotalEntityToIndex();
-		workDone += (long) fromCollector;
-
-		String percentStr = "??.?%";
-		if ( workTodo != 0 ) {
-			percentStr = String.format( "%.1f%%", 100f * workDone / workTodo );
+		long totalTodo = jobData.getTotalEntityToIndex();
+		long totalDone = globalProgress.values()
+				.stream()
+				.mapToLong( Long::longValue )
+				.sum();
+		String comment = "";
+		if ( !progress.isRestarted() ) {
+			if ( totalTodo != 0 ) {
+				comment = String.format( "%.1f%%", 100F * totalDone / totalTodo );
+			}
+			else {
+				comment = "??.?%";
+			}
 		}
-		logger.infof( "%d works processed (%s).", workDone, percentStr );
+		else {
+			// TODO Currently, percentage is not supported for the restarted job
+			// instance, because checkpoint mechanism is only available for
+			// partition scope and JSR 352 doesn't provide any API to store
+			// collected data.
+			comment = "restarted";
+		}
+		logger.infof( "%d works processed (%s).", totalDone, comment );
 	}
 
 	@Override

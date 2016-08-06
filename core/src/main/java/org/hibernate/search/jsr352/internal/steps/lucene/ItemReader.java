@@ -136,7 +136,6 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		// reset the chunk work count to avoid over-count in item collector
 		// release session
 		StepContextData stepData = (StepContextData) stepContext.getTransientUserData();
-		stepData.setChunkWorkCount( 0 );
 		stepData.setSession( null );
 		stepContext.setPersistentUserData( stepData );
 	}
@@ -154,7 +153,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@Override
 	public void open(Serializable checkpointID) throws Exception {
 
-		logger.infof( "open reader for entity %s ...", entityName );
+		logger.infof( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		entityClazz = jobData.getIndexedType( entityName );
 		PartitionUnit unit = jobData.getPartitionUnit( partitionID );
@@ -167,10 +166,12 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 
 		StepContextData stepData = null;
 		if ( checkpointID == null ) {
-			stepData = new StepContextData();
+			stepData = new StepContextData( partitionID, entityName );
+			stepData.setRestarted( false );
 		}
 		else {
 			stepData = (StepContextData) stepContext.getPersistentUserData();
+			stepData.setRestarted( true );
 		}
 
 		stepData.setSession( session );

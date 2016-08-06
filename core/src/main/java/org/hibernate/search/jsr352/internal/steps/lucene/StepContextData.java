@@ -22,20 +22,7 @@ import org.hibernate.Session;
 public class StepContextData implements Serializable {
 
 	private static final long serialVersionUID = 1961574468720628080L;
-
-	/**
-	 * chunkWorkCount is an elementary count, the counter per chunk. It records
-	 * how many items have been written in the current chunk. This value is
-	 * overwritten be the item writer at the end of each #writeItems, since one
-	 * chunk is: N read-calls + N process-calls + 1 write-call.
-	 */
-	private long chunkWorkCount = 0;
-
-	/**
-	 * partitionWorkCount is a total count, the counter per partition, sum of
-	 * all the chunkWorkCount.
-	 */
-	private long partitionWorkCount = 0;
+	private PartitionProgress partitionProgress;
 
 	/**
 	 * Hibernate session, unwrapped from EntityManager. It is stored for sharing
@@ -46,21 +33,16 @@ public class StepContextData implements Serializable {
 	 */
 	private Session session;
 
-	public long getChunkWorkCount() {
-		return chunkWorkCount;
+	public StepContextData(int partitionID, String entityName) {
+		partitionProgress = new PartitionProgress( partitionID, entityName );
 	}
 
-	public void setChunkWorkCount(long increment) {
-		this.chunkWorkCount = increment;
-		this.partitionWorkCount += increment;
+	public void documentAdded(long increment) {
+		partitionProgress.documentsAdded( increment );
 	}
 
-	public void setPartitionWorkCount(long total) {
-		this.partitionWorkCount = total;
-	}
-
-	public long getPartitionWorkCount() {
-		return partitionWorkCount;
+	public PartitionProgress getPartitionProgress() {
+		return partitionProgress;
 	}
 
 	public Session getSession() {
@@ -69,5 +51,9 @@ public class StepContextData implements Serializable {
 
 	public void setSession(Session session) {
 		this.session = session;
+	}
+
+	public void setRestarted(boolean isRestarted) {
+		partitionProgress.setRestarted( isRestarted );
 	}
 }
