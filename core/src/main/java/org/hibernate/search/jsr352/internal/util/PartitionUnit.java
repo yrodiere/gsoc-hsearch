@@ -8,7 +8,10 @@ package org.hibernate.search.jsr352.internal.util;
 
 /**
  * Information about a target partition which can not be stored in the partition
- * properties as String values.
+ * properties as String values. In particular, the boundary properties help us
+ * to identify the lower boundary and upper boundary of a given partition, with
+ * which the two ends of the scrollable results can be defined and be applied
+ * to {@link org.hibernate.search.jsr352.internal.steps.lucene.ItemReader#open}.
  * 
  * @author Mincong Huang
  */
@@ -34,7 +37,8 @@ public class PartitionUnit {
 			Object upperBound) {
 		this.entityClazz = entityClazz;
 		this.rowsToIndex = rowsToIndex;
-		setBoundary( lowerBound, upperBound );
+		this.lowerBound = lowerBound;
+		this.upperBound = upperBound;
 	}
 
 	public Class<?> getEntityClazz() {
@@ -73,30 +77,20 @@ public class PartitionUnit {
 		return isLast;
 	}
 
+	public boolean isUniquePartition() {
+		boolean isUnique = false;
+		if ( lowerBound == null && upperBound == null ) {
+			isUnique = true;
+		}
+		return isUnique;
+	}
+
 	public void setEntityClazz(Class<?> entityClazz) {
 		this.entityClazz = entityClazz;
 	}
 
 	public void setRowsToIndex(long rowsToIndex) {
 		this.rowsToIndex = rowsToIndex;
-	}
-
-	/**
-	 * Boundary helps us to identify the lower boundary and upper boundary of a
-	 * given partition, with which the two ends of the scrollable results can be
-	 * defined and later applied to
-	 * {@link org.hibernate.search.jsr352.internal.steps.lucene.ItemReader#open}
-	 *
-	 * @param lowerBound
-	 * @param upperBound
-	 */
-	public void setBoundary(Object lowerBound, Object upperBound) {
-		if ( lowerBound == null && upperBound == null ) {
-			throw new NullPointerException( "lowerBound and upperBound cannot "
-					+ "be null at the same time." );
-		}
-		this.lowerBound = lowerBound;
-		this.upperBound = upperBound;
 	}
 
 	@Override

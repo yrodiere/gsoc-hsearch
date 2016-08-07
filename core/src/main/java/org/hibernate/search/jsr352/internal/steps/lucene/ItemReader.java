@@ -200,7 +200,10 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 			criteria.add( Restrictions.ge( idName, checkpointID ) );
 		}
 
-		if ( unit.isFirstPartition() ) {
+		if ( unit.isUniquePartition() ) {
+			// no bounds if the partition unit is unique 
+		}
+		else if ( unit.isFirstPartition() ) {
 			criteria.add( Restrictions.lt( idName, unit.getUpperBound() ) );
 		}
 		else if ( unit.isLastPartition() ) {

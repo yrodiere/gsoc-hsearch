@@ -105,7 +105,6 @@ public class MassIndexerIT {
 				.jobOperator( jobOperator )
 				.isJavaSE( true )
 				.entityManagerFactory( emf )
-				.rowsPerPartition( 2 )
 				.start();
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
 		jobExecution = keepTestAlive( jobExecution );
