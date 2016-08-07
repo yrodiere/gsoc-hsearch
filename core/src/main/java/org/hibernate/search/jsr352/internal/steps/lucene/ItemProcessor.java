@@ -29,6 +29,7 @@ import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
+import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
 
@@ -56,7 +57,7 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 
 	@Inject
 	@BatchProperty
-	private String persistenceUnitName;
+	private boolean isJavaSE;
 
 	private Session session;
 	private ExtendedSearchIntegrator searchIntegrator;
@@ -103,6 +104,9 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 		searchIntegrator = ContextHelper.getSearchintegrator( session );
 		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
 		docBuilder = entityIndexBinding.getDocumentBuilder();
+		if ( isJavaSE ) {
+			emf = JobSEEnvironment.getEntityManagerFactory();
+		}
 	}
 
 	/**

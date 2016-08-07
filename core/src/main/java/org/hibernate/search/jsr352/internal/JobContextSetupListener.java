@@ -19,6 +19,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
 import org.hibernate.search.jpa.Search;
+import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.jboss.logging.Logger;
 
 /**
@@ -38,6 +39,10 @@ public class JobContextSetupListener extends AbstractJobListener {
 
 	@Inject
 	@BatchProperty
+	private boolean isJavaSE;
+
+	@Inject
+	@BatchProperty
 	private String rootEntities;
 
 	@Inject
@@ -52,6 +57,9 @@ public class JobContextSetupListener extends AbstractJobListener {
 
 		try {
 			logger.debug( "Creating entity manager ..." );
+			if ( isJavaSE ) {
+				emf = JobSEEnvironment.getEntityManagerFactory();
+			}
 			em = emf.createEntityManager();
 			String[] entityNamesToIndex = rootEntities.split( "," );
 			Set<Class<?>> entityClazzesToIndex = new HashSet<>();
@@ -77,9 +85,16 @@ public class JobContextSetupListener extends AbstractJobListener {
 			try {
 				em.close();
 			}
-			catch ( Exception e ) {
+			catch (Exception e) {
 				logger.error( e );
 			}
+		}
+	}
+
+	@Override
+	public void afterJob() throws Exception {
+		if ( isJavaSE ) {
+			JobSEEnvironment.setEntityManagerFactory( null );
 		}
 	}
 }

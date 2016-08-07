@@ -29,6 +29,7 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
+import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 import org.jboss.logging.Logger;
 
@@ -56,6 +57,10 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	@Inject
 	@BatchProperty
+	private boolean isJavaSE;
+
+	@Inject
+	@BatchProperty
 	private int fetchSize;
 
 	@Inject
@@ -79,12 +84,8 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		ScrollableResults scroll = null;
 
 		try {
-			if ( emf != null ) {
-				logger.info( "emf is not null" );
-				emf.unwrap( SessionFactory.class );
-			} else {
-				logger.warn( "emf is null" );
-				emf.unwrap( SessionFactory.class );
+			if ( isJavaSE ) {
+				emf = JobSEEnvironment.getEntityManagerFactory();
 			}
 			sessionFactory = emf.unwrap( SessionFactory.class );
 			session = sessionFactory.openSession();
@@ -174,6 +175,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				.setCacheable( false )
 				.uniqueResult();
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
+		logger.infof( "%d rows to index for entity type %s", rowCount, clazz.toString() );
 		jobData.setRowsToIndex( clazz.toString(), rowCount );
 		jobData.incrementTotalEntity( rowCount );
 	}

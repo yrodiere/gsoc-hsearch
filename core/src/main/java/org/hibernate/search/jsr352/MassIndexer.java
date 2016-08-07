@@ -9,6 +9,7 @@ package org.hibernate.search.jsr352;
 import java.util.Set;
 
 import javax.batch.operations.JobOperator;
+import javax.persistence.EntityManagerFactory;
 
 /**
  * An alternative interface to the current mass indexer, using the Java Batch
@@ -69,14 +70,13 @@ public interface MassIndexer {
 	public MassIndexer cacheable(boolean cacheable);
 
 	/**
-	 * EntityManager will be assigned inside the mass indexer with the JNDI
-	 * lookup.
+	 * Assign the entity manager factory. You must use this method if you're
+	 * under Java SE. You should NOT use it if you're under Java EE.
 	 *
-	 * @param persistenceUnitName the persistence unit name marked in the
-	 * persistence.xml file.
+	 * @param entityManagerFactory
 	 * @return
 	 */
-	public MassIndexer entityManagerProvider(String persistenceUnitName);
+	public MassIndexer entityManagerFactory(EntityManagerFactory entityManagerFactory);
 
 	/**
 	 * The fetch size for the result fetching.
@@ -85,6 +85,14 @@ public interface MassIndexer {
 	 * @return
 	 */
 	public MassIndexer fetchSize(int fetchSize);
+
+	/**
+	 * Whether the a Java SE environment. Default is false.
+	 *
+	 * @param isJavaSE
+	 * @return
+	 */
+	public MassIndexer isJavaSE(boolean isJavaSE);
 
 	/**
 	 * Job operator to start the batch job.

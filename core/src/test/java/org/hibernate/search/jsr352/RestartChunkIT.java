@@ -25,7 +25,6 @@ import javax.persistence.Persistence;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
-import org.hibernate.search.jsr352.MassIndexer;
 import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.entity.Company;
 import org.hibernate.search.jsr352.entity.Person;
@@ -90,7 +89,11 @@ public class RestartChunkIT {
 		assertEquals( 0, people.size() );
 
 		// start the job, then stop it
-		long execId1 = startJob();
+		long execId1 = new MassIndexerImpl()
+				.addRootEntities( Company.class, Person.class )
+				.entityManagerFactory( emf )
+				.jobOperator( jobOperator )
+				.start();
 		JobExecution jobExec1 = jobOperator.getJobExecution( execId1 );
 		stopChunkAfterStarted( jobExec1 );
 		jobExec1 = keepTestAlive( jobExec1 );
@@ -141,18 +144,6 @@ public class RestartChunkIT {
 		List<T> result = ftem.createFullTextQuery( luceneQuery ).getResultList();
 		em.close();
 		return result;
-	}
-
-	private long startJob() throws InterruptedException {
-		// org.hibernate.search.jsr352.MassIndexer
-		MassIndexer massIndexer = new MassIndexerImpl()
-				.addRootEntities( Company.class, Person.class )
-				.entityManagerProvider( "h2" )
-				.jobOperator( jobOperator );
-		long executionId = massIndexer.start();
-
-		logger.infof( "job execution id = %d", executionId );
-		return executionId;
 	}
 
 	private JobExecution keepTestAlive(JobExecution jobExecution) throws InterruptedException {

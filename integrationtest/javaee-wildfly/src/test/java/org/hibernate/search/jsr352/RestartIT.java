@@ -49,7 +49,6 @@ public class RestartIT {
 	private final int JOB_MAX_RESULTS = 200 * 1000;
 	private final int JOB_MAX_THREADS = 3;
 	private final int JOB_ROWS_PER_PARTITION = 1000;
-	private final String JOB_PU_NAME = "h2";
 
 	private final long DB_COMP_ROWS = 2500;
 	private final long DB_PERS_ROWS = 2600;
@@ -137,7 +136,6 @@ public class RestartIT {
 				.maxThreads( JOB_MAX_THREADS )
 				.purgeAtStart( JOB_PURGE_AT_START )
 				.rowsPerPartition( JOB_ROWS_PER_PARTITION )
-				.entityManagerProvider( JOB_PU_NAME )
 				.jobOperator( jobOperator )
 				.addRootEntities( Company.class, Person.class );
 		long executionId = massIndexer.start();

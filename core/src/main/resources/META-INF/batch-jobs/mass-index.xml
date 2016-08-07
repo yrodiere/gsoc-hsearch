@@ -11,6 +11,7 @@
     <listeners>
         <listener ref="jobContextSetupListener">
             <properties>
+                <property name="isJavaSE" value="#{jobParameters['isJavaSE']}" />
                 <property name="rootEntities" value="#{jobParameters['rootEntities']}" />
             </properties>
         </listener>
@@ -33,18 +34,20 @@
                     <property name="partitionID" value="#{partitionPlan['partitionID']}" />
                     <property name="cacheable" value="#{jobParameters['cacheable']}?:false;" />
                     <property name="fetchSize" value="#{jobParameters['fetchSize']}?:200000;" />
+                    <property name="isJavaSE" value="#{jobParameters['isJavaSE']}" />
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
                 </properties>
             </reader>
             <processor ref="itemProcessor">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
-                    <property name="persistenceUnitName" value="#{jobParameters['persistenceUnitName']}" />
+                    <property name="isJavaSE" value="#{jobParameters['isJavaSE']}?:false;" />
                 </properties>
             </processor>
             <writer ref="itemWriter">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
+                    <property name="isJavaSE" value="#{jobParameters['isJavaSE']}?:false;" />
                 </properties>
             </writer>
             <checkpoint-algorithm ref="checkpointAlgorithm">
@@ -58,6 +61,7 @@
                 <properties>
                     <property name="cacheable" value="#{jobParameters['cacheable']}?:false;" />
                     <property name="fetchSize" value="#{jobParameters['fetchSize']}?:200000;" />
+                    <property name="isJavaSE" value="#{jobParameters['isJavaSE']}?:false;" />
                     <property name="maxThreads" value="#{jobParameters['threads']}?:8;" />
                     <property name="rowsPerPartition" value="#{jobParameters['rowsPerPartition']}?:0;" />
                 </properties>

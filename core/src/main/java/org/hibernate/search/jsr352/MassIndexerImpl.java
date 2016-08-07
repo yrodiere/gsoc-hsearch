@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
+import javax.persistence.EntityManagerFactory;
+
+import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 
 /**
  * @author Mincong Huang
@@ -24,12 +27,12 @@ public class MassIndexerImpl implements MassIndexer {
 	private boolean optimizeAfterPurge = false;
 	private boolean optimizeAtEnd = false;
 	private boolean purgeAtStart = false;
+	private boolean isJavaSE = false;
 	private int fetchSize = 200 * 1000;
 	private int itemCount = 3;
 	private int maxResults = 1000 * 1000;
 	private int rowsPerPartition = 250;
 	private int maxThreads = 1;
-	private String persistenceUnitName;
 	private final Set<Class<?>> rootEntities = new HashSet<>();
 	private JobOperator jobOperator;
 
@@ -45,15 +48,29 @@ public class MassIndexerImpl implements MassIndexer {
 		if ( rootEntities == null ) {
 			throw new NullPointerException( "rootEntities cannot be null" );
 		}
+		if ( isJavaSE ) {
+			if ( JobSEEnvironment.getEntityManagerFactory() == null ) {
+				throw new NullPointerException( "You're under a Java SE environment. "
+						+ "Please assign the EntityManagerFactory via method "
+						+ "MassIndexer#setEntityManagerFactory(EntityManagerFactory) "
+						+ "before the job start." );
+			}
+		}
+		else {
+			if ( JobSEEnvironment.getEntityManagerFactory() != null ) {
+				throw new IllegalStateException( "You're under a Java EE environmant. "
+						+ "Please do not assign the EntityManagerFactory to the mass indexer." );
+			}
+		}
 
 		Properties jobParams = new Properties();
 		jobParams.put( "fetchSize", String.valueOf( fetchSize ) );
+		jobParams.put( "isJavaSE", String.valueOf( isJavaSE ) );
 		jobParams.put( "itemCount", String.valueOf( itemCount ) );
 		jobParams.put( "maxResults", String.valueOf( maxResults ) );
 		jobParams.put( "maxThreads", String.valueOf( maxThreads ) );
 		jobParams.put( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
 		jobParams.put( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
-		jobParams.put( "persistenceUnitName", persistenceUnitName );
 		jobParams.put( "purgeAtStart", String.valueOf( purgeAtStart ) );
 		jobParams.put( "rootEntities", getRootEntitiesAsString() );
 		jobParams.put( "rowsPerPartition", String.valueOf( rowsPerPartition ) );
@@ -73,6 +90,12 @@ public class MassIndexerImpl implements MassIndexer {
 			throw new IllegalArgumentException( "fetchSize must be at least 1" );
 		}
 		this.fetchSize = fetchSize;
+		return this;
+	}
+
+	@Override
+	public MassIndexer isJavaSE(boolean isJavaSE) {
+		this.isJavaSE = isJavaSE;
 		return this;
 	}
 
@@ -157,8 +180,14 @@ public class MassIndexerImpl implements MassIndexer {
 	}
 
 	@Override
-	public MassIndexer entityManagerProvider(String persistenceUnitName) {
-		this.persistenceUnitName = persistenceUnitName;
+	public MassIndexer entityManagerFactory(EntityManagerFactory entityManagerFactory) {
+		if ( entityManagerFactory == null ) {
+			throw new NullPointerException( "The entityManagerFactory cannot be null." );
+		}
+		else if ( !entityManagerFactory.isOpen() ) {
+			throw new IllegalStateException( "Please provide an open entityManagerFactory." );
+		}
+		JobSEEnvironment.setEntityManagerFactory( entityManagerFactory );
 		return this;
 	}
 

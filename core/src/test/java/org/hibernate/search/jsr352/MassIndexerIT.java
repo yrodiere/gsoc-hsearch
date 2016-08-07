@@ -25,25 +25,20 @@ import javax.persistence.Persistence;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
-import org.hibernate.search.jsr352.MassIndexer;
 import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.entity.Company;
 import org.hibernate.search.jsr352.entity.Person;
 import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * @author Mincong Huang
  */
-@Ignore("Issue #96 EntityManager and TX cannot be handled correctly in Java SE")
 public class MassIndexerIT {
 
 	private EntityManagerFactory emf;
-
-	private JobOperator jobOperator;
 
 	// mass indexer configuration values
 	private final boolean OPTIMIZE_AFTER_PURGE = true;
@@ -62,9 +57,6 @@ public class MassIndexerIT {
 	@Before
 	public void setup() {
 
-		jobOperator = JobFactory.getJobOperator();
-		emf = Persistence.createEntityManagerFactory( "h2" );
-
 		List<Company> companies = Arrays.asList(
 				new Company( "Google" ),
 				new Company( "Red Hat" ),
@@ -73,13 +65,28 @@ public class MassIndexerIT {
 				new Person( "BG", "Bill", "Gates" ),
 				new Person( "LT", "Linus", "Torvalds" ),
 				new Person( "SJ", "Steven", "Jobs" ) );
+		EntityManager em = null;
 
-		EntityManager em = emf.createEntityManager();
-		em.getTransaction().begin();
-		companies.forEach( c -> em.persist( c ) );
-		people.forEach( p -> em.persist( p ) );
-		em.getTransaction().commit();
-		em.close();
+		try {
+			emf = Persistence.createEntityManagerFactory( "h2" );
+			em = emf.createEntityManager();
+			em.getTransaction().begin();
+			for ( Company c : companies ) {
+				em.persist( c );
+			}
+			for ( Person p : people ) {
+				em.persist( p );
+			}
+			em.getTransaction().commit();
+		}
+		finally {
+			try {
+				em.close();
+			}
+			catch (Exception e) {
+				logger.error( e );
+			}
+		}
 	}
 
 	@Test
@@ -92,7 +99,14 @@ public class MassIndexerIT {
 		assertEquals( 0, companies.size() );
 		assertEquals( 0, people.size() );
 
-		long executionId = indexCompany();
+		JobOperator jobOperator = JobFactory.getJobOperator();
+		long executionId = new MassIndexerImpl()
+				.addRootEntities( Company.class, Person.class )
+				.jobOperator( jobOperator )
+				.isJavaSE( true )
+				.entityManagerFactory( emf )
+				.rowsPerPartition( 2 )
+				.start();
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
 		jobExecution = keepTestAlive( jobExecution );
 		List<StepExecution> stepExecutions = jobOperator.getStepExecutions( executionId );
@@ -119,25 +133,15 @@ public class MassIndexerIT {
 		return result;
 	}
 
-	private long indexCompany() throws InterruptedException {
-		// org.hibernate.search.jsr352.MassIndexer
-		MassIndexer massIndexer = new MassIndexerImpl()
-				.addRootEntities( Company.class, Person.class )
-				.entityManagerProvider( "h2" )
-				.jobOperator( jobOperator );
-		long executionId = massIndexer.start();
-
-		logger.infof( "job execution id = %d", executionId );
-		return executionId;
-	}
-
 	public JobExecution keepTestAlive(JobExecution jobExecution) throws InterruptedException {
 		int tries = 0;
-		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED ) ) {
+		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED ) &&
+				!jobExecution.getBatchStatus().equals( BatchStatus.FAILED ) ) {
 			if ( tries < JOB_MAX_TRIES ) {
 				tries++;
 				Thread.sleep( JOB_THREAD_SLEEP );
-				jobExecution = jobOperator.getJobExecution( jobExecution.getExecutionId() );
+				jobExecution = JobFactory.getJobOperator()
+						.getJobExecution( jobExecution.getExecutionId() );
 			}
 			else {
 				break;
@@ -224,7 +228,7 @@ public class MassIndexerIT {
 	}
 
 	@After
-	public void shutdownJPA() {
+	public void shutdown() {
 		emf.close();
 	}
 }

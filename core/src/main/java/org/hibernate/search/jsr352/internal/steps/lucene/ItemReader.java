@@ -26,6 +26,7 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
+import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 import org.jboss.logging.Logger;
 
@@ -55,6 +56,10 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	@Inject
 	@BatchProperty
 	private boolean cacheable;
+
+	@Inject
+	@BatchProperty
+	private boolean isJavaSE;
 
 	@Inject
 	@BatchProperty
@@ -159,6 +164,9 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		PartitionUnit unit = jobData.getPartitionUnit( partitionID );
 		logger.info( unit );
 
+		if ( isJavaSE ) {
+			emf = JobSEEnvironment.getEntityManagerFactory();
+		}
 		sessionFactory = emf.unwrap( SessionFactory.class );
 		ss = sessionFactory.openStatelessSession();
 		session = sessionFactory.openSession();

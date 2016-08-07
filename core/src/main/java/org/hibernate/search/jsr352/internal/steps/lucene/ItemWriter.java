@@ -26,6 +26,7 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.internal.JobContextData;
+import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.IndexShardingStrategy;
 import org.jboss.logging.Logger;
@@ -49,6 +50,10 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
+
+	@Inject
+	@BatchProperty
+	private boolean isJavaSE;
 
 	@Inject
 	@BatchProperty
@@ -101,6 +106,9 @@ public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
 	public void open(Serializable checkpoint) throws Exception {
 
 		logger.info( "open(Seriliazable) called" );
+		if ( isJavaSE ) {
+			emf = JobSEEnvironment.getEntityManagerFactory();
+		}
 		em = emf.createEntityManager();
 
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
