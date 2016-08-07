@@ -34,8 +34,9 @@ import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
 
 /**
- * ItemProcessor processes item, entity received from a scrollable results in
- * itemReader, into an AddLuceneWork.
+ * ItemProcessor receives entities coming from item reader and process then
+ * into an AddLuceneWorks. Only one entity is received and processed at each
+ * time.
  * 
  * @author Mincong Huang
  */
@@ -70,14 +71,7 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 		this.stepContext = stepContext;
 	}
 
-	/**
-	 * ItemProcessor processes item, entity received from a scrollable results
-	 * in itemReader, into an AddLuceneWork.
-	 *
-	 * @param item entity
-	 * @return an addLuceneWork
-	 * @throws Exception thrown for any errors.
-	 */
+	@Override
 	public Object processItem(Object item) throws Exception {
 		logger.debug( "processing item ..." );
 		if ( !isSetup ) {

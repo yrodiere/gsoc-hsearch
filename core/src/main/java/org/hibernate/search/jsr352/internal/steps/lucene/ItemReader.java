@@ -31,17 +31,21 @@ import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 import org.jboss.logging.Logger;
 
 /**
- * TODO: update description. Read entity IDs from {@code IndexingContext}. Each
- * time, there's one array being read. The number of IDs inside the array
- * depends on the array capacity. This value is defined before the job start.
- * Either the default value defined in the job xml will be applied, or the value
- * overwritten by the user in job parameters. These IDs will be processed in
- * {@code BatchItemProcessor}, then be used for Lucene document production.
+ * Item reader reads entities using scrollable results. For each reader, there's
+ * only one target entity type. The range to read is defined by the partition
+ * unit. This range is always a left-closed interval.
  * <p>
- * The motivation of using an array of IDs over a single ID is to accelerate the
- * entity processing. Use a SELECT statement to obtain only one ID is rather a
- * waste. For more detail about the entity process, please check {@code
- * BatchItemProcessor}.
+ * For example, there 2 entity types Company and Employee. The number of rows
+ * are respectively 5 and 4500. The rowsPerPartition is set to 1000. Then, there
+ * will be 6 readers and their ranges are :
+ * <ul>
+ * <li>partitionID = 0, entityType = Company, range = [null, null[
+ * <li>partitionID = 1, entityType = Employee, range = [1, 1000[
+ * <li>partitionID = 2, entityType = Employee, range = [1000, 2000[
+ * <li>partitionID = 3, entityType = Employee, range = [2000, 3000[
+ * <li>partitionID = 4, entityType = Employee, range = [3000, 4000[
+ * <li>partitionID = 5, entityType = Employee, range = [4000, null[
+ * </ul>
  *
  * @author Mincong Huang
  */
@@ -201,7 +205,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 		}
 
 		if ( unit.isUniquePartition() ) {
-			// no bounds if the partition unit is unique 
+			// no bounds if the partition unit is unique
 		}
 		else if ( unit.isFirstPartition() ) {
 			criteria.add( Restrictions.lt( idName, unit.getUpperBound() ) );
