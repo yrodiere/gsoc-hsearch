@@ -27,9 +27,9 @@ import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
-import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
+import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
 import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 import org.jboss.logging.Logger;
 
@@ -96,12 +96,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 			for ( Class<?> clazz : rootEntities ) {
 				setMonitor( clazz, session );
-				String fieldID = ContextHelper
-						.getSearchintegrator( session )
-						.getIndexBindings()
-						.get( clazz )
-						.getDocumentBuilder()
-						.getIdentifierName();
+				String fieldID = MassIndexerUtil.getIdName( clazz, session );
 				scroll = ss.createCriteria( clazz )
 						.addOrder( Order.asc( fieldID ) )
 						.setProjection( Projections.id() )

@@ -24,9 +24,9 @@ import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
+import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
 import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 import org.jboss.logging.Logger;
 
@@ -193,12 +193,7 @@ public class ItemReader implements javax.batch.api.chunk.ItemReader {
 	private ScrollableResults buildScroll(StatelessSession ss,
 			PartitionUnit unit, Object checkpointID) {
 
-		String idName = ContextHelper
-				.getSearchintegrator( session )
-				.getIndexBindings()
-				.get( entityClazz )
-				.getDocumentBuilder()
-				.getIdentifierName();
+		String idName = MassIndexerUtil.getIdName( entityClazz, session );
 		Criteria criteria = ss.createCriteria( entityClazz );
 		if ( checkpointID != null ) {
 			criteria.add( Restrictions.ge( idName, checkpointID ) );
