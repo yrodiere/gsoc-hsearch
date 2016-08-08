@@ -53,10 +53,13 @@ import org.jboss.logging.Logger;
 @Named
 public class ItemReader extends AbstractItemReader {
 
-	private static final Logger logger = Logger.getLogger( ItemReader.class );
+	private static final Logger LOGGER = Logger.getLogger( ItemReader.class );
 
-	@PersistenceUnit(unitName = "h2")
-	private EntityManagerFactory emf;
+	@Inject
+	private JobContext jobContext;
+
+	@Inject
+	private StepContext stepContext;
 
 	@Inject
 	@BatchProperty
@@ -82,16 +85,11 @@ public class ItemReader extends AbstractItemReader {
 	@BatchProperty
 	private String entityName;
 
-	@Inject
-	private JobContext jobContext;
-
-	@Inject
-	private StepContext stepContext;
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
 
 	private Class<?> entityClazz;
 	private Serializable checkpointID;
-
-	// read entities and produce Lucene work
 	private Session session;
 	private StatelessSession ss;
 	private ScrollableResults scroll;
@@ -110,7 +108,7 @@ public class ItemReader extends AbstractItemReader {
 	 */
 	@Override
 	public Serializable checkpointInfo() throws Exception {
-		logger.info( "checkpointInfo() called. "
+		LOGGER.info( "checkpointInfo() called. "
 				+ "Saving last read ID to batch runtime..." );
 		return checkpointID;
 	}
@@ -122,26 +120,26 @@ public class ItemReader extends AbstractItemReader {
 	 */
 	@Override
 	public void close() throws Exception {
-		logger.info( "closing everything..." );
+		LOGGER.info( "closing everything..." );
 		try {
 			scroll.close();
-			logger.info( "Scrollable results closed." );
+			LOGGER.info( "Scrollable results closed." );
 		}
 		catch (Exception e) {
-			logger.error( e );
+			LOGGER.error( e );
 		}
 		try {
 			ss.close();
-			logger.info( "Stateless session closed." );
+			LOGGER.info( "Stateless session closed." );
 		}
 		catch (Exception e) {
-			logger.error( e );
+			LOGGER.error( e );
 		}
 		try {
 			session.close();
 		}
 		catch (Exception e) {
-			logger.error( e );
+			LOGGER.error( e );
 		}
 		// reset the chunk work count to avoid over-count in item collector
 		// release session
@@ -163,11 +161,11 @@ public class ItemReader extends AbstractItemReader {
 	@Override
 	public void open(Serializable checkpointID) throws Exception {
 
-		logger.infof( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
+		LOGGER.infof( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		entityClazz = jobData.getIndexedType( entityName );
 		PartitionUnit unit = jobData.getPartitionUnit( partitionID );
-		logger.info( unit );
+		LOGGER.info( unit );
 
 		if ( isJavaSE ) {
 			emf = JobSEEnvironment.getEntityManagerFactory();
@@ -229,7 +227,7 @@ public class ItemReader extends AbstractItemReader {
 	 */
 	@Override
 	public Object readItem() throws Exception {
-		logger.debug( "Reading item ..." );
+		LOGGER.debug( "Reading item ..." );
 		Object entity = null;
 
 		if ( scroll.next() ) {
@@ -238,7 +236,7 @@ public class ItemReader extends AbstractItemReader {
 					.getIdentifier( entity );
 		}
 		else {
-			logger.info( "no more result. read ends." );
+			LOGGER.info( "no more result. read ends." );
 		}
 		return entity;
 	}

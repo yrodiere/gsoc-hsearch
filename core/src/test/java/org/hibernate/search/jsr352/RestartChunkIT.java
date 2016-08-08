@@ -40,16 +40,15 @@ import org.junit.Test;
 @Ignore("Issue #96 EntityManager and TX cannot be handled correctly in Java SE")
 public class RestartChunkIT {
 
-	private EntityManagerFactory emf;
+	private static final Logger LOGGER = Logger.getLogger( RestartChunkIT.class );
 
-	// mass indexer configuration values
-	private JobOperator jobOperator;
 	private final long DB_COMP_ROWS = 100;
 	private final long DB_PERS_ROWS = 50;
-	private static final int JOB_MAX_TRIES = 30; // 1s * 30 = 30s
-	private static final int JOB_THREAD_SLEEP = 1000; // 1s
+	private final int JOB_MAX_TRIES = 30; // 1s * 30 = 30s
+	private final int JOB_THREAD_SLEEP = 1000; // 1s
 
-	private static final Logger logger = Logger.getLogger( RestartChunkIT.class );
+	private JobOperator jobOperator;
+	private EntityManagerFactory emf;
 
 	@Before
 	public void setup() {
@@ -108,7 +107,7 @@ public class RestartChunkIT {
 					stepExec.getStepName(),
 					stepExec.getBatchStatus() );
 		}
-		logger.info( msg1 );
+		LOGGER.info( msg1 );
 
 		// restart the job
 		long execId2 = jobOperator.restart( execId1, null );
@@ -123,8 +122,8 @@ public class RestartChunkIT {
 					stepExec.getStepName(),
 					stepExec.getBatchStatus() );
 		}
-		logger.info( msg2 );
-		logger.info( "finished" );
+		LOGGER.info( msg2 );
+		LOGGER.info( "finished" );
 
 		// search again
 		companies = findClasses( Company.class, "name", "google" );
@@ -153,7 +152,7 @@ public class RestartChunkIT {
 				&& tries < JOB_MAX_TRIES ) {
 
 			long executionId = jobExecution.getExecutionId();
-			logger.infof( "Job (id=%d) %s, thread sleep %d ms...",
+			LOGGER.infof( "Job (id=%d) %s, thread sleep %d ms...",
 					executionId,
 					jobExecution.getBatchStatus(),
 					JOB_THREAD_SLEEP );
@@ -169,7 +168,7 @@ public class RestartChunkIT {
 		int tries = 0;
 		long executionId = jobExecution.getExecutionId();
 		List<StepExecution> stepExecutions = jobOperator.getStepExecutions( executionId );
-		logger.infof( "%d steps found", stepExecutions.size() );
+		LOGGER.infof( "%d steps found", stepExecutions.size() );
 		Iterator<StepExecution> cursor = stepExecutions.iterator();
 		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED )
 				|| !jobExecution.getBatchStatus().equals( BatchStatus.FAILED )
@@ -183,13 +182,13 @@ public class RestartChunkIT {
 				BatchStatus stepStatus = stepExecution.getBatchStatus();
 
 				if ( stepName.equals( "produceLuceneDoc" ) ) {
-					logger.info( "step produceLuceneDoc found." );
+					LOGGER.info( "step produceLuceneDoc found." );
 					if ( stepStatus.equals( BatchStatus.STARTING ) ) {
-						logger.info( "step status is STARTING, wait it until STARTED to stop" );
+						LOGGER.info( "step status is STARTING, wait it until STARTED to stop" );
 						break;
 					}
 					else {
-						logger.infof( "step status is %s, stopping now ...", stepStatus );
+						LOGGER.infof( "step status is %s, stopping now ...", stepStatus );
 						jobOperator.stop( executionId );
 						return;
 					}
@@ -219,7 +218,7 @@ public class RestartChunkIT {
 				for ( Metric metric : metrics ) {
 					msg += String.format( "\t%s: %d%n", metric.getType(), metric.getValue() );
 				}
-				logger.info( msg );
+				LOGGER.info( msg );
 				if ( isRestarted ) {
 					// TODO: enable to below test after code enhancement
 					// testChunk(getMetricsMap(metrics));

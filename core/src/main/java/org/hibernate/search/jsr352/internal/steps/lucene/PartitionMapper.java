@@ -43,13 +43,10 @@ import org.jboss.logging.Logger;
 @Named
 public class PartitionMapper implements javax.batch.api.partition.PartitionMapper {
 
-	private static final Logger logger = Logger.getLogger( PartitionMapper.class );
+	private static final Logger LOGGER = Logger.getLogger( PartitionMapper.class );
 
 	@Inject
 	private JobContext jobContext;
-
-	@PersistenceUnit(unitName = "h2")
-	private EntityManagerFactory emf;
 
 	@Inject
 	@BatchProperty
@@ -73,6 +70,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@Inject
 	@BatchProperty
 	private int maxThreads;
+
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
 
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
@@ -109,16 +109,16 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				while ( scroll.scroll( rowsPerPartition ) ) {
 					lowerID = upperID;
 					upperID = scroll.get( 0 );
-					logger.infof( "lowerID=%s", lowerID );
-					logger.infof( "upperID=%s", upperID );
+					LOGGER.infof( "lowerID=%s", lowerID );
+					LOGGER.infof( "upperID=%s", upperID );
 					partitionUnits.add( new PartitionUnit( clazz,
 							rowsPerPartition, lowerID, upperID ) );
 				}
 				// add an additional partition on the tail
 				lowerID = upperID;
 				upperID = null;
-				logger.infof( "lowerID=%s", lowerID );
-				logger.infof( "upperID=%s", upperID );
+				LOGGER.infof( "lowerID=%s", lowerID );
+				LOGGER.infof( "upperID=%s", upperID );
 				partitionUnits.add( new PartitionUnit( clazz,
 						rowsPerPartition, lowerID, upperID ) );
 			}
@@ -128,7 +128,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			final int threads = maxThreads;
 			final int partitions = partitionUnits.size();
 			final Properties[] props = new Properties[partitions];
-			logger.infof( "%d partitions, %d threads.", partitions, threads );
+			LOGGER.infof( "%d partitions, %d threads.", partitions, threads );
 
 			for ( int i = 0; i < partitionUnits.size(); i++ ) {
 				props[i] = new Properties();
@@ -147,19 +147,19 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				scroll.close();
 			}
 			catch (Exception e) {
-				logger.error( e );
+				LOGGER.error( e );
 			}
 			try {
 				ss.close();
 			}
 			catch (Exception e) {
-				logger.error( e );
+				LOGGER.error( e );
 			}
 			try {
 				session.close();
 			}
 			catch (Exception e) {
-				logger.error( e );
+				LOGGER.error( e );
 			}
 		}
 	}
@@ -170,7 +170,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				.setCacheable( false )
 				.uniqueResult();
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		logger.infof( "%d rows to index for entity type %s", rowCount, clazz.toString() );
+		LOGGER.infof( "%d rows to index for entity type %s", rowCount, clazz.toString() );
 		jobData.setRowsToIndex( clazz.toString(), rowCount );
 		jobData.incrementTotalEntity( rowCount );
 	}

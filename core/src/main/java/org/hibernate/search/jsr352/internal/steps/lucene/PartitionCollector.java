@@ -20,7 +20,7 @@ import org.jboss.logging.Logger;
 @Named
 public class PartitionCollector implements javax.batch.api.partition.PartitionCollector {
 
-	private static final Logger logger = Logger.getLogger( PartitionCollector.class );
+	private static final Logger LOGGER = Logger.getLogger( PartitionCollector.class );
 	private StepContext stepContext;
 
 	@Inject
@@ -36,7 +36,7 @@ public class PartitionCollector implements javax.batch.api.partition.PartitionCo
 	 */
 	@Override
 	public Serializable collectPartitionData() throws Exception {
-		logger.info( "Collecting partition data ..." );
+		LOGGER.debug( "Collecting partition data ..." );
 		return ( (StepContextData) stepContext.getTransientUserData() )
 				.getPartitionProgress();
 	}

@@ -42,7 +42,7 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class RestartIT {
 
-	private static final Logger logger = Logger.getLogger( RestartIT.class );
+	private static final Logger LOGGER = Logger.getLogger( RestartIT.class );
 
 	private final boolean JOB_PURGE_AT_START = true;
 	private final int JOB_FETCH_SIZE = 100 * 1000;
@@ -153,7 +153,7 @@ public class RestartIT {
 				&& tries < MAX_TRIES) {
 
 			long executionId = jobExecution.getExecutionId();
-			logger.infof(
+			LOGGER.infof(
 					"Job execution (id=%d) has status %s. Thread sleeps %d ms...",
 					executionId,
 					jobExecution.getBatchStatus(),

@@ -31,11 +31,8 @@ import org.jboss.logging.Logger;
 @Named
 public class JobContextSetupListener extends AbstractJobListener {
 
-	private static final Logger logger = Logger.getLogger( JobContextSetupListener.class );
+	private static final Logger LOGGER = Logger.getLogger( JobContextSetupListener.class );
 	private final JobContext jobContext;
-
-	@PersistenceUnit(unitName = "h2")
-	private EntityManagerFactory emf;
 
 	@Inject
 	@BatchProperty
@@ -44,6 +41,9 @@ public class JobContextSetupListener extends AbstractJobListener {
 	@Inject
 	@BatchProperty
 	private String rootEntities;
+
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
 
 	@Inject
 	public JobContextSetupListener(JobContext jobContext) {
@@ -56,7 +56,7 @@ public class JobContextSetupListener extends AbstractJobListener {
 		EntityManager em = null;
 
 		try {
-			logger.debug( "Creating entity manager ..." );
+			LOGGER.debug( "Creating entity manager ..." );
 			if ( isJavaSE ) {
 				emf = JobSEEnvironment.getEntityManagerFactory();
 			}
@@ -86,7 +86,7 @@ public class JobContextSetupListener extends AbstractJobListener {
 				em.close();
 			}
 			catch (Exception e) {
-				logger.error( e );
+				LOGGER.error( e );
 			}
 		}
 	}

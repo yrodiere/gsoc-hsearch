@@ -23,6 +23,9 @@ import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
  */
 public class MassIndexerImpl implements MassIndexer {
 
+	private final String JOB_NAME = "mass-index";
+	private final Set<Class<?>> rootEntities = new HashSet<>();
+
 	private boolean cacheable = false;
 	private boolean optimizeAfterPurge = false;
 	private boolean optimizeAtEnd = false;
@@ -33,10 +36,7 @@ public class MassIndexerImpl implements MassIndexer {
 	private int maxResults = 1000 * 1000;
 	private int rowsPerPartition = 250;
 	private int maxThreads = 1;
-	private final Set<Class<?>> rootEntities = new HashSet<>();
 	private JobOperator jobOperator;
-
-	private final String JOB_NAME = "mass-index";
 
 	public MassIndexerImpl() {
 

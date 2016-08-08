@@ -24,11 +24,11 @@ import javax.inject.Named;
 @Named
 public class CheckpointAlgorithm extends AbstractCheckpointAlgorithm {
 
+	private final StepContext stepContext;
+
 	@Inject
 	@BatchProperty
 	private int itemCount;
-
-	private final StepContext stepContext;
 
 	@Inject
 	public CheckpointAlgorithm(StepContext stepContext) {

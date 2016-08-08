@@ -34,23 +34,17 @@ import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
 
 /**
- * ItemProcessor receives entities coming from item reader and process then
- * into an AddLuceneWorks. Only one entity is received and processed at each
- * time.
+ * ItemProcessor receives entities coming from item reader and process then into
+ * an AddLuceneWorks. Only one entity is received and processed at each time.
  * 
  * @author Mincong Huang
  */
 @Named
 public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 
-	private static final Logger logger = Logger.getLogger( ItemProcessor.class );
+	private static final Logger LOGGER = Logger.getLogger( ItemProcessor.class );
 	private final JobContext jobContext;
 	private final StepContext stepContext;
-	private boolean isSetup = false;
-	private Class<?> entityClazz;
-
-	@PersistenceUnit(unitName = "h2")
-	private EntityManagerFactory emf;
 
 	@Inject
 	@BatchProperty
@@ -60,10 +54,15 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 	@BatchProperty
 	private boolean isJavaSE;
 
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
+
 	private Session session;
 	private ExtendedSearchIntegrator searchIntegrator;
 	private EntityIndexBinding entityIndexBinding;
 	private DocumentBuilderIndexedEntity docBuilder;
+	private boolean isSetup = false;
+	private Class<?> entityClazz;
 
 	@Inject
 	public ItemProcessor(JobContext jobContext, StepContext stepContext) {
@@ -73,7 +72,7 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 
 	@Override
 	public Object processItem(Object item) throws Exception {
-		logger.debug( "processing item ..." );
+		LOGGER.debug( "processing item ..." );
 		if ( !isSetup ) {
 			setup();
 			isSetup = true;
@@ -134,7 +133,7 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 					.setClass( entityClazz )
 					.twoWayConversionContext( idBridge )
 					.objectToString( id );
-			logger.infof( "idInString=%s", idInString );
+			LOGGER.infof( "idInString=%s", idInString );
 		}
 		finally {
 			conversionContext.popProperty();

@@ -42,15 +42,10 @@ import org.jboss.logging.Logger;
 @Named
 public class ItemWriter extends AbstractItemWriter {
 
-	private static final Logger logger = Logger.getLogger( ItemWriter.class );
-	private final Boolean forceAsync = true;
+	private static final Logger LOGGER = Logger.getLogger( ItemWriter.class );
+	private static final boolean FORCE_ASYNC = true;
 	private final JobContext jobContext;
 	private final StepContext stepContext;
-	private EntityManager em;
-	private EntityIndexBinding entityIndexBinding;
-
-	@PersistenceUnit(unitName = "h2")
-	private EntityManagerFactory emf;
 
 	@Inject
 	@BatchProperty
@@ -60,23 +55,16 @@ public class ItemWriter extends AbstractItemWriter {
 	@BatchProperty
 	private String entityName;
 
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
+
+	private EntityManager em;
+	private EntityIndexBinding entityIndexBinding;
+
 	@Inject
 	public ItemWriter(JobContext jobContext, StepContext stepContext) {
 		this.jobContext = jobContext;
 		this.stepContext = stepContext;
-	}
-
-	/**
-	 * The checkpointInfo method returns the current checkpoint data for this
-	 * writer. It is called before a chunk checkpoint is committed.
-	 *
-	 * @return the checkpoint info
-	 * @throws Exception is thrown for any errors.
-	 */
-	@Override
-	public Serializable checkpointInfo() throws Exception {
-		logger.info( "checkpointInfo called" );
-		return null;
 	}
 
 	/**
@@ -89,12 +77,12 @@ public class ItemWriter extends AbstractItemWriter {
 	 */
 	@Override
 	public void close() throws Exception {
-		logger.info( "close() called." );
+		LOGGER.info( "close() called." );
 		try {
 			em.close();
 		}
 		catch (Exception e) {
-			logger.error( e );
+			LOGGER.error( e );
 		}
 	}
 
@@ -106,7 +94,7 @@ public class ItemWriter extends AbstractItemWriter {
 	@Override
 	public void open(Serializable checkpoint) throws Exception {
 
-		logger.info( "open(Seriliazable) called" );
+		LOGGER.info( "open(Seriliazable) called" );
 		if ( isJavaSE ) {
 			emf = JobSEEnvironment.getEntityManagerFactory();
 		}
@@ -139,7 +127,7 @@ public class ItemWriter extends AbstractItemWriter {
 					addWork,
 					shardingStrategy,
 					null, // monitor,
-					forceAsync );
+					FORCE_ASYNC );
 		}
 
 		// flush after write operation

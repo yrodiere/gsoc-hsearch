@@ -31,12 +31,8 @@ import org.jboss.logging.Logger;
 @Named
 public class BeforeChunkBatchlet extends AbstractBatchlet {
 
-	private static final Logger logger = Logger.getLogger( BeforeChunkBatchlet.class );
+	private static final Logger LOGGER = Logger.getLogger( BeforeChunkBatchlet.class );
 	private final JobContext jobContext;
-
-	@PersistenceUnit(unitName = "h2")
-	private EntityManagerFactory emf;
-	private EntityManager em;
 
 	@Inject
 	@BatchProperty
@@ -45,6 +41,11 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 	@Inject
 	@BatchProperty
 	private boolean optimizeAfterPurge;
+
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
+
+	private EntityManager em;
 
 	@Inject
 	public BeforeChunkBatchlet(JobContext jobContext) {
@@ -67,7 +68,7 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 					.forEach( clz -> backend.doWorkInSync( new PurgeAllLuceneWork( null, clz ) ) );
 
 			if ( this.optimizeAfterPurge ) {
-				logger.info( "optimizing all entities ..." );
+				LOGGER.info( "optimizing all entities ..." );
 				backend.optimize( jobData.getEntityClazzSet() );
 			}
 		}
@@ -80,7 +81,7 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 			em.close();
 		}
 		catch ( Exception e ) {
-			logger.error( e );
+			LOGGER.error( e );
 		}
 	}
 }

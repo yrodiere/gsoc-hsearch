@@ -32,16 +32,17 @@ import org.jboss.logging.Logger;
 @Named
 public class AfterChunkBatchlet extends AbstractBatchlet {
 
-	private static final Logger logger = Logger.getLogger( AfterChunkBatchlet.class );
+	private static final Logger LOGGER = Logger.getLogger( AfterChunkBatchlet.class );
 	private final JobContext jobContext;
-
-	@PersistenceUnit(unitName = "h2")
-	private EntityManagerFactory emf;
-	private Session session;
 
 	@Inject
 	@BatchProperty
 	private boolean optimizeAtEnd;
+
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
+
+	private Session session;
 
 	@Inject
 	public AfterChunkBatchlet(JobContext jobContext) {
@@ -53,13 +54,13 @@ public class AfterChunkBatchlet extends AbstractBatchlet {
 
 		if ( this.optimizeAtEnd ) {
 
-			logger.info( "purging index for all entities ..." );
+			LOGGER.info( "purging index for all entities ..." );
 			session = emf.unwrap( SessionFactory.class ).openSession();
 			final BatchBackend backend = ContextHelper
 					.getSearchintegrator( session )
 					.makeBatchBackend( null );
 
-			logger.info( "optimizing all entities ..." );
+			LOGGER.info( "optimizing all entities ..." );
 			JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 			Set<Class<?>> targetedClasses = jobData.getEntityClazzSet();
 			backend.optimize( targetedClasses );
@@ -74,7 +75,7 @@ public class AfterChunkBatchlet extends AbstractBatchlet {
 			session.close();
 		}
 		catch ( Exception e ) {
-			logger.error( e );
+			LOGGER.error( e );
 		}
 	}
 }

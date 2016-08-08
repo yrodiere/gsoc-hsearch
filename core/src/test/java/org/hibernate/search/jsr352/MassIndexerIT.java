@@ -38,7 +38,7 @@ import org.junit.Test;
  */
 public class MassIndexerIT {
 
-	private EntityManagerFactory emf;
+	private static final Logger LOGGER = Logger.getLogger( MassIndexerIT.class );
 
 	// mass indexer configuration values
 	private final boolean OPTIMIZE_AFTER_PURGE = true;
@@ -49,10 +49,10 @@ public class MassIndexerIT {
 	private final long DB_COMP_ROWS = 3;
 	private final long DB_COMP_ROWS_LOADED = 3;
 
-	private static final int JOB_MAX_TRIES = 240; // 240 second
-	private static final int JOB_THREAD_SLEEP = 1000;
+	private final int JOB_MAX_TRIES = 240; // 240 second
+	private final int JOB_THREAD_SLEEP = 1000;
 
-	private static final Logger logger = Logger.getLogger( MassIndexerIT.class );
+	private EntityManagerFactory emf;
 
 	@Before
 	public void setup() {
@@ -84,7 +84,7 @@ public class MassIndexerIT {
 				em.close();
 			}
 			catch (Exception e) {
-				logger.error( e );
+				LOGGER.error( e );
 			}
 		}
 	}
@@ -110,7 +110,7 @@ public class MassIndexerIT {
 		jobExecution = keepTestAlive( jobExecution );
 		List<StepExecution> stepExecutions = jobOperator.getStepExecutions( executionId );
 		for ( StepExecution stepExecution : stepExecutions ) {
-			logger.infof( "step %s executed.", stepExecution.getStepName() );
+			LOGGER.infof( "step %s executed.", stepExecution.getStepName() );
 		}
 
 		companies = findClass( Company.class, "name", "Google" );

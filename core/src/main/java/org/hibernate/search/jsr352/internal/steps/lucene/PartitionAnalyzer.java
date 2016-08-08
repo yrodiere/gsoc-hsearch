@@ -24,9 +24,9 @@ import org.jboss.logging.Logger;
 @Named
 public class PartitionAnalyzer extends AbstractPartitionAnalyzer {
 
-	private static final Logger logger = Logger.getLogger( PartitionAnalyzer.class );
-	private Map<Integer, Long> globalProgress = new HashMap<>();
+	private static final Logger LOGGER = Logger.getLogger( PartitionAnalyzer.class );
 	private final JobContext jobContext;
+	private Map<Integer, Long> globalProgress = new HashMap<>();
 
 	@Inject
 	public PartitionAnalyzer(JobContext jobContext) {
@@ -75,6 +75,6 @@ public class PartitionAnalyzer extends AbstractPartitionAnalyzer {
 			// collected data.
 			comment = "restarted";
 		}
-		logger.infof( "%d works processed (%s).", totalDone, comment );
+		LOGGER.infof( "%d works processed (%s).", totalDone, comment );
 	}
 }
