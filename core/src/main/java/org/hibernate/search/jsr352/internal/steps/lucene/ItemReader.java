@@ -9,6 +9,7 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 import java.io.Serializable;
 
 import javax.batch.api.BatchProperty;
+import javax.batch.api.chunk.AbstractItemReader;
 import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
@@ -50,7 +51,7 @@ import org.jboss.logging.Logger;
  * @author Mincong Huang
  */
 @Named
-public class ItemReader implements javax.batch.api.chunk.ItemReader {
+public class ItemReader extends AbstractItemReader {
 
 	private static final Logger logger = Logger.getLogger( ItemReader.class );
 

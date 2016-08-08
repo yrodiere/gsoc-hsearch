@@ -7,6 +7,7 @@
 package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import javax.batch.api.BatchProperty;
+import javax.batch.api.chunk.AbstractCheckpointAlgorithm;
 import javax.batch.runtime.Metric;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
@@ -21,7 +22,7 @@ import javax.inject.Named;
  * @author Mincong Huang
  */
 @Named
-public class CheckpointAlgorithm implements javax.batch.api.chunk.CheckpointAlgorithm {
+public class CheckpointAlgorithm extends AbstractCheckpointAlgorithm {
 
 	@Inject
 	@BatchProperty
@@ -35,17 +36,6 @@ public class CheckpointAlgorithm implements javax.batch.api.chunk.CheckpointAlgo
 	}
 
 	@Override
-	public int checkpointTimeout() throws Exception {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public void beginCheckpoint() throws Exception {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
 	public boolean isReadyToCheckpoint() throws Exception {
 		Metric[] metrics = stepContext.getMetrics();
 		for ( final Metric m : metrics ) {
@@ -54,10 +44,5 @@ public class CheckpointAlgorithm implements javax.batch.api.chunk.CheckpointAlgo
 			}
 		}
 		throw new Exception( "Metric READ_COUNT not found" );
-	}
-
-	@Override
-	public void endCheckpoint() throws Exception {
-		// TODO Auto-generated method stub
 	}
 }

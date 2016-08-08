@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.batch.runtime.BatchStatus;
+import javax.batch.api.partition.AbstractPartitionAnalyzer;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,7 +22,7 @@ import org.jboss.logging.Logger;
  * @author Mincong Huang
  */
 @Named
-public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAnalyzer {
+public class PartitionAnalyzer extends AbstractPartitionAnalyzer {
 
 	private static final Logger logger = Logger.getLogger( PartitionAnalyzer.class );
 	private Map<Integer, Long> globalProgress = new HashMap<>();
@@ -76,11 +76,5 @@ public class PartitionAnalyzer implements javax.batch.api.partition.PartitionAna
 			comment = "restarted";
 		}
 		logger.infof( "%d works processed (%s).", totalDone, comment );
-	}
-
-	@Override
-	public void analyzeStatus(BatchStatus batchStatus, String exitStatus)
-			throws Exception {
-		logger.info( "analyzeStatus called." );
 	}
 }

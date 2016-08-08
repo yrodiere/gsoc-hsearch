@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import javax.batch.api.BatchProperty;
+import javax.batch.api.chunk.AbstractItemWriter;
 import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
@@ -39,7 +40,7 @@ import org.jboss.logging.Logger;
  * @author Mincong Huang
  */
 @Named
-public class ItemWriter implements javax.batch.api.chunk.ItemWriter {
+public class ItemWriter extends AbstractItemWriter {
 
 	private static final Logger logger = Logger.getLogger( ItemWriter.class );
 	private final Boolean forceAsync = true;

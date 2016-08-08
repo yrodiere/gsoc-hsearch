@@ -8,8 +8,8 @@ package org.hibernate.search.jsr352.internal.steps.afterChunk;
 
 import java.util.Set;
 
+import javax.batch.api.AbstractBatchlet;
 import javax.batch.api.BatchProperty;
-import javax.batch.api.Batchlet;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -30,7 +30,7 @@ import org.jboss.logging.Logger;
  * @author Mincong Huang
  */
 @Named
-public class AfterChunkBatchlet implements Batchlet {
+public class AfterChunkBatchlet extends AbstractBatchlet {
 
 	private static final Logger logger = Logger.getLogger( AfterChunkBatchlet.class );
 	private final JobContext jobContext;
