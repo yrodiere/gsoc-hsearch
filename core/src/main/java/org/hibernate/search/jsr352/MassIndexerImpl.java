@@ -197,68 +197,9 @@ public class MassIndexerImpl implements MassIndexer {
 		return this;
 	}
 
-	@Override
-	public boolean cacheable() {
-		return cacheable;
-	}
-
-	@Override
-	public boolean isOptimizeAfterPurge() {
-		return optimizeAfterPurge;
-	}
-
-	@Override
-	public boolean isOptimizeAtEnd() {
-		return optimizeAtEnd;
-	}
-
-	@Override
-	public boolean isPurgeAtStart() {
-		return purgeAtStart;
-	}
-
-	@Override
-	public int getFetchSize() {
-		return fetchSize;
-	}
-
-	@Override
-	public int getMaxResults() {
-		return maxResults;
-	}
-
-	@Override
-	public int getMaxThreads() {
-		return maxThreads;
-	}
-
-	@Override
-	public int getRowsPerPartition() {
-		return rowsPerPartition;
-	}
-
-	public String getJOB_NAME() {
-		return JOB_NAME;
-	}
-
-	@Override
-	public Set<Class<?>> getRootEntities() {
-		return rootEntities;
-	}
-
 	private String getRootEntitiesAsString() {
 		return rootEntities.stream()
 				.map( (e) -> e.getName() )
 				.collect( Collectors.joining( "," ) );
-	}
-
-	@Override
-	public int getItemCount() {
-		return itemCount;
-	}
-
-	@Override
-	public JobOperator getJobOperator() {
-		return jobOperator;
 	}
 }

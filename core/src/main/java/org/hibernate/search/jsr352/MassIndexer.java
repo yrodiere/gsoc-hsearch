@@ -6,8 +6,6 @@
  */
 package org.hibernate.search.jsr352;
 
-import java.util.Set;
-
 import javax.batch.operations.JobOperator;
 import javax.persistence.EntityManagerFactory;
 
@@ -162,26 +160,4 @@ public interface MassIndexer {
 	 * @return
 	 */
 	public MassIndexer rowsPerPartition(int rowsPerPartition);
-
-	public int getFetchSize();
-
-	public int getItemCount();
-
-	public int getMaxResults();
-
-	public int getMaxThreads();
-
-	public int getRowsPerPartition();
-
-	public boolean cacheable();
-
-	public boolean isOptimizeAfterPurge();
-
-	public boolean isOptimizeAtEnd();
-
-	public boolean isPurgeAtStart();
-
-	public Set<Class<?>> getRootEntities();
-
-	public JobOperator getJobOperator();
 }
