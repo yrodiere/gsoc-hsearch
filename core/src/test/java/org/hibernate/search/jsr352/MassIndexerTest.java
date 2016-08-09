@@ -7,7 +7,10 @@
 package org.hibernate.search.jsr352;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import javax.batch.operations.JobOperator;
@@ -23,7 +26,6 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 /**
- *
  * @author Mincong Huang
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -44,7 +46,7 @@ public class MassIndexerTest {
 	@Before
 	public void setUp() {
 		Mockito.when( mockedOperator.start( Mockito.anyString(), Mockito.any( Properties.class ) ) )
-			.thenReturn( 1L );
+				.thenReturn( 1L );
 	}
 
 	@Test
@@ -65,7 +67,7 @@ public class MassIndexerTest {
 
 		Mockito.verify( mockedOperator )
 				.start( Mockito.anyString(), propsCaptor.capture() );
-		Properties props = propsCaptor.getAllValues().get( 0 );
+		Properties props = propsCaptor.getValue();
 		assertEquals( FETCH_SIZE, Integer.parseInt( props.getProperty( "fetchSize" ) ) );
 		assertEquals( MAX_RESULTS, Integer.parseInt( props.getProperty( "maxResults" ) ) );
 		assertEquals( OPTIMIZE_AFTER_PURGE, Boolean.parseBoolean( props.getProperty( "optimizeAfterPurge" ) ) );
@@ -73,15 +75,31 @@ public class MassIndexerTest {
 		assertEquals( ROWS_PER_PARTITION, Integer.parseInt( props.getProperty( "rowsPerPartition" ) ) );
 		assertEquals( PURGE_AT_START, Boolean.parseBoolean( props.getProperty( "purgeAtStart" ) ) );
 		assertEquals( MAX_THREADS, Integer.parseInt( props.getProperty( "maxThreads" ) ) );
-		// TODO assert root entities
+
+		String rootEntities = propsCaptor.getValue().getProperty( "rootEntities" );
+		List<String> entityNames = Arrays.asList( rootEntities.split( "," ) );
+		entityNames.forEach( entityName -> entityName = entityName.trim() );
+		assertTrue( entityNames.contains( Integer.class.getName() ) );
+		assertTrue( entityNames.contains( String.class.getName() ) );
 	}
 
 	@Test
 	public void testAddRootEntity_notNull() {
-		MassIndexer massIndexer = new MassIndexerImpl().jobOperator( mockedOperator )
+
+		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
+		long executionID = new MassIndexerImpl().jobOperator( mockedOperator )
 				.addRootEntity( Integer.class )
-				.addRootEntity( String.class );
-		// TODO captor values and assert
+				.addRootEntity( String.class )
+				.start();
+		assertEquals( 1L, executionID );
+
+		Mockito.verify( mockedOperator )
+				.start( Mockito.anyString(), propsCaptor.capture() );
+		String rootEntities = propsCaptor.getValue().getProperty( "rootEntities" );
+		List<String> entityNames = Arrays.asList( rootEntities.split( "," ) );
+		entityNames.forEach( entityName -> entityName = entityName.trim() );
+		assertTrue( entityNames.contains( Integer.class.getName() ) );
+		assertTrue( entityNames.contains( String.class.getName() ) );
 	}
 
 	@Test(expected = NullPointerException.class)
@@ -92,9 +110,19 @@ public class MassIndexerTest {
 	@Test
 	public void testAddRootEntities_notNull() {
 
-		MassIndexer massIndexer = new MassIndexerImpl().jobOperator( mockedOperator )
-				.addRootEntities( String.class, Integer.class );
-		// TODO captor values and assert
+		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
+		long executionID = new MassIndexerImpl().jobOperator( mockedOperator )
+				.addRootEntities( String.class, Integer.class )
+				.start();
+		assertEquals( 1L, executionID );
+
+		Mockito.verify( mockedOperator )
+				.start( Mockito.anyString(), propsCaptor.capture() );
+		String rootEntities = propsCaptor.getValue().getProperty( "rootEntities" );
+		List<String> entityNames = Arrays.asList( rootEntities.split( "," ) );
+		entityNames.forEach( entityName -> entityName = entityName.trim() );
+		assertTrue( entityNames.contains( Integer.class.getName() ) );
+		assertTrue( entityNames.contains( String.class.getName() ) );
 	}
 
 	@Test(expected = NullPointerException.class)
