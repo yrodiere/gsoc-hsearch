@@ -435,7 +435,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel2">
 <li><a href="#_selection_of_entities">1.1. Selection of entities</a></li>
 <li><a href="#_parallelism">1.2. Parallelism</a></li>
-<li><a href="#_session_configuration">1.3. Session configuration</a></li>
+<li><a href="#_persistence">1.3. Persistence</a></li>
 </ul>
 </li>
 </ul>
@@ -628,15 +628,46 @@ checkpoint counter and it is not shared with other partitions.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_session_configuration">1.3. Session configuration</h3>
+<h3 id="_persistence">1.3. Persistence</h3>
 <div class="paragraph">
-<p>Paragraph under construction :)</p>
+<p>The new mass indexer interacts with databases using JPA. We need you to
+configure a persistence unit and provide an entity manager factory, so that the
+new mass indexer can use it.</p>
 </div>
-<div class="sect3">
-<h4 id="_persistence_unit">1.3.1. Persistence unit</h4>
 <div class="paragraph">
-<p>Paragraph under construction :)</p>
+<p>If you’re under Java EE, there’s no additional configuration before the job start.
+Entity manager factory will be injected by annotation
+<code>@PersistenceUnit(name = “massindex”)</code> for all the internal classes. However,
+you need to ensure the existence of persistence unit “massindex”, so that we can
+detect it and do the CDI. If you’re under Java SE, please confirm the SE
+environment and assign specifically the entity manager factory via massindexer’s
+related method.</p>
 </div>
+<div class="exampleblock">
+<div class="title">Example 3. Additional configuration in Java SE</div>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer = massIndexer.isJavaSE( true )
+        .entityManagerFactory( emf );</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Please make sure that the entity manager factory provided is opened and won’t be
+closed during the mass indexing process.</p>
+</div>
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -644,7 +675,7 @@ checkpoint counter and it is not shared with other partitions.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-08-01 16:53:02 CEST
+Last updated 2016-08-06 10:48:09 CEST
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/github.min.css">
