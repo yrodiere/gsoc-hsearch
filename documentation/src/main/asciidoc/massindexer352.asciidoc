@@ -102,9 +102,30 @@ Checkpoint a partition-scope algorithm, which means each partition has its own
 checkpoint counter and it is not shared with other partitions.
 
 
-=== Session configuration
-Paragraph under construction :)
+=== Persistence
+The new mass indexer interacts with databases using JPA. We need you to
+configure a persistence unit and provide an entity manager factory, so that the
+new mass indexer can use it.
 
-==== Persistence unit
-Paragraph under construction :)
+If you’re under Java EE, there’s no additional configuration before the job start.
+Entity manager factory will be injected by annotation
+`@PersistenceUnit(name = “massindex”)` for all the internal classes. However,
+you need to ensure the existence of persistence unit “massindex”, so that we can
+detect it and do the CDI. If you’re under Java SE, please confirm the SE
+environment and assign specifically the entity manager factory via massindexer’s
+related method.
+
+
+.Additional configuration in Java SE
+====
+[source, JAVA]
+massIndexer = massIndexer.isJavaSE( true )
+        .entityManagerFactory( emf );
+====
+
+[NOTE]
+====
+Please make sure that the entity manager factory provided is opened and won’t be
+closed during the mass indexing process.
+====
 
