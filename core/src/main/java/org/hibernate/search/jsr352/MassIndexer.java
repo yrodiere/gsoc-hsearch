@@ -48,22 +48,26 @@ public class MassIndexer {
 	 */
 	public long start() {
 
+		// check different variables
 		if ( rootEntities == null ) {
 			throw new NullPointerException( "rootEntities cannot be null" );
 		}
 		if ( isJavaSE ) {
 			if ( JobSEEnvironment.getEntityManagerFactory() == null ) {
 				throw new NullPointerException( "You're under a Java SE environment. "
-						+ "Please assign the EntityManagerFactory via method "
-						+ "MassIndexer#setEntityManagerFactory(EntityManagerFactory) "
-						+ "before the job start." );
+						+ "Please assign the EntityManagerFactory before the job start." );
+			}
+			if ( jobOperator == null ) {
+				throw new NullPointerException( "You're under a Java SE environment. "
+						+ "Please assign the jobOperator before the job start." );
 			}
 		}
 		else {
 			if ( JobSEEnvironment.getEntityManagerFactory() != null ) {
 				throw new IllegalStateException( "You're under a Java EE environmant. "
-						+ "Please do not assign the EntityManagerFactory to the mass indexer." );
+						+ "Please do not assign the EntityManagerFactory." );
 			}
+			jobOperator = BatchRuntime.getJobOperator();
 		}
 
 		Properties jobParams = new Properties();
@@ -194,13 +198,14 @@ public class MassIndexer {
 	}
 
 	/**
-	 * Job operator to start the batch job.
+	 * Job operator to start the batch job. You must call this method if you're
+	 * under Java SE. Else, this method is not necessary.
 	 *
 	 * @param jobOperator
 	 * @return
 	 */
-	public MassIndexer jobOperator(JobOperator jobOperator) {
-		this.jobOperator = jobOperator;
+	public MassIndexer jobOperator(JobOperator jobOperatorInJavaSE) {
+		this.jobOperator = jobOperatorInJavaSE;
 		return this;
 	}
 

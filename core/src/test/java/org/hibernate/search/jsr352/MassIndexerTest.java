@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.batch.operations.JobOperator;
+import javax.persistence.EntityManagerFactory;
 
-import org.jboss.logging.Logger;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +30,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MassIndexerTest {
 
-	private static final Logger LOGGER = Logger.getLogger( MassIndexerTest.class );
 	private final boolean OPTIMIZE_AFTER_PURGE = true;
 	private final boolean OPTIMIZE_AT_END = true;
 	private final boolean PURGE_AT_START = true;
@@ -42,17 +41,23 @@ public class MassIndexerTest {
 	@Mock
 	private JobOperator mockedOperator;
 
+	@Mock
+	private EntityManagerFactory mockedEMF;
+
 	@Before
 	public void setUp() {
 		Mockito.when( mockedOperator.start( Mockito.anyString(), Mockito.any( Properties.class ) ) )
 				.thenReturn( 1L );
+		Mockito.when( mockedEMF.isOpen() ).thenReturn( true );
 	}
 
 	@Test
 	public void testJobParamsAll() {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
-		long executionID = new MassIndexer().jobOperator( mockedOperator )
+		long executionID = new MassIndexer().isJavaSE( true )
+				.jobOperator( mockedOperator )
+				.entityManagerFactory( mockedEMF )
 				.addRootEntities( String.class, Integer.class )
 				.fetchSize( FETCH_SIZE )
 				.maxResults( MAX_RESULTS )
@@ -86,7 +91,9 @@ public class MassIndexerTest {
 	public void testAddRootEntity_notNull() {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
-		long executionID = new MassIndexer().jobOperator( mockedOperator )
+		long executionID = new MassIndexer().isJavaSE( true )
+				.jobOperator( mockedOperator )
+				.entityManagerFactory( mockedEMF )
 				.addRootEntity( Integer.class )
 				.addRootEntity( String.class )
 				.start();
@@ -110,7 +117,9 @@ public class MassIndexerTest {
 	public void testAddRootEntities_notNull() {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
-		long executionID = new MassIndexer().jobOperator( mockedOperator )
+		long executionID = new MassIndexer().isJavaSE( true )
+				.jobOperator( mockedOperator )
+				.entityManagerFactory( mockedEMF )
 				.addRootEntities( String.class, Integer.class )
 				.start();
 		assertEquals( 1L, executionID );
