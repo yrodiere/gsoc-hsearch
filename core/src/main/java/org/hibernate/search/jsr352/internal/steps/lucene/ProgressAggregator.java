@@ -19,21 +19,20 @@ import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
 /**
- * Partition progress analyzer which analyzes the chunk progress using
- * intermediary results received from each partition sent via the collectors.
- * It runs on the step main thread.
+ * Progress aggregator aggregates the intermediary chunk progress received from
+ * each partition sent via the collectors. It runs on the step main thread.
  *
  * @author Mincong Huang
  */
 @Named
-public class PartitionAnalyzer extends AbstractPartitionAnalyzer {
+public class ProgressAggregator extends AbstractPartitionAnalyzer {
 
-	private static final Logger LOGGER = Logger.getLogger( PartitionAnalyzer.class );
+	private static final Logger LOGGER = Logger.getLogger( ProgressAggregator.class );
 	private final JobContext jobContext;
 	private Map<Integer, Long> globalProgress = new HashMap<>();
 
 	@Inject
-	public PartitionAnalyzer(JobContext jobContext) {
+	public ProgressAggregator(JobContext jobContext) {
 		this.jobContext = jobContext;
 	}
 

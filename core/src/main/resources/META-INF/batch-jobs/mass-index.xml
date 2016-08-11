@@ -66,8 +66,8 @@
                     <property name="rowsPerPartition" value="#{jobParameters['rowsPerPartition']}?:0;" />
                 </properties>
             </mapper>
-            <collector ref="partitionCollector" />
-            <analyzer ref="partitionAnalyzer" />
+            <collector ref="progressCollector" />
+            <analyzer ref="progressAggregator" />
         </partition>
     </step>
 
