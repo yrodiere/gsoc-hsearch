@@ -6,8 +6,17 @@
  */
 package org.hibernate.search.jsr352;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.batch.operations.JobOperator;
+import javax.batch.runtime.BatchRuntime;
 import javax.persistence.EntityManagerFactory;
+
+import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 
 /**
  * An alternative interface to the current mass indexer, using the Java Batch
@@ -15,21 +24,73 @@ import javax.persistence.EntityManagerFactory;
  *
  * @author Mincong Huang
  */
-public interface MassIndexer {
+public class MassIndexer {
+
+	private final String JOB_NAME = "mass-index";
+	private final Set<Class<?>> rootEntities = new HashSet<>();
+
+	private boolean cacheable = false;
+	private boolean optimizeAfterPurge = false;
+	private boolean optimizeAtEnd = false;
+	private boolean purgeAtStart = false;
+	private boolean isJavaSE = false;
+	private int fetchSize = 200 * 1000;
+	private int itemCount = 3;
+	private int maxResults = 1000 * 1000;
+	private int rowsPerPartition = 250;
+	private int maxThreads = 1;
+	private JobOperator jobOperator;
 
 	/**
 	 * Start the job.
 	 *
 	 * @return
 	 */
-	public long start();
+	public long start() {
+
+		if ( rootEntities == null ) {
+			throw new NullPointerException( "rootEntities cannot be null" );
+		}
+		if ( isJavaSE ) {
+			if ( JobSEEnvironment.getEntityManagerFactory() == null ) {
+				throw new NullPointerException( "You're under a Java SE environment. "
+						+ "Please assign the EntityManagerFactory via method "
+						+ "MassIndexer#setEntityManagerFactory(EntityManagerFactory) "
+						+ "before the job start." );
+			}
+		}
+		else {
+			if ( JobSEEnvironment.getEntityManagerFactory() != null ) {
+				throw new IllegalStateException( "You're under a Java EE environmant. "
+						+ "Please do not assign the EntityManagerFactory to the mass indexer." );
+			}
+		}
+
+		Properties jobParams = new Properties();
+		jobParams.put( "cacheable", String.valueOf( cacheable ) );
+		jobParams.put( "fetchSize", String.valueOf( fetchSize ) );
+		jobParams.put( "isJavaSE", String.valueOf( isJavaSE ) );
+		jobParams.put( "itemCount", String.valueOf( itemCount ) );
+		jobParams.put( "maxResults", String.valueOf( maxResults ) );
+		jobParams.put( "maxThreads", String.valueOf( maxThreads ) );
+		jobParams.put( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
+		jobParams.put( "optimizeAtEnd", String.valueOf( optimizeAtEnd ) );
+		jobParams.put( "purgeAtStart", String.valueOf( purgeAtStart ) );
+		jobParams.put( "rootEntities", getRootEntitiesAsString() );
+		jobParams.put( "rowsPerPartition", String.valueOf( rowsPerPartition ) );
+		Long executionId = jobOperator.start( JOB_NAME, jobParams );
+		return executionId;
+	}
 
 	/**
 	 * Stop the job.
 	 *
 	 * @param executionId
 	 */
-	public void stop(long executionId);
+	public void stop(long executionId) {
+		JobOperator jobOperator = BatchRuntime.getJobOperator();
+		jobOperator.stop( executionId );
+	}
 
 	/**
 	 * Add entity type to index.
@@ -37,7 +98,13 @@ public interface MassIndexer {
 	 * @param rootEntitiy
 	 * @return
 	 */
-	public MassIndexer addRootEntity(Class<?> rootEntitiy);
+	public MassIndexer addRootEntity(Class<?> rootEntity) {
+		if ( rootEntity == null ) {
+			throw new NullPointerException( "rootEntity cannot be NULL." );
+		}
+		this.rootEntities.add( rootEntity );
+		return this;
+	}
 
 	/**
 	 * Add entity types to index. Currently, only root entities are accepted
@@ -46,7 +113,17 @@ public interface MassIndexer {
 	 * @param rootEntities
 	 * @return
 	 */
-	public MassIndexer addRootEntities(Class<?>... rootEntities);
+	public MassIndexer addRootEntities(Class<?>... rootEntities) {
+		if ( rootEntities == null ) {
+			throw new NullPointerException( "rootEntities cannot be NULL." );
+		}
+		else if ( rootEntities.length == 0 ) {
+			throw new IllegalStateException(
+					"rootEntities must have at least 1 element." );
+		}
+		this.rootEntities.addAll( Arrays.asList( rootEntities ) );
+		return this;
+	}
 
 	/**
 	 * Checkpoint frequency during the mass index process. The checkpoint will
@@ -56,7 +133,10 @@ public interface MassIndexer {
 	 * checkpoint.
 	 * @return
 	 */
-	public MassIndexer checkpointFreq(int itemCount);
+	public MassIndexer checkpointFreq(int itemCount) {
+		this.itemCount = itemCount;
+		return this;
+	}
 
 	/**
 	 * Whether the Hibernate queries are cacheable. This setting will be applied
@@ -65,7 +145,10 @@ public interface MassIndexer {
 	 * @param cacheable
 	 * @return
 	 */
-	public MassIndexer cacheable(boolean cacheable);
+	public MassIndexer cacheable(boolean cacheable) {
+		this.cacheable = cacheable;
+		return this;
+	}
 
 	/**
 	 * Assign the entity manager factory. You must use this method if you're
@@ -74,7 +157,16 @@ public interface MassIndexer {
 	 * @param entityManagerFactory
 	 * @return
 	 */
-	public MassIndexer entityManagerFactory(EntityManagerFactory entityManagerFactory);
+	public MassIndexer entityManagerFactory(EntityManagerFactory entityManagerFactory) {
+		if ( entityManagerFactory == null ) {
+			throw new NullPointerException( "The entityManagerFactory cannot be null." );
+		}
+		else if ( !entityManagerFactory.isOpen() ) {
+			throw new IllegalStateException( "Please provide an open entityManagerFactory." );
+		}
+		JobSEEnvironment.setEntityManagerFactory( entityManagerFactory );
+		return this;
+	}
 
 	/**
 	 * The fetch size for the result fetching.
@@ -82,7 +174,13 @@ public interface MassIndexer {
 	 * @param fetchSize
 	 * @return
 	 */
-	public MassIndexer fetchSize(int fetchSize);
+	public MassIndexer fetchSize(int fetchSize) {
+		if ( fetchSize < 1 ) {
+			throw new IllegalArgumentException( "fetchSize must be at least 1" );
+		}
+		this.fetchSize = fetchSize;
+		return this;
+	}
 
 	/**
 	 * Whether the a Java SE environment. Default is false.
@@ -90,7 +188,10 @@ public interface MassIndexer {
 	 * @param isJavaSE
 	 * @return
 	 */
-	public MassIndexer isJavaSE(boolean isJavaSE);
+	public MassIndexer isJavaSE(boolean isJavaSE) {
+		this.isJavaSE = isJavaSE;
+		return this;
+	}
 
 	/**
 	 * Job operator to start the batch job.
@@ -98,7 +199,10 @@ public interface MassIndexer {
 	 * @param jobOperator
 	 * @return
 	 */
-	public MassIndexer jobOperator(JobOperator jobOperator);
+	public MassIndexer jobOperator(JobOperator jobOperator) {
+		this.jobOperator = jobOperator;
+		return this;
+	}
 
 	/**
 	 * The maximum number of results will be return from the HQL / criteria. It
@@ -107,7 +211,13 @@ public interface MassIndexer {
 	 * @param maxResults
 	 * @return
 	 */
-	public MassIndexer maxResults(int maxResults);
+	public MassIndexer maxResults(int maxResults) {
+		if ( maxResults < 1 ) {
+			throw new IllegalArgumentException( "maxResults must be at least 1" );
+		}
+		this.maxResults = maxResults;
+		return this;
+	}
 
 	/**
 	 * Specify the maximum number of threads on which to execute the partitions
@@ -119,7 +229,13 @@ public interface MassIndexer {
 	 * @param maxThreads
 	 * @return
 	 */
-	public MassIndexer maxThreads(int maxThreads);
+	public MassIndexer maxThreads(int maxThreads) {
+		if ( maxThreads < 1 ) {
+			throw new IllegalArgumentException( "threads must be at least 1." );
+		}
+		this.maxThreads = maxThreads;
+		return this;
+	}
 
 	/**
 	 * Specify whether the mass indexer should be optimized at the beginning of
@@ -130,7 +246,10 @@ public interface MassIndexer {
 	 * @param optimizeAfterPurge
 	 * @return
 	 */
-	public MassIndexer optimizeAfterPurge(boolean optimizeAfterPurge);
+	public MassIndexer optimizeAfterPurge(boolean optimizeAfterPurge) {
+		this.optimizeAfterPurge = optimizeAfterPurge;
+		return this;
+	}
 
 	/**
 	 * Specify whether the mass indexer should be optimized at the end of the
@@ -141,7 +260,10 @@ public interface MassIndexer {
 	 * @param optimizeAtEnd
 	 * @return
 	 */
-	public MassIndexer optimizeAtEnd(boolean optimizeAtEnd);
+	public MassIndexer optimizeAtEnd(boolean optimizeAtEnd) {
+		this.optimizeAtEnd = optimizeAtEnd;
+		return this;
+	}
 
 	/**
 	 * Specify whether the existing lucene index should be purged at the
@@ -151,7 +273,10 @@ public interface MassIndexer {
 	 * @param purgeAtStart
 	 * @return
 	 */
-	public MassIndexer purgeAtStart(boolean purgeAtStart);
+	public MassIndexer purgeAtStart(boolean purgeAtStart) {
+		this.purgeAtStart = purgeAtStart;
+		return this;
+	}
 
 	/**
 	 * Define the max number of rows to process per partition.
@@ -159,5 +284,18 @@ public interface MassIndexer {
 	 * @param partitionCapacity
 	 * @return
 	 */
-	public MassIndexer rowsPerPartition(int rowsPerPartition);
+	public MassIndexer rowsPerPartition(int rowsPerPartition) {
+		if ( rowsPerPartition < 1 ) {
+			throw new IllegalArgumentException(
+					"rowsPerPartition must be at least 1" );
+		}
+		this.rowsPerPartition = rowsPerPartition;
+		return this;
+	}
+
+	private String getRootEntitiesAsString() {
+		return rootEntities.stream()
+				.map( (e) -> e.getName() )
+				.collect( Collectors.joining( "," ) );
+	}
 }

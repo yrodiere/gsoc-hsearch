@@ -12,7 +12,7 @@ container will be used. For Java SE users, we’ve chosen JBeret SE for you.
 .How to use the new MassIndexer?
 ====
 [source, JAVA]
-Long executionID = new MassIndexerImpl()
+Long executionID = new MassIndexer()
         .addRootEntity( MyEntity.class );
         .start();
 ====

@@ -15,7 +15,6 @@ import java.util.Properties;
 
 import javax.batch.operations.JobOperator;
 
-import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.jboss.logging.Logger;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +52,7 @@ public class MassIndexerTest {
 	public void testJobParamsAll() {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
-		long executionID = new MassIndexerImpl().jobOperator( mockedOperator )
+		long executionID = new MassIndexer().jobOperator( mockedOperator )
 				.addRootEntities( String.class, Integer.class )
 				.fetchSize( FETCH_SIZE )
 				.maxResults( MAX_RESULTS )
@@ -87,7 +86,7 @@ public class MassIndexerTest {
 	public void testAddRootEntity_notNull() {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
-		long executionID = new MassIndexerImpl().jobOperator( mockedOperator )
+		long executionID = new MassIndexer().jobOperator( mockedOperator )
 				.addRootEntity( Integer.class )
 				.addRootEntity( String.class )
 				.start();
@@ -104,14 +103,14 @@ public class MassIndexerTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testAddRootEntity_null() {
-		new MassIndexerImpl().addRootEntity( null );
+		new MassIndexer().addRootEntity( null );
 	}
 
 	@Test
 	public void testAddRootEntities_notNull() {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
-		long executionID = new MassIndexerImpl().jobOperator( mockedOperator )
+		long executionID = new MassIndexer().jobOperator( mockedOperator )
 				.addRootEntities( String.class, Integer.class )
 				.start();
 		assertEquals( 1L, executionID );
@@ -127,11 +126,11 @@ public class MassIndexerTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testAddRootEntities_null() {
-		new MassIndexerImpl().addRootEntities( null );
+		new MassIndexer().addRootEntities( null );
 	}
 
 	@Test(expected = IllegalStateException.class)
 	public void testAddRootEntities_empty() {
-		new MassIndexerImpl().addRootEntities( new Class<?>[0] );
+		new MassIndexer().addRootEntities( new Class<?>[0] );
 	}
 }

@@ -25,7 +25,6 @@ import javax.persistence.Persistence;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
-import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.entity.Company;
 import org.hibernate.search.jsr352.entity.Person;
 import org.jboss.logging.Logger;
@@ -100,7 +99,7 @@ public class MassIndexerIT {
 		assertEquals( 0, people.size() );
 
 		JobOperator jobOperator = JobFactory.getJobOperator();
-		long executionId = new MassIndexerImpl()
+		long executionId = new MassIndexer()
 				.addRootEntities( Company.class, Person.class )
 				.jobOperator( jobOperator )
 				.isJavaSE( true )

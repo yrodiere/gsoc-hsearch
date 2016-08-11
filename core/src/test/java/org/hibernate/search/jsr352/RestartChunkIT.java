@@ -25,7 +25,6 @@ import javax.persistence.Persistence;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
-import org.hibernate.search.jsr352.MassIndexerImpl;
 import org.hibernate.search.jsr352.entity.Company;
 import org.hibernate.search.jsr352.entity.Person;
 import org.jboss.logging.Logger;
@@ -88,7 +87,7 @@ public class RestartChunkIT {
 		assertEquals( 0, people.size() );
 
 		// start the job, then stop it
-		long execId1 = new MassIndexerImpl()
+		long execId1 = new MassIndexer()
 				.addRootEntities( Company.class, Person.class )
 				.entityManagerFactory( emf )
 				.jobOperator( jobOperator )

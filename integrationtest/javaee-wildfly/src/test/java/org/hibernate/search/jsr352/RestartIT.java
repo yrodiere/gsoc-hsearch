@@ -130,7 +130,7 @@ public class RestartIT {
 	}
 
 	private long createAndStartJob(JobOperator jobOperator) {
-		MassIndexer massIndexer = new MassIndexerImpl()
+		MassIndexer massIndexer = new MassIndexer()
 				.fetchSize( JOB_FETCH_SIZE )
 				.maxResults( JOB_MAX_RESULTS )
 				.maxThreads( JOB_MAX_THREADS )
