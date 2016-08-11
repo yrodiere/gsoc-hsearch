@@ -19,6 +19,10 @@ import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
 /**
+ * Partition progress analyzer which analyzes the chunk progress using
+ * intermediary results received from each partition sent via the collectors.
+ * It runs on the step main thread.
+ *
  * @author Mincong Huang
  */
 @Named
@@ -70,9 +74,9 @@ public class PartitionAnalyzer extends AbstractPartitionAnalyzer {
 		}
 		else {
 			// TODO Currently, percentage is not supported for the restarted job
-			// instance, because checkpoint mechanism is only available for
-			// partition scope and JSR 352 doesn't provide any API to store
-			// collected data.
+			// instance, because collected data is lost after the job stop. The
+			// checkpoint mechanism is only available for partition scope and
+			// JSR 352 doesn't provide any API to store step-scope data.
 			comment = "restarted";
 		}
 		LOGGER.infof( "%d works processed (%s).", totalDone, comment );
