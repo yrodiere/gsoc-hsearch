@@ -17,6 +17,7 @@ import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.JobExecution;
 import javax.batch.runtime.Metric;
+import javax.batch.runtime.Metric.MetricType;
 import javax.batch.runtime.StepExecution;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -39,15 +40,9 @@ public class MassIndexerIT {
 
 	private static final Logger LOGGER = Logger.getLogger( MassIndexerIT.class );
 
-	// mass indexer configuration values
-	private final boolean OPTIMIZE_AFTER_PURGE = true;
-	private final boolean PURGE_AT_START = true;
-	private final int ARRAY_CAPACITY = 500;
-
 	// example dataset
 	private final long DB_COMP_ROWS = 3;
-	private final long DB_COMP_ROWS_LOADED = 3;
-
+	private final long DB_PERS_ROWS = 3;
 	private final int JOB_MAX_TRIES = 240; // 240 second
 	private final int JOB_THREAD_SLEEP = 1000;
 
@@ -110,6 +105,7 @@ public class MassIndexerIT {
 		List<StepExecution> stepExecutions = jobOperator.getStepExecutions( executionId );
 		for ( StepExecution stepExecution : stepExecutions ) {
 			LOGGER.infof( "step %s executed.", stepExecution.getStepName() );
+			testBatchStatus( stepExecution );
 		}
 
 		companies = findClass( Company.class, "name", "Google" );
@@ -152,62 +148,21 @@ public class MassIndexerIT {
 		BatchStatus batchStatus = stepExecution.getBatchStatus();
 		switch ( stepExecution.getStepName() ) {
 
-			case "loadId":
-				long expectedEntityCount = DB_COMP_ROWS;
-				// assertEquals(expectedEntityCount,
-				// indexingContext.getEntityCount());
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "purgeDecision":
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "purgeIndex":
-				if ( PURGE_AT_START ) {
-					assertEquals( BatchStatus.COMPLETED, batchStatus );
-				}
-				break;
-
-			case "afterPurgeDecision":
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "optimizeAfterPurge":
-				if ( OPTIMIZE_AFTER_PURGE ) {
-					assertEquals( BatchStatus.COMPLETED, batchStatus );
-				}
-				break;
-
 			case "produceLuceneDoc":
-				Metric[] metrics = stepExecution.getMetrics();
-				testChunk( getMetricsMap( metrics ) );
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "afterIndexDecision":
-				assertEquals( BatchStatus.COMPLETED, batchStatus );
-				break;
-
-			case "optimizeAfterIndex":
+				for ( Metric m : stepExecution.getMetrics() ) {
+					if ( m.getType().equals( MetricType.READ_COUNT ) ) {
+						assertEquals( DB_COMP_ROWS + DB_PERS_ROWS, m.getValue() );
+					}
+					else if ( m.getType().equals( MetricType.WRITE_COUNT ) ) {
+						assertEquals( DB_COMP_ROWS + DB_PERS_ROWS, m.getValue() );
+					}
+				}
 				assertEquals( BatchStatus.COMPLETED, batchStatus );
 				break;
 
 			default:
 				break;
 		}
-	}
-
-	private void testChunk(Map<Metric.MetricType, Long> metricsMap) {
-		long companyCount = (long) Math.ceil( (double) DB_COMP_ROWS_LOADED / ARRAY_CAPACITY );
-		// The read count.
-		long expectedReadCount = companyCount;
-		long actualReadCount = metricsMap.get( Metric.MetricType.READ_COUNT );
-		assertEquals( expectedReadCount, actualReadCount );
-		// The write count
-		long expectedWriteCount = companyCount;
-		long actualWriteCount = metricsMap.get( Metric.MetricType.WRITE_COUNT );
-		assertEquals( expectedWriteCount, actualWriteCount );
 	}
 
 	/**
