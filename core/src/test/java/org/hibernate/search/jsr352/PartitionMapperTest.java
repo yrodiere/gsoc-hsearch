@@ -53,7 +53,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PrepareForTest(ContextHelper.class)
 public class PartitionMapperTest {
 
-	private int ROWS_PER_PARTITION = 1000;
 	private int COMP_ROWS = 500;
 	private int PERS_ROWS = 5 * 1000;
 	private Set<Class<?>> ROOT_ENTITIES = Stream.of( Company.class, Person.class )
@@ -179,9 +178,9 @@ public class PartitionMapperTest {
 	public void testMapPartitions() throws Exception {
 
 		PartitionPlan partitionPlan = partitionMapper.mapPartitions();
+		int realPartitionC = 0; // companies
+		int realPartitionP = 0; // people
 
-		int realPartitionP = 0;
-		int realPartitionC = 0;
 		for ( Properties p : partitionPlan.getPartitionProperties() ) {
 			String entityName = p.getProperty( "entityName" );
 			if ( entityName.equals( Company.class.toString() ) ) {
@@ -192,10 +191,10 @@ public class PartitionMapperTest {
 			}
 		}
 
-		int expectedPartitionC = (int) Math.ceil( 1f * COMP_ROWS / ROWS_PER_PARTITION ) + 1;
-		int expectedPartitionP = (int) Math.ceil( 1f * PERS_ROWS / ROWS_PER_PARTITION ) + 1;
-
-		assertEquals( expectedPartitionC, realPartitionC );
-		assertEquals( expectedPartitionP, realPartitionP );
+		// nbPartitions = ceil( rows / rowsPerPartition ) + tailPartition
+		// c = ceil( 500 / 1000 ) + 1 = 1 + 1 = 2
+		// p = ceil( 5000 / 1000 ) + 1 = 5 + 1 = 6
+		assertEquals( 2, realPartitionC );
+		assertEquals( 6, realPartitionP );
 	}
 }

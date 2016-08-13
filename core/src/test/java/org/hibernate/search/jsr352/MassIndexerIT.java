@@ -43,13 +43,14 @@ public class MassIndexerIT {
 	// example dataset
 	private final long DB_COMP_ROWS = 3;
 	private final long DB_PERS_ROWS = 3;
-	private final int JOB_MAX_TRIES = 240; // 240 second
-	private final int JOB_THREAD_SLEEP = 1000;
 
 	private EntityManagerFactory emf;
+	private JobOperator jobOperator;
 
 	@Before
 	public void setup() {
+
+		jobOperator = JobFactory.getJobOperator();
 
 		List<Company> companies = Arrays.asList(
 				new Company( "Google" ),
@@ -129,17 +130,16 @@ public class MassIndexerIT {
 
 	public JobExecution keepTestAlive(JobExecution jobExecution) throws InterruptedException {
 		int tries = 0;
-		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED ) &&
-				!jobExecution.getBatchStatus().equals( BatchStatus.FAILED ) ) {
-			if ( tries < JOB_MAX_TRIES ) {
-				tries++;
-				Thread.sleep( JOB_THREAD_SLEEP );
-				jobExecution = JobFactory.getJobOperator()
-						.getJobExecution( jobExecution.getExecutionId() );
-			}
-			else {
-				break;
-			}
+		while ( ( jobExecution.getBatchStatus().equals( BatchStatus.STARTING )
+				|| jobExecution.getBatchStatus().equals( BatchStatus.STARTED ) )
+				&& tries < 10 ) {
+
+			long executionId = jobExecution.getExecutionId();
+			LOGGER.infof( "Job (id=%d) %s, thread sleep 1000 ms...",
+					executionId, jobExecution.getBatchStatus() );
+			Thread.sleep( 1000 );
+			jobExecution = jobOperator.getJobExecution( executionId );
+			tries++;
 		}
 		return jobExecution;
 	}
