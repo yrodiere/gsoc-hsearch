@@ -26,7 +26,8 @@ import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
  */
 public class MassIndexer {
 
-	private final String JOB_NAME = "mass-index";
+	private static final long NO_PREV_JOB_EXEC = 0L;
+	private static final String JOB_NAME = "mass-index";
 	private final Set<Class<?>> rootEntities = new HashSet<>();
 
 	private boolean cacheable = false;
@@ -39,7 +40,9 @@ public class MassIndexer {
 	private int maxResults = 1000 * 1000;
 	private int rowsPerPartition = 250;
 	private int maxThreads = 1;
+	private EntityManagerFactory emf;
 	private JobOperator jobOperator;
+	private long executionId = NO_PREV_JOB_EXEC;
 
 	/**
 	 * Start the job.
@@ -53,7 +56,7 @@ public class MassIndexer {
 			throw new NullPointerException( "rootEntities cannot be null" );
 		}
 		if ( isJavaSE ) {
-			if ( JobSEEnvironment.getEntityManagerFactory() == null ) {
+			if ( emf == null ) {
 				throw new NullPointerException( "You're under a Java SE environment. "
 						+ "Please assign the EntityManagerFactory before the job start." );
 			}
@@ -61,11 +64,13 @@ public class MassIndexer {
 				throw new NullPointerException( "You're under a Java SE environment. "
 						+ "Please assign the jobOperator before the job start." );
 			}
+			JobSEEnvironment.setEntityManagerFactory( emf );
 		}
 		else {
-			if ( JobSEEnvironment.getEntityManagerFactory() != null ) {
+			if ( emf != null ) {
 				throw new IllegalStateException( "You're under a Java EE environmant. "
-						+ "Please do not assign the EntityManagerFactory." );
+						+ "Please do not assign the EntityManagerFactory. "
+						+ "If you're under Java SE, set isJavaSE( true );");
 			}
 			jobOperator = BatchRuntime.getJobOperator();
 		}
@@ -82,7 +87,34 @@ public class MassIndexer {
 		jobParams.put( "purgeAtStart", String.valueOf( purgeAtStart ) );
 		jobParams.put( "rootEntities", getRootEntitiesAsString() );
 		jobParams.put( "rowsPerPartition", String.valueOf( rowsPerPartition ) );
-		Long executionId = jobOperator.start( JOB_NAME, jobParams );
+		executionId = jobOperator.start( JOB_NAME, jobParams );
+		return executionId;
+	}
+
+	public long restart() {
+		if ( executionId == NO_PREV_JOB_EXEC ) {
+			throw new IllegalStateException( "No previous job execution." );
+		}
+		if ( isJavaSE ) {
+			if ( emf == null ) {
+				throw new NullPointerException( "You're under a Java SE environment. "
+						+ "Please assign the EntityManagerFactory before the job start." );
+			}
+			if ( jobOperator == null ) {
+				throw new NullPointerException( "You're under a Java SE environment. "
+						+ "Please assign the jobOperator before the job start." );
+			}
+			JobSEEnvironment.setEntityManagerFactory( emf );
+		}
+		else {
+			if ( emf != null ) {
+				throw new IllegalStateException( "You're under a Java EE environmant. "
+						+ "Please do not assign the EntityManagerFactory. "
+						+ "If you're under Java SE, set isJavaSE( true );");
+			}
+			jobOperator = BatchRuntime.getJobOperator();
+		}
+		executionId = jobOperator.restart( executionId, null );
 		return executionId;
 	}
 
@@ -168,7 +200,7 @@ public class MassIndexer {
 		else if ( !entityManagerFactory.isOpen() ) {
 			throw new IllegalStateException( "Please provide an open entityManagerFactory." );
 		}
-		JobSEEnvironment.setEntityManagerFactory( entityManagerFactory );
+		this.emf = entityManagerFactory;
 		return this;
 	}
 

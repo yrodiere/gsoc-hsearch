@@ -21,6 +21,7 @@
     <properties>
         <org.mockito>1.10.19</org.mockito>
         <org.powermock>1.6.4</org.powermock>
+        <byteman.version>3.0.6</byteman.version>
     </properties>
 
     <dependencies>
@@ -145,6 +146,32 @@
         </dependency>
         <!-- above dependencies are moved from Java SE integration test -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <!-- bytemen -->
+        
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman</artifactId>
+            <scope>test</scope>
+            <version>${byteman.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-submit</artifactId>
+            <scope>test</scope>
+            <version>${byteman.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-install</artifactId>
+            <scope>test</scope>
+            <version>${byteman.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-bmunit</artifactId>
+            <scope>test</scope>
+            <version>${byteman.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -155,13 +182,13 @@
                 <directory>src/test/resources</directory>
                 <includes>
                     <include>META-INF/persistence.xml</include>
+                    <include>JobInterruptor.btm</include>
                 </includes>
             </testResource>
         </testResources>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -185,9 +212,21 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <useSystemClassLoader>true</useSystemClassLoader>
+                    <useManifestOnlyJar>true</useManifestOnlyJar>
                     <systemPropertyVariables>
                         <jberet.tmp.dir>${project.build.directory}${file.separator}tmp</jberet.tmp.dir>
                     </systemPropertyVariables>
+                    <!-- ensure we don't inherit a byteman jar from any env settings -->
+                    <environmentVariables>
+                        <BYTEMAN_HOME></BYTEMAN_HOME>
+                    </environmentVariables>
+                    <systemProperties>
+                        <property>
+                            <name>org.jboss.byteman.home</name>
+                            <value></value>
+                        </property>
+                    </systemProperties>
                 </configuration>
             </plugin>
         </plugins>
