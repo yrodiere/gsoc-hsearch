@@ -16,9 +16,10 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
 import org.hibernate.Session;
-import org.hibernate.search.backend.PurgeAllLuceneWork;
 import org.hibernate.search.backend.spi.BatchBackend;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
+import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
@@ -46,6 +47,7 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 	private EntityManagerFactory emf;
 
 	private EntityManager em;
+	private FullTextEntityManager ftem;
 
 	@Inject
 	public BeforeChunkBatchlet(JobContext jobContext) {
@@ -58,17 +60,18 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 		if ( this.purgeAtStart ) {
 
 			em = emf.createEntityManager();
+			ftem = Search.getFullTextEntityManager( em );
 			Session session = em.unwrap( Session.class );
 			final BatchBackend backend = ContextHelper
 					.getSearchintegrator( session )
 					.makeBatchBackend( null );
-
 			JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-			jobData.getEntityClazzSet()
-					.forEach( clz -> backend.doWorkInSync( new PurgeAllLuceneWork( null, clz ) ) );
+			jobData.getEntityClazzSet().forEach( clz -> ftem.purgeAll( clz ) );
 
 			if ( this.optimizeAfterPurge ) {
 				LOGGER.info( "optimizing all entities ..." );
+				// TODO issue #113
+				// I don't know what optimize is doing and how to modify it
 				backend.optimize( jobData.getEntityClazzSet() );
 			}
 		}
