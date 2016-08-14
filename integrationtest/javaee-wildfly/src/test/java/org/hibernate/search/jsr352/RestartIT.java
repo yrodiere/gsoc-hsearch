@@ -9,6 +9,7 @@ package org.hibernate.search.jsr352;
 import static org.junit.Assert.assertEquals;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -28,6 +29,7 @@ import org.jboss.logging.Logger;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -39,6 +41,7 @@ import org.junit.runner.RunWith;
  *
  * @author Mincong Huang
  */
+@Ignore("No need to run another restart test under Java EE")
 @RunWith(Arquillian.class)
 public class RestartIT {
 
@@ -119,14 +122,18 @@ public class RestartIT {
 				{ "Facebook", "Mark", "Zuckerberg" },
 				{ "Amazon", "Jeff", "Bezos" }
 		};
+		List<Person> people = new ArrayList<>( (int) DB_PERS_ROWS );
+		List<Company> companies = new ArrayList<>( (int) DB_COMP_ROWS );
 		for ( int i = 0; i < DB_PERS_ROWS; i++ ) {
 			Person p = new Person( i, str[i % 5][1], str[i % 5][2] );
-			personManager.persist( p );
+			people.add( p );
 		}
 		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
 			Company c = new Company( str[i % 5][0] );
-			companyManager.persist( c );
+			companies.add( c );
 		}
+		personManager.persist( people );
+		companyManager.persist( companies );
 	}
 
 	private long createAndStartJob(JobOperator jobOperator) {

@@ -7,6 +7,7 @@
 package org.hibernate.search.jsr352.test.entity;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -17,9 +18,11 @@ import javax.persistence.criteria.CriteriaQuery;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 /**
  * @author Mincong Huang
+ * @author Gunnar Morling
  */
 @Stateless
 public class PersonManager {
@@ -27,8 +30,16 @@ public class PersonManager {
 	@PersistenceContext(name = "h2")
 	private EntityManager em;
 
-	public void persist(Person person) {
-		em.persist( person );
+	@TransactionTimeout(value = 5, unit = TimeUnit.MINUTES)
+	public void persist(Iterable<Person> people) {
+		int i = 0;
+		for ( Person person : people ) {
+			em.persist( person );
+			if ( i % 50 == 0 ) {
+				em.flush();
+				em.clear();
+			}
+		}
 	}
 
 	public List<Person> findPerson(String firstName) {
