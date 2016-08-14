@@ -133,7 +133,7 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 					.setClass( entityClazz )
 					.twoWayConversionContext( idBridge )
 					.objectToString( id );
-			LOGGER.infof( "idInString=%s", idInString );
+			LOGGER.debugf( "idInString=%s", idInString );
 		}
 		finally {
 			conversionContext.popProperty();

@@ -77,7 +77,7 @@ public class ItemWriter extends AbstractItemWriter {
 	 */
 	@Override
 	public void close() throws Exception {
-		LOGGER.info( "close() called." );
+		LOGGER.debug( "close() called." );
 		try {
 			em.close();
 		}
@@ -94,7 +94,7 @@ public class ItemWriter extends AbstractItemWriter {
 	@Override
 	public void open(Serializable checkpoint) throws Exception {
 
-		LOGGER.info( "open(Seriliazable) called" );
+		LOGGER.debug( "open(Seriliazable) called" );
 		if ( isJavaSE ) {
 			emf = JobSEEnvironment.getEntityManagerFactory();
 		}

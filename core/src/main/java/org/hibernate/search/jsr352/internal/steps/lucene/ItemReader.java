@@ -108,7 +108,7 @@ public class ItemReader extends AbstractItemReader {
 	 */
 	@Override
 	public Serializable checkpointInfo() throws Exception {
-		LOGGER.info( "checkpointInfo() called. "
+		LOGGER.debug( "checkpointInfo() called. "
 				+ "Saving last read ID to batch runtime..." );
 		return checkpointID;
 	}
@@ -120,23 +120,24 @@ public class ItemReader extends AbstractItemReader {
 	 */
 	@Override
 	public void close() throws Exception {
-		LOGGER.info( "closing everything..." );
+		LOGGER.debug( "closing everything..." );
 		try {
 			scroll.close();
-			LOGGER.info( "Scrollable results closed." );
+			LOGGER.debug( "Scrollable results closed." );
 		}
 		catch (Exception e) {
 			LOGGER.error( e );
 		}
 		try {
 			ss.close();
-			LOGGER.info( "Stateless session closed." );
+			LOGGER.debug( "Stateless session closed." );
 		}
 		catch (Exception e) {
 			LOGGER.error( e );
 		}
 		try {
 			session.close();
+			LOGGER.debug( "Session closed." );
 		}
 		catch (Exception e) {
 			LOGGER.error( e );
@@ -161,11 +162,11 @@ public class ItemReader extends AbstractItemReader {
 	@Override
 	public void open(Serializable checkpointID) throws Exception {
 
-		LOGGER.infof( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
+		LOGGER.debugf( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		entityClazz = jobData.getIndexedType( entityName );
 		PartitionUnit unit = jobData.getPartitionUnit( partitionID );
-		LOGGER.info( unit );
+		LOGGER.debug( unit );
 
 		if ( isJavaSE ) {
 			emf = JobSEEnvironment.getEntityManagerFactory();
@@ -236,7 +237,7 @@ public class ItemReader extends AbstractItemReader {
 					.getIdentifier( entity );
 		}
 		else {
-			LOGGER.info( "no more result. read ends." );
+			LOGGER.debug( "no more result. read ends." );
 		}
 		return entity;
 	}
