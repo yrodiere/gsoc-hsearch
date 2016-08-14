@@ -51,7 +51,7 @@ public class PerformanceIT {
 
 	private static final int JOB_FETCH_SIZE = 100 * 1000;
 	private static final int JOB_MAX_THREADS = 10;
-	private static final int JOB_ROWS_PER_PARTITION = 10000;
+	private static final int JOB_ROWS_PER_PARTITION = 20 * 1000;
 	private static final int JOB_ITEM_COUNT = 500;
 	private static final long DB_COMP_ROWS = 100 * 1000;
 	private static final long DB_PERS_ROWS = 1000 * 1000;
@@ -89,7 +89,7 @@ public class PerformanceIT {
 		};
 		List<Person> people = new ArrayList<>( (int) DB_PERS_ROWS );
 		List<Company> companies = new ArrayList<>( (int) DB_COMP_ROWS );
-		for ( int i = 0; i < DB_PERS_ROWS; i++ ) {
+		for ( int i = 0; i < DB_PERS_ROWS - 1; i++ ) {
 			Person p = new Person( i, str[i % 5][1], str[i % 5][2] );
 			people.add( p );
 		}
@@ -97,6 +97,8 @@ public class PerformanceIT {
 			Company c = new Company( str[i % 5][0] );
 			companies.add( c );
 		}
+		people.add( new Person( (int) DB_PERS_ROWS, "Mincong", "Huang" ) );
+		companies.add( new Company( "hibernate" ) );
 		personManager.persist( people );
 		companyManager.persist( companies );
 	}
@@ -105,20 +107,20 @@ public class PerformanceIT {
 	public void testDiffrentMassIndexer() throws InterruptedException {
 
 		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
-		long t0 = System.currentTimeMillis();
 
+		long start0 = System.currentTimeMillis();
 		testOldMassIndexer( ftem );
+		long end0 = System.currentTimeMillis();
 
-		long t1 = System.currentTimeMillis();
 		ftem.purgeAll( Person.class );
 		ftem.purgeAll( Company.class );
 		ftem.flushToIndexes();
 
+		long start1 = System.currentTimeMillis();
 		testNewMassIndexer();
-
-		long t2 = System.currentTimeMillis();
-		double delta0 = ( t1 - t0 ) / 1000f;
-		double delta1 = ( t2 - t1 ) / 1000f;
+		long end1 = System.currentTimeMillis();
+		double delta0 = ( end0 - start0 ) / 1000f;
+		double delta1 = ( end1 - start1 ) / 1000f;
 		LOGGER.infof( "%n%n"
 				+ "\told massindexer = %.2fs%n"
 				+ "\tnew massindexer = %.2fs%n",
@@ -127,37 +129,31 @@ public class PerformanceIT {
 
 	public void testOldMassIndexer(FullTextEntityManager ftem) throws InterruptedException {
 
-		final String google = "google";
-		final String googleCEO = "Sundar";
-		List<Company> googles = companyManager.findCompanyByName( google );
-		List<Person> googleCEOs = personManager.findPerson( googleCEO );
-		assertEquals( 0, googles.size() );
-		assertEquals( 0, googleCEOs.size() );
+		List<Company> hibernate = companyManager.findCompanyByName( "hibernate" );
+		List<Person> mincong = personManager.findPerson( "mincong" );
+		assertEquals( 0, hibernate.size() );
+		assertEquals( 0, mincong.size() );
 
 		// Start the job
 		ftem.createIndexer()
-				.batchSizeToLoadObjects( 1000 )
+				.batchSizeToLoadObjects( 500 )
 				.threadsToLoadObjects( JOB_MAX_THREADS )
 				.cacheMode( CacheMode.IGNORE )
 				.startAndWait();
 
 		// Assert
-//		googles = companyManager.findCompanyByName( google );
-//		googleCEOs = personManager.findPerson( googleCEO );
-//		assertEquals( DB_COMP_ROWS / 5, googles.size() );
-//		assertEquals( DB_PERS_ROWS / 5, googleCEOs.size() );
-//		int totalDocs = companyManager.findAll().size();
-//		assertEquals( (int) ( DB_COMP_ROWS + DB_PERS_ROWS ), totalDocs );
+		hibernate = companyManager.findCompanyByName( "hibernate" );
+		mincong = personManager.findPerson( "mincong" );
+		assertEquals( 1, hibernate.size() );
+		assertEquals( 1, mincong.size() );
 	}
 
 	public void testNewMassIndexer() throws InterruptedException {
 
-		final String google = "google";
-		final String googleCEO = "Sundar";
-		List<Company> googles = companyManager.findCompanyByName( google );
-		List<Person> googleCEOs = personManager.findPerson( googleCEO );
-		assertEquals( 0, googles.size() );
-		assertEquals( 0, googleCEOs.size() );
+		List<Company> hibernate = companyManager.findCompanyByName( "hibernate" );
+		List<Person> mincong = personManager.findPerson( "mincong" );
+		assertEquals( 0, hibernate.size() );
+		assertEquals( 0, mincong.size() );
 
 		// Start the job
 		JobOperator jobOperator = BatchRuntime.getJobOperator();
@@ -173,12 +169,10 @@ public class PerformanceIT {
 		assertEquals( BatchStatus.COMPLETED, jobExecution.getBatchStatus() );
 
 		// Assert
-//		List<Company> googles = companyManager.findCompanyByName( "google" );
-//		List<Person> googleCEOs = personManager.findPerson( "Sundar" );
-//		assertEquals( DB_COMP_ROWS / 5, googles.size() );
-//		assertEquals( DB_PERS_ROWS / 5, googleCEOs.size() );
-//		int totalDocs = companyManager.findAll().size();
-//		assertEquals( (int) ( DB_COMP_ROWS + DB_PERS_ROWS ), totalDocs );
+		hibernate = companyManager.findCompanyByName( "hibernate" );
+		mincong = personManager.findPerson( "mincong" );
+		assertEquals( 1, hibernate.size() );
+		assertEquals( 1, mincong.size() );
 	}
 
 	private JobExecution keepTestAlive(JobExecution jobExecution)
