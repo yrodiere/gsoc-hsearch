@@ -431,11 +431,21 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#preface">Preface</a></li>
-<li><a href="#massindexer352">1. Using a MassIndexer under JSR352</a>
+<li><a href="#user-guide">1. User Guide</a>
 <ul class="sectlevel2">
 <li><a href="#_selection_of_entities">1.1. Selection of entities</a></li>
 <li><a href="#_parallelism">1.2. Parallelism</a></li>
 <li><a href="#_persistence">1.3. Persistence</a></li>
+</ul>
+</li>
+<li><a href="#developer-guide">2. Developer Guide</a>
+<ul class="sectlevel2">
+<li><a href="#_batch_approach_under_jsr352">2.1. Batch approach under JSR352</a></li>
+<li><a href="#_chunk">2.2. Chunk</a></li>
+<li><a href="#_partitioning">2.3. Partitioning</a></li>
+<li><a href="#_checkpoint_2">2.4. Checkpoint</a></li>
+<li><a href="#_java_se">2.5. Java SE</a></li>
+<li><a href="#_todo">2.6. TODO</a></li>
 </ul>
 </li>
 </ul>
@@ -474,7 +484,7 @@ the full-text index from these.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="massindexer352">1. Using a MassIndexer under JSR352</h2>
+<h2 id="user-guide">1. User Guide</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Hibernate Seach’s new MassIndexer uses the Batch approach introduced by JSR352.
@@ -489,7 +499,7 @@ container will be used. For Java SE users, we’ve chosen JBeret SE for you.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">Long executionID = new MassIndexerImpl()
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">Long executionID = new MassIndexer()
         .addRootEntity( MyEntity.class );
         .start();</code></pre>
 </div>
@@ -672,10 +682,384 @@ closed during the mass indexing process.</p>
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="developer-guide">2. Developer Guide</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_batch_approach_under_jsr352">2.1. Batch approach under JSR352</h3>
+<div class="paragraph">
+<p>The mass indexer in Google Summer of Code uses the standardized batch processing
+architecture JSR 352. Comparing to the current mass indexer in Hibernate Search,
+ it provides more clarified work flows and job roles. This clarification helps
+ to avoid code confusion and makes each batch component aligned with the Java
+ standard batch design. The work flow of this index is described in job xml
+ file:</p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-SHELL" data-lang="SHELL">$GSOC_HOME/core/src/main/resources/META-INF/batch-jobs/mass-index.xml</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>This job has 3 steps: before-chunk batchlet / chunk / after-chunk batchlet.
+Chunk is the core part of the project, the mass indexing. Before-chunk batchlet
+contains purge and optimization before the start of indexation and after-chunk
+batchlet contains optimization after the end of indexation.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_chunk">2.2. Chunk</h3>
+<div class="paragraph">
+<p>A basic chunk is composed by 3 components: item reader, item processor and item
+writer. One chunk has N items. Chunk reads one item, processes one item, then
+stores into an item list. When all the N items have been processed, then item
+writer writes them into the destination.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/jsr352_chunk.png" alt="The chunk sequence diagram of JSR 352">
+</div>
+</div>
+<div class="sect3">
+<h4 id="_item_reader_and_item_processor">2.2.1. Item reader and item processor</h4>
+<div class="paragraph">
+<p>In mass indexer, reading an item means loading an entity using JPA. During the
+open of read stream, item reader builds a scrollable result. Then it scrolls one
+entity at each reading. The scrolled entity will be processed into an
+add-lucene-work by the item processor. This process continues N times until the
+checkpoint reaches. Once reached, item writer writes the N items into the
+destination and checkpoint will be persisted to the runtime. The number N is
+determined by the checkpoint algorithm. This algorithm tells the batch runtime
+when the chunk is ready to checkpoint. User can define his own checkpoint
+frequency using the mass-indexer interface:</p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer = massIndexer.checkpointFreq( 1000 );</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>For each read, the checkpoint ID will be updated. When one chunk is finished,
+the checkpoint ID will be passed to the batch runtime, which can be reuse in
+case of job restart. Each reader has their own session and they’re not shared
+with other reader. However, the session for item reader is the same as the
+session for item processor, they’re located in the same thread. Item reader has
+a boundary, it reads only entities belonging to the target interval, which is
+greater or equal to the lower bound and less than the upper bound. A chunk
+reader reaches its end when there’s no more result to read.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_item_writer">2.2.2. Item writer</h4>
+<div class="paragraph">
+<p>Item writer executes the add-lucene-works received from the item processor.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_persistence_2">2.2.3. Persistence</h4>
+<div class="paragraph">
+<p>The new mass indexer interacts with databases using JPA. We need you to
+configure a persistence unit and provide an entity manager factory, so that the
+new mass indexer can use it.</p>
+</div>
+<div class="paragraph">
+<p>If you’re under Java EE, there’s no additional configuration before the job
+start. Entity manager factory will be injected by annotation
+<code>@PersistenceUnit(name = “massindex”)</code> for all the internal classes. However,
+you need to ensure the existence of persistence unit “massindex”, so that we can
+detect it and do the CDI. If you’re under Java SE, please confirm the SE
+environment and assign specifically the entity manager factory via massindexer’s
+related method.</p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer.isJavaSE( true )
+    .entityManagerFactory( emf );</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Please make sure that the entity manager factory provided is opened and won’t be
+closed during the mass indexing process.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_partitioning">2.3. Partitioning</h3>
+<div class="paragraph">
+<p>In order to maximize the performance, we highly recommend you to speed up the
+mass indexer using parallelism. Parallelism is activated by default. Under the
+standard JSR 352, the exact word is “partitioning”. The indexing step may run as
+multiple partitions, one per thread. Each partition has its own partition ID and
+parameters. If there’re more partitions than threads, partitions are considered
+as a queue to consume: each thread can only run one partition at a time and
+won’t consume the next partition until the previous one is finished.</p>
+</div>
+<div class="paragraph">
+<p>Mass indexer defines dynamically the number of partitions, but you need to tell
+it the number of rows per partitions so that it can calculate the partitions by
+division.</p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer = massIndexer.rowsPerPartition( 5000 );</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Each partition deals with one root entity type, so 2 different entity types will
+never run under the same partition.</p>
+</div>
+<div class="sect3">
+<h4 id="_partition_mapper">2.3.1. Partition Mapper</h4>
+<div class="paragraph">
+<p>Partition mapper provides a partition plan for chunk partitioning. Each entity
+type will receive a different number of partitions according to the number of
+entities to index. For each partition, it has its own boundary which is defined
+by a scrollable result. Boundaries are defined by dividers. For N partitions
+within one entity type, there will be N - 1 dividers. Each divider has 2 roles:
+it is the R-limit of the left partition and the L-limit of the right partition.</p>
+</div>
+<table class="tableblock frame-topbot grid-all" style="width: 60%;">
+<caption class="title">Table 1. A partition example</caption>
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Partition ID</th>
+<th class="tableblock halign-left valign-top">Entity type</th>
+<th class="tableblock halign-left valign-top">Partition boundaries</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Company</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[N/A, N/A[</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Employee</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[1, 1000[</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Employee</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[1000, 2000[</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Employee</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[2000, 3000[</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Employee</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[3000, 4000[</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Employee</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[4000, N/A[</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_threads_2">2.3.2. Threads</h4>
+<div class="paragraph">
+<p>The maximum number of threads used by the job execution is defined through
+method <code>maxThreads()</code>. Within the N threads given, there’s 1 thread reserved for
+the core, so only N – 1 threads are available for different partitions. The
+default number is 10, which correspond to the default max number of threads in
+JBeret, the WildFly batch runtime. However, you can overwrite it with your own
+value.</p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer = massIndexer.maxThreads( 5 );</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that the batch runtime cannot guarantee the requested number of threads are
+available, it will use as it can up to the requested maximum. (JSR352 v1.0 Final
+Release, page 34)</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_benefits">2.3.3. Benefits</h4>
+<div class="paragraph">
+<p>This approach is aligned with DB caches and hard drive page reading and it only
+requires ids to be comparable i.e. they do not need to honor mod nor any other
+mathematical function, e.g. mod, hash, which are more likely to be more CPU
+intensive to the DB.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_inconvenient">2.3.4. Inconvenient</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Defining partitions is complicated to understand.</p>
+</li>
+<li>
+<p>DB iteration reading is 2 times. 1 iteration for calculating the dividers and
+1 for the Lucene document production (1 / N per partition).</p>
+</li>
+<li>
+<p>Giving the partition plan to a large amount of partitions is slow.</p>
+</li>
+<li>
+<p>Hashing	Not required for PK with primitive types and String. May be required
+for composite PK.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_checkpoint_2">2.4. Checkpoint</h3>
+<div class="paragraph">
+<p>Mass indexer supports checkpoint algorithm. Assume that N is the value of
+checkpoint frequency, then a partition will reach at checkpoint every N items
+processed inside the partition. You can overwrite it to adapt your business
+requirement. By default, it is set to 3.</p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer = massIndexer.checkpointFreq( 1000 );</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Checkpoint a partition-scope algorithm, which means each partition has its own
+checkpoint counter and it is not shared with other partitions.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_java_se">2.5. Java SE</h3>
+<div class="paragraph">
+<p>The major configuration has no difference for Java SE and Java EE. Only 2
+additional configurations will be found in Java SE. They’re entity manager
+factory and job operator. In Java SE, the entity manager factory should be
+manually assigned by the user. The same for job operator.</p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-JAVA" data-lang="JAVA">massIndexer.entityManagerFactory( emf );
+massIndexer.jobOperator( myJobOperator );</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>In Java SE, the method BatchRuntime#getJobOperator should only be called once,
+which ensures that all the classes are using the same operator to coordinate
+different job.</p>
+</div>
+<div class="sect3">
+<h4 id="_test">2.5.1. Test</h4>
+<div class="paragraph">
+<p>There’re currently 3 groups of tests in the project, for Java SE, Java EE and
+performance. Java SE tests cover the unit tests and integration tests for the
+core module. They validate the mass indexer property configuration, the
+partition plan, DB access, integrity of indexation and the restartability of the
+ job. The Java EE test validate the integrity of indexation and the
+ restartability of the job. Performance test compares the performance between
+ the existing mass indexer and the new mass indexer.</p>
+</div>
+<table class="tableblock frame-topbot grid-all" style="width: 60%;">
+<caption class="title">Table 2. Tests location</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Test</th>
+<th class="tableblock halign-left valign-top">Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Java SE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>core</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Java EE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>integrationtest/wildfly</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Performance</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>integrationtest/wildfly</code> (will be changed soon)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_todo">2.6. TODO</h3>
+<div class="paragraph">
+<p>There’re still a lot of things to take care to really make this project
+operational. Here’re some ideas:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Transaction timeout. Currently we don’t have the issue of TX, but face to a
+large dataset, it might cause problem. And I don’t know how to handle it. We
+need to find out how to let people configure their timeout via the mass
+indexer (builder).</p>
+</li>
+<li>
+<p>Performance. The performance shows that the new mass indexer is not more
+efficient than the existing one. But I think it can probably become faster.</p>
+</li>
+<li>
+<p>The project is not part of the WildFly as a module. This should be done before
+the end.</p>
+</li>
+<li>
+<p>The new mass indexer is not able to handle entity types with composite PK.</p>
+</li>
+<li>
+<p>JPQL</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2016-08-06 10:48:09 CEST
+Last updated 2016-08-15 23:25:07 CEST
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/github.min.css">
