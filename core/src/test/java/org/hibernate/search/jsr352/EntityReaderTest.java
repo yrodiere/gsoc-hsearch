@@ -15,7 +15,7 @@ import javax.persistence.PersistenceUnitUtil;
 import org.hibernate.ScrollableResults;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.entity.Company;
-import org.hibernate.search.jsr352.internal.steps.lucene.ItemReader;
+import org.hibernate.search.jsr352.internal.steps.lucene.EntityReader;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,7 +32,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(ContextHelper.class)
-public class ItemReaderTest {
+public class EntityReaderTest {
 
 	private final Company[] COMPANIES = new Company[]{
 			new Company( "Red Hat" ),
@@ -49,7 +49,7 @@ public class ItemReaderTest {
 	private PersistenceUnitUtil puUtil;
 
 	@InjectMocks
-	private ItemReader itemReader;
+	private EntityReader entityReader;
 
 	@Before
 	public void setUp() {
@@ -70,10 +70,10 @@ public class ItemReaderTest {
 	public void testReadItem() throws Exception {
 
 		for ( int i = 0; i < COMPANIES.length; i++ ) {
-			Company realCompany = (Company) itemReader.readItem();
+			Company realCompany = (Company) entityReader.readItem();
 			assertEquals( COMPANIES[i], realCompany );
 		}
-		Object lastItem = itemReader.readItem();
+		Object lastItem = entityReader.readItem();
 		assertNull( lastItem );
 	}
 }

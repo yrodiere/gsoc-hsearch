@@ -51,9 +51,9 @@ import org.jboss.logging.Logger;
  * @author Mincong Huang
  */
 @Named
-public class ItemReader extends AbstractItemReader {
+public class EntityReader extends AbstractItemReader {
 
-	private static final Logger LOGGER = Logger.getLogger( ItemReader.class );
+	private static final Logger LOGGER = Logger.getLogger( EntityReader.class );
 
 	@Inject
 	private JobContext jobContext;
@@ -95,7 +95,7 @@ public class ItemReader extends AbstractItemReader {
 	private ScrollableResults scroll;
 	private SessionFactory sessionFactory;
 
-	public ItemReader() {
+	public EntityReader() {
 
 	}
 

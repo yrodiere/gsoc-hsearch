@@ -40,9 +40,9 @@ import org.jboss.logging.Logger;
  * @author Mincong Huang
  */
 @Named
-public class ItemWriter extends AbstractItemWriter {
+public class LuceneDocWriter extends AbstractItemWriter {
 
-	private static final Logger LOGGER = Logger.getLogger( ItemWriter.class );
+	private static final Logger LOGGER = Logger.getLogger( LuceneDocWriter.class );
 	private static final boolean FORCE_ASYNC = true;
 	private final JobContext jobContext;
 	private final StepContext stepContext;
@@ -62,7 +62,7 @@ public class ItemWriter extends AbstractItemWriter {
 	private EntityIndexBinding entityIndexBinding;
 
 	@Inject
-	public ItemWriter(JobContext jobContext, StepContext stepContext) {
+	public LuceneDocWriter(JobContext jobContext, StepContext stepContext) {
 		this.jobContext = jobContext;
 		this.stepContext = stepContext;
 	}

@@ -28,7 +28,7 @@
 
     <step id="produceLuceneDoc" next="afterChunk">
         <chunk checkpoint-policy="custom">
-            <reader ref="itemReader">
+            <reader ref="entityReader">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
                     <property name="partitionID" value="#{partitionPlan['partitionID']}" />
@@ -38,13 +38,13 @@
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
                 </properties>
             </reader>
-            <processor ref="itemProcessor">
+            <processor ref="luceneDocProducer">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
                     <property name="isJavaSE" value="#{jobParameters['isJavaSE']}?:false;" />
                 </properties>
             </processor>
-            <writer ref="itemWriter">
+            <writer ref="luceneDocWriter">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
                     <property name="isJavaSE" value="#{jobParameters['isJavaSE']}?:false;" />

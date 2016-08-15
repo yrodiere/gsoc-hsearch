@@ -9,6 +9,7 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 import java.io.Serializable;
 
 import javax.batch.api.BatchProperty;
+import javax.batch.api.chunk.ItemProcessor;
 import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
@@ -40,9 +41,9 @@ import org.jboss.logging.Logger;
  * @author Mincong Huang
  */
 @Named
-public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
+public class LuceneDocProducer implements ItemProcessor {
 
-	private static final Logger LOGGER = Logger.getLogger( ItemProcessor.class );
+	private static final Logger LOGGER = Logger.getLogger( LuceneDocProducer.class );
 	private final JobContext jobContext;
 	private final StepContext stepContext;
 
@@ -65,7 +66,7 @@ public class ItemProcessor implements javax.batch.api.chunk.ItemProcessor {
 	private Class<?> entityClazz;
 
 	@Inject
-	public ItemProcessor(JobContext jobContext, StepContext stepContext) {
+	public LuceneDocProducer(JobContext jobContext, StepContext stepContext) {
 		this.jobContext = jobContext;
 		this.stepContext = stepContext;
 	}
