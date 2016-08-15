@@ -23,8 +23,8 @@ import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.entity.Company;
 import org.hibernate.search.jsr352.entity.Person;
-import org.jboss.byteman.contrib.bmunit.BMScript;
-import org.jboss.byteman.contrib.bmunit.BMUnitConfig;
+import org.jboss.byteman.contrib.bmunit.BMRule;
+import org.jboss.byteman.contrib.bmunit.BMRules;
 import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.Before;
@@ -35,8 +35,23 @@ import org.junit.runner.RunWith;
  * @author Mincong Huang
  */
 @RunWith(org.jboss.byteman.contrib.bmunit.BMUnitRunner.class)
-@BMUnitConfig(loadDirectory = "target/test-classes")
-@BMScript(value = "JobInterruptor.btm")
+@BMRules(rules = {
+		@BMRule(
+				name = "Create count-down before the step partitioning",
+				targetClass = "org.hibernate.search.jsr352.internal.steps.lucene.PartitionMapper",
+				targetMethod = "mapPartitions",
+				targetLocation = "AT EXIT",
+				action = "createCountDown(\"beforeRestart\", 100)"
+		),
+		@BMRule(
+				name = "Count down for each item read, interrupt the job when counter is 0",
+				targetClass = "org.hibernate.search.jsr352.internal.steps.lucene.EntityReader",
+				targetMethod = "readItem",
+				targetLocation = "AT ENTRY",
+				condition = "countDown(\"beforeRestart\")",
+				action = "throw new java.lang.InterruptedException(\"Job is interrupted by Byteman.\")"
+		)
+})
 public class RestartChunkIT {
 
 	private static final Logger LOGGER = Logger.getLogger( RestartChunkIT.class );
@@ -96,7 +111,7 @@ public class RestartChunkIT {
 		// job will be stopped by the byteman
 		for ( StepExecution stepExec : jobOperator.getStepExecutions( execId1 ) ) {
 			if ( stepExec.getStepName().equals( "produceLuceneDoc" ) ) {
-				assertEquals( stepExec.getBatchStatus(), BatchStatus.FAILED );
+				assertEquals( BatchStatus.FAILED, stepExec.getBatchStatus() );
 			}
 		}
 
@@ -105,7 +120,7 @@ public class RestartChunkIT {
 		JobExecution jobExec2 = jobOperator.getJobExecution( execId2 );
 		jobExec2 = keepTestAlive( jobExec2 );
 		for ( StepExecution stepExec : jobOperator.getStepExecutions( execId2 ) ) {
-			assertEquals( stepExec.getBatchStatus(), BatchStatus.COMPLETED );
+			assertEquals( BatchStatus.COMPLETED, stepExec.getBatchStatus() );
 		}
 
 		// search again

@@ -182,7 +182,6 @@
                 <directory>src/test/resources</directory>
                 <includes>
                     <include>META-INF/persistence.xml</include>
-                    <include>JobInterruptor.btm</include>
                 </includes>
             </testResource>
         </testResources>
