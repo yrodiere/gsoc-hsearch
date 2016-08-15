@@ -1,5 +1,5 @@
-[[massindexer352]]
-== Using a MassIndexer under JSR352
+[[user-guide]]
+== User Guide
 
 
 Hibernate Seach’s new MassIndexer uses the Batch approach introduced by JSR352.
