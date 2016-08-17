@@ -22,7 +22,6 @@ import javax.persistence.PersistenceContext;
 import org.hibernate.CacheMode;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
-import org.hibernate.search.jsr352.test.entity.Address;
 import org.hibernate.search.jsr352.test.entity.Company;
 import org.hibernate.search.jsr352.test.entity.CompanyManager;
 import org.hibernate.search.jsr352.test.entity.Person;
@@ -69,13 +68,11 @@ public class PerformanceIT {
 	@Deployment
 	public static WebArchive createDeployment() {
 		WebArchive war = ShrinkWrap.create( WebArchive.class )
-//				.addAsManifestResource( "META-INF/MANIFEST.MF", "/MANIFEST.MF" )
-//				.addAsResource( "META-INF/batch-jobs/mass-index.xml" )
 				.addAsWebInfResource( "jboss-deployment-structure.xml", "/jboss-deployment-structure.xml" )
-				.addAsResource( "META-INF/persistence.xml", "META-INF/persistence.xml" )
-//				.addAsResource( "META-INF/batch-jobs/mass-index.xml" )
+				.addAsResource( "META-INF/persistence.xml" )
+				.addAsResource( "META-INF/batch-jobs/mass-index.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" )
-				.addPackage( Address.class.getPackage() );
+				.addPackage( Company.class.getPackage() );
 		return war;
 	}
 
