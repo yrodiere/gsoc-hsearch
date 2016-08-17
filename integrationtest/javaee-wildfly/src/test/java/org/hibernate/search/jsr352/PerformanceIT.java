@@ -53,8 +53,10 @@ public class PerformanceIT {
 	private static final int JOB_MAX_THREADS = 10;
 	private static final int JOB_ROWS_PER_PARTITION = 20 * 1000;
 	private static final int JOB_ITEM_COUNT = 500;
-	private static final long DB_COMP_ROWS = 100 * 1000;
-	private static final long DB_PERS_ROWS = 1000 * 1000;
+//	private static final long DB_COMP_ROWS = 100 * 1000;
+//	private static final long DB_PERS_ROWS = 1000 * 1000;
+	private static final long DB_COMP_ROWS = 10 * 1000;
+	private static final long DB_PERS_ROWS = 10 * 1000;
 
 	@PersistenceContext(unitName = "h2")
 	private EntityManager em;
@@ -68,13 +70,12 @@ public class PerformanceIT {
 	@Deployment
 	public static WebArchive createDeployment() {
 		WebArchive war = ShrinkWrap.create( WebArchive.class )
+				.addAsManifestResource( "META-INF/MANIFEST.MF" )
 				.addAsResource( "META-INF/persistence.xml" )
 				.addAsResource( "META-INF/batch-jobs/mass-index.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" )
-				.addClasses( Serializable.class, Date.class )
-				.addPackages( true, "org.hibernate.search.annotations" )
-				.addPackages( true, "org.hibernate.search.jsr352" )
-				.addPackages( true, "javax.persistence" );
+				.addClasses( Serializable.class, Date.class );
+//				.addPackages( true, "org.hibernate.search.jsr352" );
 		return war;
 	}
 
