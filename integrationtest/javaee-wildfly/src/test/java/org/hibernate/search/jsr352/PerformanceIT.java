@@ -70,12 +70,14 @@ public class PerformanceIT {
 	@Deployment
 	public static WebArchive createDeployment() {
 		WebArchive war = ShrinkWrap.create( WebArchive.class )
-				.addAsManifestResource( "META-INF/MANIFEST.MF" )
+//				.addAsResource( "META-INF/MANIFEST.MF" )
+//				.add( manifest( injectVariables( dependencies ) ), "META-INF/MANIFEST.MF" )
+				.addAsManifestResource("Dependencies: org.hibernate.search.jsr352:${hibernate.search.version}", "MANIFEST.MF")
 				.addAsResource( "META-INF/persistence.xml" )
 				.addAsResource( "META-INF/batch-jobs/mass-index.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" )
-				.addClasses( Serializable.class, Date.class );
-//				.addPackages( true, "org.hibernate.search.jsr352" );
+				.addClasses( Serializable.class, Date.class )
+				.addPackages( true, "org.hibernate.search.jsr352.test.entity" );
 		return war;
 	}
 

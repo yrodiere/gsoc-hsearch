@@ -19,6 +19,7 @@
     <name>GSoC JSR352 - Integration Tests in WildFly</name>
 
     <properties>
+        <hibernate.search.version>${project.version}</hibernate.search.version>
         <path.tools_jar>${java.home}/../lib/tools.jar</path.tools_jar>
         <byteman.version>3.0.6</byteman.version>
         <byteman.agent.path>${org.jboss.byteman:byteman:jar}</byteman.agent.path>
