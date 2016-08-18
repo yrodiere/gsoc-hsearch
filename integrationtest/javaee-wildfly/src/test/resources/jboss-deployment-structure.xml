@@ -8,7 +8,7 @@
 <jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.1">
     <deployment>
         <dependencies>
-            <module name="org.hibernate.search.jsr352" services="export" export="true" slot="${project.version}"/>
+            <module name="org.hibernate.search.jsr352" services="export" export="true" slot="${project.version}" meta-inf="import"/>
         </dependencies>
     </deployment>
 </jboss-deployment-structure>
