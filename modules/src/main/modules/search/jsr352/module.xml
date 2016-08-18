@@ -10,8 +10,16 @@
         <resource-root path="hsearch-jsr352-core-${hibernate.search.version}.jar" />
     </resources>
     <dependencies>
+        <!--
+            TODO some of these dependencies might not be necessary, because WF
+            has implicit module dependencies for deployments, see:
+            https://docs.jboss.org/author/display/WFLY10/Implicit+module+dependencies+for+deployments
+         -->
+        <module name="javaee.api" />
         <module name="javax.batch.api" />
+        <module name="javax.inject.api" />
         <module name="javax.persistence.api" />
+        <module name="org.hibernate" />
         <module name="org.hibernate.search.engine" />
         <module name="org.hibernate.search.orm" />
         <module name="org.jboss.logging" />

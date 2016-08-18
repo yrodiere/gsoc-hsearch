@@ -51,8 +51,8 @@ public class PerformanceIT {
 	private static final int JOB_MAX_THREADS = 10;
 	private static final int JOB_ROWS_PER_PARTITION = 20 * 1000;
 	private static final int JOB_ITEM_COUNT = 500;
-//	private static final long DB_COMP_ROWS = 100 * 1000;
-//	private static final long DB_PERS_ROWS = 1000 * 1000;
+	// private static final long DB_COMP_ROWS = 100 * 1000;
+	// private static final long DB_PERS_ROWS = 1000 * 1000;
 	private static final long DB_COMP_ROWS = 10 * 1000;
 	private static final long DB_PERS_ROWS = 10 * 1000;
 
@@ -67,10 +67,9 @@ public class PerformanceIT {
 
 	@Deployment
 	public static WebArchive createDeployment() {
-		WebArchive war = ShrinkWrap.create( WebArchive.class )
+		WebArchive war = ShrinkWrap.create( WebArchive.class, PerformanceIT.class.getSimpleName() + ".war" )
 				.addAsWebInfResource( "jboss-deployment-structure.xml", "/jboss-deployment-structure.xml" )
 				.addAsResource( "META-INF/persistence.xml" )
-				.addAsResource( "META-INF/batch-jobs/mass-index.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" )
 				.addPackage( Company.class.getPackage() );
 		return war;
