@@ -96,7 +96,6 @@
                 <includes>
                     <include>**/persistence.xml</include>
                     <include>**/arquillian.xml</include>
-                    <include>**/MANIFEST.MF</include>
                 </includes>
             </testResource>
         </testResources>
