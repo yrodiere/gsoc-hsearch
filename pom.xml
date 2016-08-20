@@ -32,7 +32,6 @@
         <module>build-config</module>
         <module>core</module>
         <module>documentation</module>
-        <module>modules</module>
         <module>integrationtest/wildfly</module>
     </modules>
 
