@@ -19,9 +19,9 @@
     <description>New implementation of mass-indexer using JSR 352</description>
 
     <properties>
+        <org.jboss.byteman>3.0.6</org.jboss.byteman>
         <org.mockito>1.10.19</org.mockito>
         <org.powermock>1.6.4</org.powermock>
-        <byteman.version>3.0.6</byteman.version>
     </properties>
 
     <dependencies>
@@ -78,14 +78,13 @@
             <version>${org.powermock}</version>
             <scope>test</scope>
         </dependency>
-        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-        <!-- below dependencies are moved from Java SE integration test -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
             <version>${org.hibernate}</version>
             <scope>test</scope>
         </dependency>
+
         <!-- JBeret minimal application dependencies -->
         <!-- https://jberet.gitbooks.io/jberet-user-guide/content/set_up_jberet/#minimal-application-dependencies -->
         <dependency>
@@ -124,6 +123,7 @@
             <version>19.0</version>
             <scope>test</scope>
         </dependency>
+
         <!-- Additional dependencies for Java SE batch applications -->
         <!-- https://jberet.gitbooks.io/jberet-user-guide/content/set_up_jberet/#additional-dependencies-for-java-se-batch-applications -->
         <dependency>
@@ -138,38 +138,37 @@
             <version>2.3.4.Final</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>${com.h2database}</version>
             <scope>test</scope>
         </dependency>
-        <!-- above dependencies are moved from Java SE integration test -->
-        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <!-- bytemen -->
         <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman</artifactId>
+            <version>${org.jboss.byteman}</version>
             <scope>test</scope>
-            <version>${byteman.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-submit</artifactId>
+            <version>${org.jboss.byteman}</version>
             <scope>test</scope>
-            <version>${byteman.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-install</artifactId>
+            <version>${org.jboss.byteman}</version>
             <scope>test</scope>
-            <version>${byteman.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-bmunit</artifactId>
+            <version>${org.jboss.byteman}</version>
             <scope>test</scope>
-            <version>${byteman.version}</version>
         </dependency>
     </dependencies>
 

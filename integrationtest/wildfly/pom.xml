@@ -81,8 +81,8 @@
         <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman</artifactId>
-            <scope>test</scope>
             <version>${byteman.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
