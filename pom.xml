@@ -35,15 +35,6 @@
         <module>integrationtest/wildfly</module>
     </modules>
 
-    <profiles>
-        <profile>
-            <id>perf</id>
-            <properties>
-                <org.hibernate.search.enable_performance_tests>true</org.hibernate.search.enable_performance_tests>
-            </properties>
-        </profile>
-    </profiles>
-
     <dependencyManagement>
         <dependencies>
             <!-- This project's modules -->
