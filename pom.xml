@@ -33,7 +33,7 @@
         <module>core</module>
         <module>documentation</module>
         <module>modules</module>
-        <module>integrationtest/javaee-wildfly</module>
+        <module>integrationtest/wildfly</module>
     </modules>
 
     <profiles>

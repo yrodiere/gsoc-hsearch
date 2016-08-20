@@ -15,7 +15,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>hsearch-jsr352-integrationtest-wildfly</artifactId>
+    <artifactId>hsearch-jsr352-test-wildfly</artifactId>
     <name>GSoC JSR352 - Integration Tests in WildFly</name>
 
     <properties>
