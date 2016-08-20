@@ -16,16 +16,16 @@
     <description>New implementation mass-indexer using JSR 352</description>
 
     <properties>
+        <com.h2database>1.4.192</com.h2database>
+        <org.hibernate>5.1.0.Final</org.hibernate>
+        <com.puppycrawl.tools>6.16</com.puppycrawl.tools>
+        <org.jboss.shrinkwrap>2.2.2</org.jboss.shrinkwrap>
         <org.jboss.arquillian.version>1.1.1.Final</org.jboss.arquillian.version>
+        <org.jberet>1.3.0.Beta2</org.jberet>
         <org.wildfly>10.0.0.Final</org.wildfly>
         <org.wildfly.arquillian>8.2.1.Final</org.wildfly.arquillian>
-        <org.jboss.shrinkwrap>2.2.2</org.jboss.shrinkwrap>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <org.jberet>1.3.0.Beta2</org.jberet>
-        <com.h2database>1.4.192</com.h2database>
-        <puppycrawl.checkstyle.version>6.16</puppycrawl.checkstyle.version>
-        <org.hibernate>5.1.0.Final</org.hibernate>
     </properties>
 
     <modules>
@@ -119,7 +119,6 @@
                 <artifactId>wildfly-arquillian-container-managed</artifactId>
                 <version>2.0.0.Final</version>
             </dependency>
-
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>

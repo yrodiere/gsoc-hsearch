@@ -27,7 +27,17 @@
     <dependencies>
         <dependency>
             <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${org.hibernate}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-orm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>3.3.0.Final</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.spec.javax.batch</groupId>
@@ -76,11 +86,6 @@
             <version>${org.hibernate}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>${org.hibernate}</version>
-        </dependency>
         <!-- JBeret minimal application dependencies -->
         <!-- https://jberet.gitbooks.io/jberet-user-guide/content/set_up_jberet/#minimal-application-dependencies -->
         <dependency>
@@ -100,11 +105,6 @@
             <artifactId>jboss-marshalling</artifactId>
             <version>1.4.11.Final</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-            <version>3.3.0.Final</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.weld</groupId>
@@ -180,9 +180,6 @@
             <testResource>
                 <filtering>true</filtering>
                 <directory>src/test/resources</directory>
-                <includes>
-                    <include>META-INF/persistence.xml</include>
-                </includes>
             </testResource>
         </testResources>
         <plugins>
