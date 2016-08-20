@@ -11,15 +11,14 @@ import javax.batch.api.BatchProperty;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
 import org.hibernate.Session;
-import org.hibernate.search.backend.spi.BatchBackend;
+import org.hibernate.SessionFactory;
+import org.hibernate.search.FullTextSession;
+import org.hibernate.search.Search;
 import org.hibernate.search.hcore.util.impl.ContextHelper;
-import org.hibernate.search.jpa.FullTextEntityManager;
-import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
@@ -46,8 +45,8 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
 
-	private EntityManager em;
-	private FullTextEntityManager ftem;
+	private Session session;
+	private FullTextSession fts;
 
 	@Inject
 	public BeforeChunkBatchlet(JobContext jobContext) {
@@ -59,20 +58,14 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 
 		if ( this.purgeAtStart ) {
 
-			em = emf.createEntityManager();
-			ftem = Search.getFullTextEntityManager( em );
-			Session session = em.unwrap( Session.class );
-			final BatchBackend backend = ContextHelper
-					.getSearchintegrator( session )
-					.makeBatchBackend( null );
+			session = emf.unwrap( SessionFactory.class ).openSession();
+			fts = Search.getFullTextSession( session );
 			JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-			jobData.getEntityClazzSet().forEach( clz -> ftem.purgeAll( clz ) );
+			jobData.getEntityClazzSet().forEach( clz -> fts.purgeAll( clz ) );
 
 			if ( this.optimizeAfterPurge ) {
 				LOGGER.info( "optimizing all entities ..." );
-				// TODO issue #113
-				// I don't know what optimize is doing and how to modify it
-				backend.optimize( jobData.getEntityClazzSet() );
+				ContextHelper.getSearchintegrator( session ).optimize();
 			}
 		}
 		return null;
@@ -81,7 +74,7 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 	@Override
 	public void stop() throws Exception {
 		try {
-			em.close();
+			session.close();
 		}
 		catch ( Exception e ) {
 			LOGGER.error( e );
