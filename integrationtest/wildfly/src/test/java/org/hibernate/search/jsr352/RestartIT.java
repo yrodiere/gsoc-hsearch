@@ -8,9 +8,7 @@ package org.hibernate.search.jsr352;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.batch.operations.JobOperator;
@@ -29,7 +27,6 @@ import org.jboss.logging.Logger;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -41,7 +38,6 @@ import org.junit.runner.RunWith;
  *
  * @author Mincong Huang
  */
-@Ignore("No need to run another restart test under Java EE")
 @RunWith(Arquillian.class)
 public class RestartIT {
 
@@ -71,7 +67,6 @@ public class RestartIT {
 				.addAsResource( "META-INF/persistence.xml" )
 				.addAsResource( "META-INF/batch-jobs/mass-index.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" )
-				.addClasses( Serializable.class, Date.class )
 				.addPackages( true, "org.hibernate.search.annotations" )
 				.addPackages( true, "org.hibernate.search.jsr352" )
 				.addPackages( true, "javax.persistence" );

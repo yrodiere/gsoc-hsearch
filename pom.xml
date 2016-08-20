@@ -33,6 +33,7 @@
         <module>core</module>
         <module>documentation</module>
         <module>integrationtest/wildfly</module>
+        <module>integrationtest/performance</module>
     </modules>
 
     <dependencyManagement>

@@ -7,7 +7,7 @@ DO createCountDown("beforeRestart", 3000)
 ENDRULE
 
 RULE Count down for each item read, interrupt the job when counter is 0
-CLASS org.hibernate.search.jsr352.internal.steps.lucene.ItemReader
+CLASS org.hibernate.search.jsr352.internal.steps.lucene.EntityReader
 METHOD readItem
 AT ENTRY
 IF countDown("beforeRestart")
