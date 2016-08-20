@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.hibernate</groupId>
     <artifactId>hsearch-jsr352-parent</artifactId>
-    <version>5.5.4.Final</version>
+    <version>1.0</version>
     <packaging>pom</packaging>
     <name>GSoC JSR352 - Aggregator</name>
     <description>New implementation mass-indexer using JSR 352</description>
@@ -22,6 +22,7 @@
         <org.jboss.shrinkwrap>2.2.2</org.jboss.shrinkwrap>
         <org.jboss.arquillian.version>1.1.1.Final</org.jboss.arquillian.version>
         <org.jberet>1.3.0.Beta2</org.jberet>
+        <org.hibernate.search>5.5.4.Final</org.hibernate.search>
         <org.wildfly>10.0.0.Final</org.wildfly>
         <org.wildfly.arquillian>8.2.1.Final</org.wildfly.arquillian>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
