@@ -36,6 +36,11 @@
         <module>integrationtest/performance</module>
     </modules>
 
+    <issueManagement>
+        <system>GitHub Issue</system>
+        <url>https://github.com/mincong-h/gsoc-hsearch/issues</url>
+    </issueManagement>
+
     <licenses>
         <license>
             <name>GNU Lesser General Public License</name>
