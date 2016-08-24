@@ -27,6 +27,16 @@
                     -javaagent:${byteman.agent.path}=script:${byteman.script.path}
                     -Djboss.modules.system.pkgs=org.jboss.byteman
                 </property>
+                <!-- To debug the Arquillian managed application server: -->
+                <!-- <property name="javaVmArguments">
+                    -javaagent:${byteman.agent.path}=script:${byteman.script.path}
+                    -Djboss.modules.system.pkgs=org.jboss.byteman
+                    -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y 
+                    -Xmx512m
+                    -Dorg.jboss.remoting-jmx.timeout=300
+                    -Djava.net.preferIPv4Stack=true
+                    -Djgroups.bind_addr=127.0.0.1
+                </property> -->
             </configuration>
         </container>
     </group>
