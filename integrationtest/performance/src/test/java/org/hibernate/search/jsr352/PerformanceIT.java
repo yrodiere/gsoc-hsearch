@@ -66,14 +66,10 @@ public class PerformanceIT {
 	@Deployment
 	public static WebArchive createDeployment() {
 		WebArchive war = ShrinkWrap.create( WebArchive.class, PerformanceIT.class.getSimpleName() + ".war" )
-				.addAsWebInfResource( "jboss-deployment-structure.xml" )
 				.addAsResource( "META-INF/persistence.xml" )
-//				.addAsResource( "META-INF/batch-jobs/should-not-be-used.xml" )
+				.addAsWebInfResource( "jboss-deployment-structure.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" )
-				.addPackage( Company.class.getPackage() )
-				.addPackages( true, "org.hibernate.search.annotations" )
-				.addPackages( true, "org.hibernate.search.jsr352" )
-				.addPackages( true, "javax.persistence" );
+				.addPackage( Company.class.getPackage() );
 		return war;
 	}
 

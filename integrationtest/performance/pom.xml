@@ -149,6 +149,16 @@
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.directory}/node1</outputDirectory>
                                 </artifactItem>
+                                <!-- Provide the current project to WildFly as a new module -->
+                                <artifactItem>
+                                    <groupId>org.hibernate</groupId>
+                                    <artifactId>hsearch-jsr352-modules</artifactId>
+                                    <version>${project.version}</version>
+                                    <classifier>wildfly-10-dist</classifier>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/node1/wildfly-${org.wildfly}/modules</outputDirectory>
+                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>

@@ -65,11 +65,9 @@ public class RestartIT {
 	public static WebArchive createDeployment() {
 		WebArchive war = ShrinkWrap.create( WebArchive.class )
 				.addAsResource( "META-INF/persistence.xml" )
-				.addAsResource( "META-INF/batch-jobs/mass-index.xml" )
+				.addAsWebInfResource( "jboss-deployment-structure.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" )
-				.addPackages( true, "org.hibernate.search.annotations" )
-				.addPackages( true, "org.hibernate.search.jsr352" )
-				.addPackages( true, "javax.persistence" );
+				.addPackage( Company.class.getPackage() );
 		return war;
 	}
 
