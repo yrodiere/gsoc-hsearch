@@ -50,19 +50,19 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	@Inject
 	@BatchProperty
-	private boolean cacheable;
+	private String cacheable;
 
 	@Inject
 	@BatchProperty
-	private boolean isJavaSE;
+	private String fetchSize;
 
 	@Inject
 	@BatchProperty
-	private int fetchSize;
+	private String isJavaSE;
 
 	@Inject
 	@BatchProperty
-	private int rowsPerPartition;
+	private String rowsPerPartition;
 
 	/**
 	 * The max number of threads used by the job
@@ -84,7 +84,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		ScrollableResults scroll = null;
 
 		try {
-			if ( isJavaSE ) {
+			if ( Boolean.parseBoolean( isJavaSE ) ) {
 				emf = JobSEEnvironment.getEntityManagerFactory();
 			}
 			sessionFactory = emf.unwrap( SessionFactory.class );
@@ -100,19 +100,21 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				scroll = ss.createCriteria( clazz )
 						.addOrder( Order.asc( fieldID ) )
 						.setProjection( Projections.id() )
-						.setCacheable( cacheable )
-						.setFetchSize( fetchSize )
+						.setCacheable( Boolean.parseBoolean( cacheable ) )
+						.setFetchSize( Integer.parseInt( fetchSize ) )
 						.setReadOnly( true )
 						.scroll( ScrollMode.FORWARD_ONLY );
 				Object lowerID = null;
 				Object upperID = null;
-				while ( scroll.scroll( rowsPerPartition ) ) {
+				while ( scroll.scroll( Integer.parseInt( rowsPerPartition ) ) ) {
 					lowerID = upperID;
 					upperID = scroll.get( 0 );
 					LOGGER.infof( "lowerID=%s", lowerID );
 					LOGGER.infof( "upperID=%s", upperID );
 					partitionUnits.add( new PartitionUnit( clazz,
-							rowsPerPartition, lowerID, upperID ) );
+							Integer.parseInt( rowsPerPartition ),
+							lowerID,
+							upperID ) );
 				}
 				// add an additional partition on the tail
 				lowerID = upperID;
@@ -120,7 +122,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				LOGGER.infof( "lowerID=%s", lowerID );
 				LOGGER.infof( "upperID=%s", upperID );
 				partitionUnits.add( new PartitionUnit( clazz,
-						rowsPerPartition, lowerID, upperID ) );
+						Integer.parseInt( rowsPerPartition ),
+						lowerID,
+						upperID ) );
 			}
 			jobData.setPartitionUnits( partitionUnits );
 

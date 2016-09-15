@@ -28,7 +28,7 @@ public class CheckpointAlgorithm extends AbstractCheckpointAlgorithm {
 
 	@Inject
 	@BatchProperty
-	private int itemCount;
+	private String itemCount;
 
 	@Inject
 	public CheckpointAlgorithm(StepContext stepContext) {
@@ -40,7 +40,7 @@ public class CheckpointAlgorithm extends AbstractCheckpointAlgorithm {
 		Metric[] metrics = stepContext.getMetrics();
 		for ( final Metric m : metrics ) {
 			if ( m.getType().equals( Metric.MetricType.READ_COUNT ) ) {
-				return m.getValue() % itemCount == 0;
+				return m.getValue() % Integer.parseInt( itemCount ) == 0;
 			}
 		}
 		throw new Exception( "Metric READ_COUNT not found" );

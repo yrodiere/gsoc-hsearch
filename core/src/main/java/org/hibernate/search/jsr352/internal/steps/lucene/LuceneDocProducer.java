@@ -37,7 +37,7 @@ import org.jboss.logging.Logger;
 /**
  * ItemProcessor receives entities coming from item reader and process then into
  * an AddLuceneWorks. Only one entity is received and processed at each time.
- * 
+ *
  * @author Mincong Huang
  */
 @Named
@@ -53,7 +53,7 @@ public class LuceneDocProducer implements ItemProcessor {
 
 	@Inject
 	@BatchProperty
-	private boolean isJavaSE;
+	private String isJavaSE;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
@@ -98,7 +98,7 @@ public class LuceneDocProducer implements ItemProcessor {
 		searchIntegrator = ContextHelper.getSearchintegrator( session );
 		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
 		docBuilder = entityIndexBinding.getDocumentBuilder();
-		if ( isJavaSE ) {
+		if ( Boolean.parseBoolean( isJavaSE ) ) {
 			emf = JobSEEnvironment.getEntityManagerFactory();
 		}
 	}

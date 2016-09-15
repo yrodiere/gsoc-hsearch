@@ -31,7 +31,7 @@ public class AfterChunkBatchlet extends AbstractBatchlet {
 
 	@Inject
 	@BatchProperty
-	private boolean optimizeAtEnd;
+	private String optimizeAtEnd;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
@@ -44,7 +44,7 @@ public class AfterChunkBatchlet extends AbstractBatchlet {
 	@Override
 	public String process() throws Exception {
 
-		if ( this.optimizeAtEnd ) {
+		if ( Boolean.parseBoolean( this.optimizeAtEnd ) ) {
 			LOGGER.info( "optimizing all entities ..." );
 			session = emf.unwrap( SessionFactory.class ).openSession();
 			ContextHelper.getSearchintegrator( session ).optimize();

@@ -63,27 +63,27 @@ public class EntityReader extends AbstractItemReader {
 
 	@Inject
 	@BatchProperty
-	private boolean cacheable;
-
-	@Inject
-	@BatchProperty
-	private boolean isJavaSE;
-
-	@Inject
-	@BatchProperty
-	private int fetchSize;
-
-	@Inject
-	@BatchProperty
-	private int maxResults;
-
-	@Inject
-	@BatchProperty
-	private int partitionID;
+	private String cacheable;
 
 	@Inject
 	@BatchProperty
 	private String entityName;
+
+	@Inject
+	@BatchProperty
+	private String fetchSize;
+
+	@Inject
+	@BatchProperty
+	private String isJavaSE;
+
+	@Inject
+	@BatchProperty
+	private String maxResults;
+
+	@Inject
+	@BatchProperty
+	private String partitionID;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
@@ -165,10 +165,10 @@ public class EntityReader extends AbstractItemReader {
 		LOGGER.debugf( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		entityClazz = jobData.getIndexedType( entityName );
-		PartitionUnit unit = jobData.getPartitionUnit( partitionID );
+		PartitionUnit unit = jobData.getPartitionUnit( Integer.parseInt( partitionID ) );
 		LOGGER.debug( unit );
 
-		if ( isJavaSE ) {
+		if ( Boolean.parseBoolean( isJavaSE ) ) {
 			emf = JobSEEnvironment.getEntityManagerFactory();
 		}
 		sessionFactory = emf.unwrap( SessionFactory.class );
@@ -178,7 +178,7 @@ public class EntityReader extends AbstractItemReader {
 
 		StepContextData stepData = null;
 		if ( checkpointID == null ) {
-			stepData = new StepContextData( partitionID, entityName );
+			stepData = new StepContextData( Integer.parseInt( partitionID ), entityName );
 			stepData.setRestarted( false );
 		}
 		else {
@@ -214,9 +214,9 @@ public class EntityReader extends AbstractItemReader {
 		}
 		return criteria.addOrder( Order.asc( idName ) )
 				.setReadOnly( true )
-				.setCacheable( cacheable )
-				.setFetchSize( fetchSize )
-				.setMaxResults( maxResults )
+				.setCacheable( Boolean.parseBoolean( cacheable ) )
+				.setFetchSize( Integer.parseInt( fetchSize ) )
+				.setMaxResults( Integer.parseInt( maxResults ) )
 				.scroll( ScrollMode.FORWARD_ONLY );
 	}
 

@@ -36,11 +36,11 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 
 	@Inject
 	@BatchProperty
-	private boolean purgeAtStart;
+	private String purgeAtStart;
 
 	@Inject
 	@BatchProperty
-	private boolean optimizeAfterPurge;
+	private String optimizeAfterPurge;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
@@ -56,14 +56,14 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 	@Override
 	public String process() throws Exception {
 
-		if ( this.purgeAtStart ) {
+		if ( Boolean.parseBoolean( this.purgeAtStart ) ) {
 
 			session = emf.unwrap( SessionFactory.class ).openSession();
 			fts = Search.getFullTextSession( session );
 			JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 			jobData.getEntityClazzSet().forEach( clz -> fts.purgeAll( clz ) );
 
-			if ( this.optimizeAfterPurge ) {
+			if ( Boolean.parseBoolean( this.optimizeAfterPurge ) ) {
 				LOGGER.info( "optimizing all entities ..." );
 				ContextHelper.getSearchintegrator( session ).optimize();
 			}

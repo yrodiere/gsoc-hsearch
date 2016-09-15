@@ -49,11 +49,11 @@ public class LuceneDocWriter extends AbstractItemWriter {
 
 	@Inject
 	@BatchProperty
-	private boolean isJavaSE;
+	private String entityName;
 
 	@Inject
 	@BatchProperty
-	private String entityName;
+	private String isJavaSE;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
@@ -95,7 +95,7 @@ public class LuceneDocWriter extends AbstractItemWriter {
 	public void open(Serializable checkpoint) throws Exception {
 
 		LOGGER.debug( "open(Seriliazable) called" );
-		if ( isJavaSE ) {
+		if ( Boolean.parseBoolean( isJavaSE ) ) {
 			emf = JobSEEnvironment.getEntityManagerFactory();
 		}
 		em = emf.createEntityManager();
