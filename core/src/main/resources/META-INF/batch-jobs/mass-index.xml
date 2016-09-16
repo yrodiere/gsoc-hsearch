@@ -59,7 +59,6 @@
         <partition>
             <mapper ref="partitionMapper">
                 <properties>
-                    <property name="cacheable" value="#{jobParameters['cacheable']}?:false;" />
                     <property name="fetchSize" value="#{jobParameters['fetchSize']}?:200000;" />
                     <property name="isJavaSE" value="#{jobParameters['isJavaSE']}?:false;" />
                     <property name="maxThreads" value="#{jobParameters['threads']}?:8;" />

@@ -50,10 +50,6 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	@Inject
 	@BatchProperty
-	private String cacheable;
-
-	@Inject
-	@BatchProperty
 	private String fetchSize;
 
 	@Inject
@@ -100,7 +96,6 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				scroll = ss.createCriteria( clazz )
 						.addOrder( Order.asc( fieldID ) )
 						.setProjection( Projections.id() )
-						.setCacheable( Boolean.parseBoolean( cacheable ) )
 						.setFetchSize( Integer.parseInt( fetchSize ) )
 						.setReadOnly( true )
 						.scroll( ScrollMode.FORWARD_ONLY );

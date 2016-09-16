@@ -176,7 +176,9 @@ public class MassIndexer {
 
 	/**
 	 * Whether the Hibernate queries are cacheable. This setting will be applied
-	 * to all the queries. The default value is false.
+	 * to {@link org.hibernate.search.jsr352.internal.steps.lucene.EntityReader}.
+	 * The default value is false. Set it to true when reading a complex graph
+	 * with relations.
 	 *
 	 * @param cacheable
 	 * @return
