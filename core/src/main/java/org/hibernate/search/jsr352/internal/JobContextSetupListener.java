@@ -20,6 +20,7 @@ import javax.persistence.PersistenceUnit;
 
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
+import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
 import org.jboss.logging.Logger;
 
 /**
@@ -41,6 +42,10 @@ public class JobContextSetupListener extends AbstractJobListener {
 	@Inject
 	@BatchProperty
 	private String rootEntities;
+
+	@Inject
+	@BatchProperty(name = "jobContextData")
+	private String serializedJobContextData;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
@@ -68,6 +73,7 @@ public class JobContextSetupListener extends AbstractJobListener {
 					.getSearchFactory()
 					.getIndexedTypes();
 
+			// TODO move to JobContextData directly
 			// check the root entities selected do exist
 			// in full-text entity session
 			for ( String entityName : entityNamesToIndex ) {
@@ -79,7 +85,11 @@ public class JobContextSetupListener extends AbstractJobListener {
 				}
 			}
 
-			jobContext.setTransientUserData( new JobContextData( entityClazzesToIndex ) );
+			JobContextData jobContextData = MassIndexerUtil
+					.deserializeJobContextData( serializedJobContextData );
+			LOGGER.infof( "%d criterions found.", jobContextData.getCriterions().size() );
+			jobContextData.setEntityClazzSet( entityClazzesToIndex );
+			jobContext.setTransientUserData( jobContextData );
 		}
 		finally {
 			try {

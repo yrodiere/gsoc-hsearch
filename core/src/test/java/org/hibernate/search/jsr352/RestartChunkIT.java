@@ -8,6 +8,7 @@ package org.hibernate.search.jsr352;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.batch.operations.JobOperator;
@@ -92,7 +93,7 @@ public class RestartChunkIT {
 	}
 
 	@Test
-	public void testJob() throws InterruptedException {
+	public void testJob() throws InterruptedException, IOException {
 
 		List<Company> companies = findClasses( Company.class, "name", "Google" );
 		List<Person> people = findClasses( Person.class, "firstName", "Sundar" );

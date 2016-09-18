@@ -8,6 +8,7 @@ package org.hibernate.search.jsr352;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,7 +74,7 @@ public class RestartIT {
 	}
 
 	@Test
-	public void testJob() throws InterruptedException {
+	public void testJob() throws InterruptedException, IOException {
 
 		final String google = "google";
 		final String googleCEO = "Sundar";
@@ -130,7 +131,7 @@ public class RestartIT {
 		companyManager.persist( companies );
 	}
 
-	private long createAndStartJob(JobOperator jobOperator) {
+	private long createAndStartJob(JobOperator jobOperator) throws IOException {
 		MassIndexer massIndexer = new MassIndexer()
 				.fetchSize( JOB_FETCH_SIZE )
 				.maxResults( JOB_MAX_RESULTS )

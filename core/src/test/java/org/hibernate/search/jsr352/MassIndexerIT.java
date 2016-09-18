@@ -8,6 +8,7 @@ package org.hibernate.search.jsr352;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.Query;
+import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.entity.Company;
@@ -85,7 +87,17 @@ public class MassIndexerIT {
 	}
 
 	@Test
-	public void testMassIndexer() throws InterruptedException {
+	public void testMassIndexer_usingAddRootEntities() throws InterruptedException,
+			IOException {
+
+		// purge all before start
+		// TODO Can the creation of a new EM and FTEM be avoided?
+		EntityManager em = emf.createEntityManager();
+		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
+		ftem.purgeAll( Person.class );
+		ftem.purgeAll( Company.class );
+		ftem.flushToIndexes();
+		em.close();
 
 		// searches before mass index,
 		// expected no results for each search
@@ -113,6 +125,41 @@ public class MassIndexerIT {
 		people = findClass( Person.class, "firstName", "Linus" );
 		assertEquals( 1, companies.size() );
 		assertEquals( 1, people.size() );
+	}
+
+	@Test
+	public void testMassIndexer_usingCriteria() throws InterruptedException,
+			IOException {
+
+		// purge all before start
+		// TODO Can the creation of a new EM and FTEM be avoided?
+		EntityManager em = emf.createEntityManager();
+		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
+		ftem.purgeAll( Person.class );
+		ftem.purgeAll( Company.class );
+		ftem.flushToIndexes();
+		em.close();
+
+		// searches before mass index,
+		// expected no results for each search
+		assertEquals( 0, findClass( Company.class, "name", "Google" ).size() );
+		assertEquals( 0, findClass( Company.class, "name", "Red Hat" ).size() );
+		assertEquals( 0, findClass( Company.class, "name", "Microsoft" ).size() );
+
+		JobOperator jobOperator = JobFactory.getJobOperator();
+		long executionId = new MassIndexer()
+				.addRootEntity( Company.class )
+				.addRestriction( Restrictions.in( "name", "Google", "Red Hat" ) )
+				.jobOperator( jobOperator )
+				.isJavaSE( true )
+				.entityManagerFactory( emf )
+				.start();
+		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
+		jobExecution = keepTestAlive( jobExecution );
+
+		assertEquals( 1, findClass( Company.class, "name", "Google" ).size() );
+		assertEquals( 1, findClass( Company.class, "name", "Red Hat" ).size() );
+		assertEquals( 0, findClass( Company.class, "name", "Microsoft" ).size() );
 	}
 
 	private <T> List<T> findClass(Class<T> clazz, String key, String value) {

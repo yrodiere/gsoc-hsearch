@@ -8,6 +8,7 @@ package org.hibernate.search.jsr352;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,7 +101,7 @@ public class PerformanceIT {
 	}
 
 	@Test
-	public void testDiffrentMassIndexer() throws InterruptedException {
+	public void testDiffrentMassIndexer() throws InterruptedException, IOException {
 
 		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
 
@@ -144,7 +145,7 @@ public class PerformanceIT {
 		assertEquals( 1, mincong.size() );
 	}
 
-	public void testNewMassIndexer() throws InterruptedException {
+	public void testNewMassIndexer() throws InterruptedException, IOException {
 
 		List<Company> hibernate = companyManager.findCompanyByName( "hibernate" );
 		List<Person> mincong = personManager.findPerson( "mincong" );

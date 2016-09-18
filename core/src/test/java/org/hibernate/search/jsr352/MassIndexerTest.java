@@ -9,6 +9,7 @@ package org.hibernate.search.jsr352;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -52,7 +53,7 @@ public class MassIndexerTest {
 	}
 
 	@Test
-	public void testJobParamsAll() {
+	public void testJobParamsAll() throws IOException {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
 		long executionID = new MassIndexer().isJavaSE( true )
@@ -88,7 +89,7 @@ public class MassIndexerTest {
 	}
 
 	@Test
-	public void testAddRootEntity_notNull() {
+	public void testAddRootEntity_notNull() throws IOException {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
 		long executionID = new MassIndexer().isJavaSE( true )
@@ -114,7 +115,7 @@ public class MassIndexerTest {
 	}
 
 	@Test
-	public void testAddRootEntities_notNull() {
+	public void testAddRootEntities_notNull() throws IOException {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
 		long executionID = new MassIndexer().isJavaSE( true )

@@ -41,7 +41,7 @@ import org.jboss.logging.Logger;
  * will be 6 readers and their ranges are :
  * <ul>
  * <li>partitionID = 0, entityType = Company, range = [null, null[
- * <li>partitionID = 1, entityType = Employee, range = [1, 1000[
+ * <li>partitionID = 1, entityType = Employee, range = [null, 1000[
  * <li>partitionID = 2, entityType = Employee, range = [1000, 2000[
  * <li>partitionID = 3, entityType = Employee, range = [2000, 3000[
  * <li>partitionID = 4, entityType = Employee, range = [3000, 4000[
@@ -174,7 +174,7 @@ public class EntityReader extends AbstractItemReader {
 		sessionFactory = emf.unwrap( SessionFactory.class );
 		ss = sessionFactory.openStatelessSession();
 		session = sessionFactory.openSession();
-		scroll = buildScroll( ss, unit, checkpointID );
+		scroll = buildScroll( ss, unit, checkpointID, jobData );
 
 		StepContextData stepData = null;
 		if ( checkpointID == null ) {
@@ -191,14 +191,17 @@ public class EntityReader extends AbstractItemReader {
 	}
 
 	private ScrollableResults buildScroll(StatelessSession ss,
-			PartitionUnit unit, Object checkpointID) {
+			PartitionUnit unit, Object checkpointID, JobContextData jobData) {
 
 		String idName = MassIndexerUtil.getIdName( entityClazz, session );
 		Criteria criteria = ss.createCriteria( entityClazz );
+
+		// build criteria using checkpoint ID
 		if ( checkpointID != null ) {
 			criteria.add( Restrictions.ge( idName, checkpointID ) );
 		}
 
+		// build criteria using partition unit
 		if ( unit.isUniquePartition() ) {
 			// no bounds if the partition unit is unique
 		}
@@ -212,6 +215,10 @@ public class EntityReader extends AbstractItemReader {
 			criteria.add( Restrictions.ge( idName, unit.getLowerBound() ) )
 					.add( Restrictions.lt( idName, unit.getUpperBound() ) );
 		}
+
+		// build criteria using job context data
+		jobData.getCriterions().forEach( c -> criteria.add( c ) );
+
 		return criteria.addOrder( Order.asc( idName ) )
 				.setReadOnly( true )
 				.setCacheable( Boolean.parseBoolean( cacheable ) )

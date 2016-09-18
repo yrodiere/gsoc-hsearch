@@ -6,12 +6,14 @@
  */
 package org.hibernate.search.jsr352.internal;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.criterion.Criterion;
 import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 
 /**
@@ -20,7 +22,9 @@ import org.hibernate.search.jsr352.internal.util.PartitionUnit;
  * @author Gunnar Morling
  * @author Mincong Huang
  */
-public class JobContextData {
+public class JobContextData implements Serializable {
+
+	private static final long serialVersionUID = 4465274690302894983L;
 
 	/**
 	 * The map of key value pair (string, class-type), designed for storage of
@@ -46,7 +50,12 @@ public class JobContextData {
 	 */
 	private List<PartitionUnit> partitionUnits;
 
-	public JobContextData(Set<Class<?>> entityClazzes) {
+	private Set<Criterion> criterions;
+
+	public JobContextData() {
+	}
+
+	public void setEntityClazzSet(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
 		entityClazzes.forEach( clz -> entityClazzMap.put( clz.toString(), clz ) );
 	}
@@ -77,6 +86,10 @@ public class JobContextData {
 		return totalEntityToIndex;
 	}
 
+	public Set<Criterion> getCriterions() {
+		return criterions;
+	}
+
 	public void setTotalEntityToIndex(long totalEntityToIndex) {
 		this.totalEntityToIndex = totalEntityToIndex;
 	}
@@ -104,6 +117,10 @@ public class JobContextData {
 
 	public void setRowsToIndex(String entityName, long rowsToIndex) {
 		entityCountMap.put( entityName, rowsToIndex );
+	}
+
+	public void setCriterions(Set<Criterion> criterions) {
+		this.criterions = criterions;
 	}
 
 	@Override

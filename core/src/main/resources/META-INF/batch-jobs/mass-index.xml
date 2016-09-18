@@ -13,6 +13,7 @@
             <properties>
                 <property name="isJavaSE" value="#{jobParameters['isJavaSE']}" />
                 <property name="rootEntities" value="#{jobParameters['rootEntities']}" />
+                <property name="jobContextData" value="#{jobParameters['jobContextData']}" />
             </properties>
         </listener>
     </listeners>

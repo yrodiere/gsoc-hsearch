@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.jsr352;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
@@ -16,7 +17,10 @@ import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 import javax.persistence.EntityManagerFactory;
 
+import org.hibernate.criterion.Criterion;
+import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
+import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
 
 /**
  * An alternative interface to the current mass indexer, using the Java Batch
@@ -29,6 +33,7 @@ public class MassIndexer {
 	private static final long NO_PREV_JOB_EXEC = 0L;
 	private static final String JOB_NAME = "mass-index";
 	private final Set<Class<?>> rootEntities = new HashSet<>();
+	private final Set<Criterion> criterions = new HashSet<>();
 
 	private boolean cacheable = false;
 	private boolean optimizeAfterPurge = false;
@@ -48,8 +53,12 @@ public class MassIndexer {
 	 * Start the job.
 	 *
 	 * @return
+	 * @throws IOException if the serialization of JobContextData fails.
 	 */
-	public long start() {
+	public long start() throws IOException {
+
+		Properties jobParams = new Properties();
+		JobContextData jobContextData = new JobContextData();
 
 		// check different variables
 		if ( rootEntities == null ) {
@@ -75,11 +84,13 @@ public class MassIndexer {
 			jobOperator = BatchRuntime.getJobOperator();
 		}
 
-		Properties jobParams = new Properties();
+		jobContextData.setCriterions( criterions );
+
 		jobParams.put( "cacheable", String.valueOf( cacheable ) );
 		jobParams.put( "fetchSize", String.valueOf( fetchSize ) );
 		jobParams.put( "isJavaSE", String.valueOf( isJavaSE ) );
 		jobParams.put( "itemCount", String.valueOf( itemCount ) );
+		jobParams.put( "jobContextData", MassIndexerUtil.serialize( jobContextData ) );
 		jobParams.put( "maxResults", String.valueOf( maxResults ) );
 		jobParams.put( "maxThreads", String.valueOf( maxThreads ) );
 		jobParams.put( "optimizeAfterPurge", String.valueOf( optimizeAfterPurge ) );
@@ -185,6 +196,17 @@ public class MassIndexer {
 	 */
 	public MassIndexer cacheable(boolean cacheable) {
 		this.cacheable = cacheable;
+		return this;
+	}
+
+	/**
+	 * Add criterion to choose the set of entities to index.
+	 *
+	 * @param criterion
+	 * @return
+	 */
+	public MassIndexer addRestriction(Criterion criterion) {
+		criterions.add( criterion );
 		return this;
 	}
 

@@ -105,7 +105,8 @@ public class PartitionMapperTest {
 	public void setUp() {
 
 		// mock job context
-		JobContextData jobData = new JobContextData( ROOT_ENTITIES );
+		JobContextData jobData = new JobContextData();
+		jobData.setEntityClazzSet( ROOT_ENTITIES );
 		Mockito.when( jobContext.getTransientUserData() ).thenReturn( jobData );
 
 		// mock factories

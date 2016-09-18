@@ -20,6 +20,7 @@ import javax.inject.Named;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
+import org.hibernate.Criteria;
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
@@ -93,8 +94,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			for ( Class<?> clazz : rootEntities ) {
 				setMonitor( clazz, session );
 				String fieldID = MassIndexerUtil.getIdName( clazz, session );
-				scroll = ss.createCriteria( clazz )
-						.addOrder( Order.asc( fieldID ) )
+				Criteria criteria = ss.createCriteria( clazz );
+				jobData.getCriterions().forEach( c -> criteria.add( c ) );
+				scroll = criteria.addOrder( Order.asc( fieldID ) )
 						.setProjection( Projections.id() )
 						.setFetchSize( Integer.parseInt( fetchSize ) )
 						.setReadOnly( true )
