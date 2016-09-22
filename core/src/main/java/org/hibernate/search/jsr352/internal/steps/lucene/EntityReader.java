@@ -95,8 +95,31 @@ public class EntityReader extends AbstractItemReader {
 	private ScrollableResults scroll;
 	private SessionFactory sessionFactory;
 
-	public EntityReader() {
+	EntityReader() {
+	}
 
+	/**
+	 * Constructor for unit test TODO should it be done in this way?
+	 *
+	 * @param cacheable
+	 * @param entityName
+	 * @param fetchSize
+	 * @param isJavaSE
+	 * @param maxResults
+	 * @param partitionID
+	 */
+	EntityReader(String cacheable,
+			String entityName,
+			String fetchSize,
+			String isJavaSE,
+			String maxResults,
+			String partitionID) {
+		this.cacheable = cacheable;
+		this.entityName = entityName;
+		this.fetchSize = fetchSize;
+		this.isJavaSE = isJavaSE;
+		this.maxResults = maxResults;
+		this.partitionID = partitionID;
 	}
 
 	/**

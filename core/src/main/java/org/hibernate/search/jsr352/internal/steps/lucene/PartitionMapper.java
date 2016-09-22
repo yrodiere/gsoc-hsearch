@@ -59,17 +59,36 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	@Inject
 	@BatchProperty
-	private String rowsPerPartition;
+	private String maxThreads;
 
-	/**
-	 * The max number of threads used by the job
-	 */
 	@Inject
 	@BatchProperty
-	private int maxThreads;
+	private String rowsPerPartition;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
+
+	PartitionMapper() {}
+
+	/**
+	 * Constructor for unit test.
+	 * TODO should it be done in this way?
+	 *
+	 * @param fetchSize
+	 * @param isJavaSE
+	 * @param rowsPerPartition
+	 */
+	PartitionMapper(EntityManagerFactory emf,
+			String fetchSize,
+			String isJavaSE,
+			String rowsPerPartition,
+			String maxThreads) {
+		this.emf = emf;
+		this.fetchSize = fetchSize;
+		this.isJavaSE = isJavaSE;
+		this.maxThreads = maxThreads;
+		this.rowsPerPartition = rowsPerPartition;
+	}
 
 	@Override
 	public PartitionPlan mapPartitions() throws Exception {
@@ -126,7 +145,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			jobData.setPartitionUnits( partitionUnits );
 
 			// Build partition plan
-			final int threads = maxThreads;
+			final int threads = Integer.valueOf( maxThreads );
 			final int partitions = partitionUnits.size();
 			final Properties[] props = new Properties[partitions];
 			LOGGER.infof( "%d partitions, %d threads.", partitions, threads );

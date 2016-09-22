@@ -21,7 +21,6 @@
     <properties>
         <org.jboss.byteman>3.0.6</org.jboss.byteman>
         <org.mockito>1.10.19</org.mockito>
-        <org.powermock>1.6.4</org.powermock>
     </properties>
 
     <dependencies>
@@ -64,18 +63,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
             <version>${org.mockito}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>${org.powermock}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito</artifactId>
-            <version>${org.powermock}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
