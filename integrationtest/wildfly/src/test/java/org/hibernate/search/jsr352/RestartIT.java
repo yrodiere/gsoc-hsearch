@@ -64,7 +64,7 @@ public class RestartIT {
 
 	@Deployment
 	public static WebArchive createDeployment() {
-		WebArchive war = ShrinkWrap.create( WebArchive.class )
+		WebArchive war = ShrinkWrap.create( WebArchive.class, RestartIT.class.getSimpleName() + ".war"  )
 				.addAsResource( "META-INF/persistence.xml" )
 				.addAsResource( "META-INF/batch-jobs/make-deployment-as-batch-app.xml" ) // WFLY-7000
 				.addAsWebInfResource( "jboss-deployment-structure.xml" )
