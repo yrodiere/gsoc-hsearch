@@ -18,7 +18,6 @@ import javax.batch.runtime.BatchRuntime;
 import javax.persistence.EntityManagerFactory;
 
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
@@ -166,14 +165,11 @@ public class MassIndexer {
 	 * @param rootEntities
 	 * @return
 	 */
-	public MassIndexer addRootEntities(Class<?>... rootEntities) {
-		if ( rootEntities == null ) {
-			throw new NullPointerException( "rootEntities cannot be NULL." );
+	public MassIndexer addRootEntities(Class<?> rootEntity, Class<?>... rootEntities) {
+		if ( rootEntity == null ) {
+			throw new NullPointerException( "rootEntities must have at least 1 element." );
 		}
-		else if ( rootEntities.length == 0 ) {
-			throw new IllegalStateException(
-					"rootEntities must have at least 1 element." );
-		}
+		this.rootEntities.add( rootEntity );
 		this.rootEntities.addAll( Arrays.asList( rootEntities ) );
 		return this;
 	}
