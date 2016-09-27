@@ -68,7 +68,7 @@ public class PerformanceIT {
 	public static WebArchive createDeployment() {
 		WebArchive war = ShrinkWrap.create( WebArchive.class, PerformanceIT.class.getSimpleName() + ".war" )
 				.addAsResource( "META-INF/persistence.xml" )
-				.addAsResource( "META-INF/batch-jobs/make-deployment-as-batch-app.xml" ) // WFLY-7000
+				//.addAsResource( "META-INF/batch-jobs/make-deployment-as-batch-app.xml" ) // WFLY-7000
 				.addAsWebInfResource( "jboss-deployment-structure.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" )
 				.addPackage( Company.class.getPackage() );
