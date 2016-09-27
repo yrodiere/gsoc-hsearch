@@ -77,10 +77,12 @@ public class PartitionMapperTest {
 		JobSEEnvironment.setEntityManagerFactory( emf );
 		final String isJavaSE = String.valueOf( true );
 		final String fetchSize = String.valueOf( 200 * 1000 );
+		final String hql = null;
 		final String maxThreads = String.valueOf( 1 );
 		final String rowsPerPartition = String.valueOf( 3 );
 		partitionMapper = new PartitionMapper( null,
 				fetchSize,
+				hql,
 				isJavaSE,
 				rowsPerPartition,
 				maxThreads );

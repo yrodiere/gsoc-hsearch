@@ -35,6 +35,7 @@
                     <property name="partitionID" value="#{partitionPlan['partitionID']}" />
                     <property name="cacheable" value="#{jobParameters['cacheable']}?:false;" />
                     <property name="fetchSize" value="#{jobParameters['fetchSize']}?:200000;" />
+                    <property name="hql" value="#{jobParameters['hql']}" />
                     <property name="isJavaSE" value="#{jobParameters['isJavaSE']}" />
                     <property name="maxResults" value="#{jobParameters['maxResults']}?:10000000;" />
                 </properties>
@@ -61,6 +62,7 @@
             <mapper ref="partitionMapper">
                 <properties>
                     <property name="fetchSize" value="#{jobParameters['fetchSize']}?:200000;" />
+                    <property name="hql" value="#{jobParameters['hql']}" />
                     <property name="isJavaSE" value="#{jobParameters['isJavaSE']}?:false;" />
                     <property name="maxThreads" value="#{jobParameters['threads']}?:8;" />
                     <property name="rowsPerPartition" value="#{jobParameters['rowsPerPartition']}?:0;" />

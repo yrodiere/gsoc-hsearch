@@ -26,6 +26,7 @@ import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.search.jsr352.internal.JobContextData;
@@ -55,6 +56,10 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	@Inject
 	@BatchProperty
+	private String hql;
+
+	@Inject
+	@BatchProperty
 	private String isJavaSE;
 
 	@Inject
@@ -68,23 +73,28 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
 
-	PartitionMapper() {}
+	PartitionMapper() {
+	}
 
 	/**
-	 * Constructor for unit test.
-	 * TODO should it be done in this way?
+	 * Constructor for unit test. TODO should it be done in this way?
 	 *
+	 * @param emf
 	 * @param fetchSize
+	 * @param hql
 	 * @param isJavaSE
+	 * @param maxThreads
 	 * @param rowsPerPartition
 	 */
 	PartitionMapper(EntityManagerFactory emf,
 			String fetchSize,
+			String hql,
 			String isJavaSE,
 			String rowsPerPartition,
 			String maxThreads) {
 		this.emf = emf;
 		this.fetchSize = fetchSize;
+		this.hql = hql;
 		this.isJavaSE = isJavaSE;
 		this.maxThreads = maxThreads;
 		this.rowsPerPartition = rowsPerPartition;
@@ -110,37 +120,32 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			Set<Class<?>> rootEntities = jobData.getEntityClazzSet();
 			List<PartitionUnit> partitionUnits = new ArrayList<>();
 
-			for ( Class<?> clazz : rootEntities ) {
+			// HQL approach
+			if ( hql != null && !hql.isEmpty() ) {
+
+				// TODO add partition plan here
+				Class<?> clazz = rootEntities.toArray( new Class<?>[1] )[0];
 				setMonitor( clazz, session );
-				String fieldID = MassIndexerUtil.getIdName( clazz, session );
-				Criteria criteria = ss.createCriteria( clazz );
-				jobData.getCriterions().forEach( c -> criteria.add( c ) );
-				scroll = criteria.addOrder( Order.asc( fieldID ) )
-						.setProjection( Projections.id() )
-						.setFetchSize( Integer.parseInt( fetchSize ) )
-						.setReadOnly( true )
-						.scroll( ScrollMode.FORWARD_ONLY );
-				Object lowerID = null;
-				Object upperID = null;
-				while ( scroll.scroll( Integer.parseInt( rowsPerPartition ) ) ) {
-					lowerID = upperID;
-					upperID = scroll.get( 0 );
-					LOGGER.infof( "lowerID=%s", lowerID );
-					LOGGER.infof( "upperID=%s", upperID );
-					partitionUnits.add( new PartitionUnit( clazz,
-							Integer.parseInt( rowsPerPartition ),
-							lowerID,
-							upperID ) );
+				int rpp = Integer.parseInt( rowsPerPartition );
+				partitionUnits.add( new PartitionUnit( clazz, rpp, null, null ) );
+			}
+			// Criteria approach
+			else if ( jobData.getCriterions() != null && jobData.getCriterions().size() > 0 ) {
+
+				// TODO add partition plan here
+				Class<?> clazz = rootEntities.toArray( new Class<?>[1] )[0];
+				setMonitor( clazz, session );
+				scroll = buildScrollableResults( ss, session, clazz, jobData.getCriterions() );
+				partitionUnits = buildPartitionUnitsFrom( scroll, clazz );
+
+			}
+			// Full indexing approach
+			else {
+				for ( Class<?> clazz : rootEntities ) {
+					setMonitor( clazz, session );
+					scroll = buildScrollableResults( ss, session, clazz, null );
+					partitionUnits.addAll( buildPartitionUnitsFrom( scroll, clazz ) );
 				}
-				// add an additional partition on the tail
-				lowerID = upperID;
-				upperID = null;
-				LOGGER.infof( "lowerID=%s", lowerID );
-				LOGGER.infof( "upperID=%s", upperID );
-				partitionUnits.add( new PartitionUnit( clazz,
-						Integer.parseInt( rowsPerPartition ),
-						lowerID,
-						upperID ) );
 			}
 			jobData.setPartitionUnits( partitionUnits );
 
@@ -182,6 +187,40 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				LOGGER.error( e );
 			}
 		}
+	}
+
+	private List<PartitionUnit> buildPartitionUnitsFrom(ScrollableResults scroll, Class<?> clazz) {
+
+		List<PartitionUnit> partitionUnits = new ArrayList<>();
+		final int rowsPerPartition = Integer.parseInt( this.rowsPerPartition );
+		Object lowerID = null;
+		Object upperID = null;
+		while ( scroll.scroll( rowsPerPartition ) ) {
+			lowerID = upperID;
+			upperID = scroll.get( 0 );
+			partitionUnits.add( new PartitionUnit( clazz, rowsPerPartition, lowerID, upperID ) );
+		}
+		// add an additional partition on the tail
+		lowerID = upperID;
+		upperID = null;
+		partitionUnits.add( new PartitionUnit( clazz, rowsPerPartition, lowerID, upperID ) );
+		return partitionUnits;
+	}
+
+	private ScrollableResults buildScrollableResults(StatelessSession ss,
+			Session session, Class<?> clazz, Set<Criterion> criterions) {
+
+		String fieldID = MassIndexerUtil.getIdName( clazz, session );
+		Criteria criteria = ss.createCriteria( clazz );
+		if ( criterions != null ) {
+			criterions.forEach( c -> criteria.add( c ) );
+		}
+		ScrollableResults scroll = criteria.addOrder( Order.asc( fieldID ) )
+				.setProjection( Projections.id() )
+				.setFetchSize( Integer.parseInt( fetchSize ) )
+				.setReadOnly( true )
+				.scroll( ScrollMode.FORWARD_ONLY );
+		return scroll;
 	}
 
 	private void setMonitor(Class<?> clazz, Session session) {

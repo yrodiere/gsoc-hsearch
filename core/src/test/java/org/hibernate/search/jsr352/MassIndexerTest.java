@@ -143,4 +143,9 @@ public class MassIndexerTest {
 	public void testAddRootEntities_empty() {
 		new MassIndexer().addRootEntities( new Class<?>[0] );
 	}
+
+	@Test(expected = NullPointerException.class)
+	public void testHql_null() {
+		new MassIndexer().hql( null );
+	}
 }

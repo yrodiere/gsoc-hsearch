@@ -162,6 +162,41 @@ public class MassIndexerIT {
 		assertEquals( 0, findClass( Company.class, "name", "Microsoft" ).size() );
 	}
 
+	@Test
+	public void testMassIndexer_usingHQL() throws InterruptedException,
+			IOException {
+
+		// purge all before start
+		// TODO Can the creation of a new EM and FTEM be avoided?
+		EntityManager em = emf.createEntityManager();
+		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
+		ftem.purgeAll( Person.class );
+		ftem.purgeAll( Company.class );
+		ftem.flushToIndexes();
+		em.close();
+
+		// searches before mass index,
+		// expected no results for each search
+		assertEquals( 0, findClass( Company.class, "name", "Google" ).size() );
+		assertEquals( 0, findClass( Company.class, "name", "Red Hat" ).size() );
+		assertEquals( 0, findClass( Company.class, "name", "Microsoft" ).size() );
+
+		JobOperator jobOperator = JobFactory.getJobOperator();
+		long executionId = new MassIndexer()
+				.addRootEntity( Company.class )
+				.hql( "select c from Company c where c.name in ( 'Google', 'Red Hat' )" )
+				.jobOperator( jobOperator )
+				.isJavaSE( true )
+				.entityManagerFactory( emf )
+				.start();
+		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
+		jobExecution = keepTestAlive( jobExecution );
+
+		assertEquals( 1, findClass( Company.class, "name", "Google" ).size() );
+		assertEquals( 1, findClass( Company.class, "name", "Red Hat" ).size() );
+		assertEquals( 0, findClass( Company.class, "name", "Microsoft" ).size() );
+	}
+
 	private <T> List<T> findClass(Class<T> clazz, String key, String value) {
 		EntityManager em = emf.createEntityManager();
 		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );

@@ -75,6 +75,10 @@ public class EntityReader extends AbstractItemReader {
 
 	@Inject
 	@BatchProperty
+	private String hql;
+
+	@Inject
+	@BatchProperty
 	private String isJavaSE;
 
 	@Inject
@@ -104,6 +108,7 @@ public class EntityReader extends AbstractItemReader {
 	 * @param cacheable
 	 * @param entityName
 	 * @param fetchSize
+	 * @param hql
 	 * @param isJavaSE
 	 * @param maxResults
 	 * @param partitionID
@@ -111,12 +116,14 @@ public class EntityReader extends AbstractItemReader {
 	EntityReader(String cacheable,
 			String entityName,
 			String fetchSize,
+			String hql,
 			String isJavaSE,
 			String maxResults,
 			String partitionID) {
 		this.cacheable = cacheable;
 		this.entityName = entityName;
 		this.fetchSize = fetchSize;
+		this.hql = hql;
 		this.isJavaSE = isJavaSE;
 		this.maxResults = maxResults;
 		this.partitionID = partitionID;
@@ -197,23 +204,47 @@ public class EntityReader extends AbstractItemReader {
 		sessionFactory = emf.unwrap( SessionFactory.class );
 		ss = sessionFactory.openStatelessSession();
 		session = sessionFactory.openSession();
-		scroll = buildScroll( ss, unit, checkpointID, jobData );
 
 		StepContextData stepData = null;
-		if ( checkpointID == null ) {
+		// HQL approach
+		// In this approach, the checkpoint mechanism is disabled, because we
+		// don't know if the selection is ordered by ID ascendingly in the query.
+		if ( hql != null && !hql.isEmpty() ) {
+			// TODO should I worry about the Lucene AddWork? If this is a
+			// restart, will it create duplicate index for the same entity,
+			// since there's no purge?
+			scroll = buildScrollUsingHQL( ss, hql );
 			stepData = new StepContextData( Integer.parseInt( partitionID ), entityName );
 			stepData.setRestarted( false );
 		}
+		// Criteria approach
 		else {
-			stepData = (StepContextData) stepContext.getPersistentUserData();
-			stepData.setRestarted( true );
+			scroll = buildScrollUsingCriteria( ss, unit, checkpointID, jobData );
+			if ( checkpointID == null ) {
+				stepData = new StepContextData( Integer.parseInt( partitionID ), entityName );
+				stepData.setRestarted( false );
+			}
+			else {
+				stepData = (StepContextData) stepContext.getPersistentUserData();
+				stepData.setRestarted( true );
+			}
 		}
 
 		stepData.setSession( session );
 		stepContext.setTransientUserData( stepData );
 	}
 
-	private ScrollableResults buildScroll(StatelessSession ss,
+	private ScrollableResults buildScrollUsingHQL(StatelessSession ss, String HQL) {
+
+		return ss.createQuery( HQL )
+				.setReadOnly( true )
+				.setCacheable( Boolean.parseBoolean( cacheable ) )
+				.setFetchSize( Integer.parseInt( fetchSize ) )
+				.setMaxResults( Integer.parseInt( maxResults ) )
+				.scroll( ScrollMode.FORWARD_ONLY );
+	}
+
+	private ScrollableResults buildScrollUsingCriteria(StatelessSession ss,
 			PartitionUnit unit, Object checkpointID, JobContextData jobData) {
 
 		String idName = MassIndexerUtil.getIdName( entityClazz, session );

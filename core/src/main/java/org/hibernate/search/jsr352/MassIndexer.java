@@ -18,6 +18,7 @@ import javax.batch.runtime.BatchRuntime;
 import javax.persistence.EntityManagerFactory;
 
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
@@ -48,6 +49,7 @@ public class MassIndexer {
 	private EntityManagerFactory emf;
 	private JobOperator jobOperator;
 	private long executionId = NO_PREV_JOB_EXEC;
+	private String hql;
 
 	/**
 	 * Start the job.
@@ -83,11 +85,15 @@ public class MassIndexer {
 			}
 			jobOperator = BatchRuntime.getJobOperator();
 		}
+		if ( hql == null ) {
+			hql = "";
+		}
 
 		jobContextData.setCriterions( criterions );
 
 		jobParams.put( "cacheable", String.valueOf( cacheable ) );
 		jobParams.put( "fetchSize", String.valueOf( fetchSize ) );
+		jobParams.put( "hql", hql );
 		jobParams.put( "isJavaSE", String.valueOf( isJavaSE ) );
 		jobParams.put( "itemCount", String.valueOf( itemCount ) );
 		jobParams.put( "jobContextData", MassIndexerUtil.serialize( jobContextData ) );
@@ -239,6 +245,20 @@ public class MassIndexer {
 			throw new IllegalArgumentException( "fetchSize must be at least 1" );
 		}
 		this.fetchSize = fetchSize;
+		return this;
+	}
+
+	/**
+	 * Use HQL / JPQL to select to entities to index
+	 *
+	 * @param hql
+	 * @return
+	 */
+	public MassIndexer hql(String hql) {
+		if ( hql == null ) {
+			throw new NullPointerException( "The HQL is null." );
+		}
+		this.hql = hql;
 		return this;
 	}
 

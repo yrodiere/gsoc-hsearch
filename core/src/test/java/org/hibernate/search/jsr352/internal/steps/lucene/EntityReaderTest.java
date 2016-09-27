@@ -76,15 +76,17 @@ public class EntityReaderTest {
 		}
 
 		JobSEEnvironment.setEntityManagerFactory( emf );
-		String cacheable = String.valueOf( false );
-		String entityName = String.valueOf( Company.class );
-		String fetchSize = String.valueOf( 1000 );
-		String isJavaSE = String.valueOf( true );
-		String maxResults = String.valueOf( Integer.MAX_VALUE );
-		String partitionID = String.valueOf( 0 );
+		final String cacheable = String.valueOf( false );
+		final String entityName = String.valueOf( Company.class );
+		final String fetchSize = String.valueOf( 1000 );
+		final String hql = null;
+		final String isJavaSE = String.valueOf( true );
+		final String maxResults = String.valueOf( Integer.MAX_VALUE );
+		final String partitionID = String.valueOf( 0 );
 		entityReader = new EntityReader(cacheable,
 				entityName,
 				fetchSize,
+				hql,
 				isJavaSE,
 				maxResults,
 				partitionID);
