@@ -37,6 +37,7 @@ public class CompanyManager {
 				em.flush();
 				em.clear();
 			}
+			i++;
 		}
 	}
 

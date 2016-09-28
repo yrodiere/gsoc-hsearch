@@ -39,6 +39,7 @@ public class PersonManager {
 				em.flush();
 				em.clear();
 			}
+			i++;
 		}
 	}
 
