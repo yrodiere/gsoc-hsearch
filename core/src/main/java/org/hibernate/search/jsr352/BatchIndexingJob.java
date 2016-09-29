@@ -29,7 +29,7 @@ import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
  */
 public class BatchIndexingJob {
 
-	public static final String JOB_NAME = "mass-index";
+	public static final String JOB_NAME = "BatchIndexingJob";
 
 	public static Builder forEntity(Class<?> rootEntity) {
 		return new Builder( rootEntity );
