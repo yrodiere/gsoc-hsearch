@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.JobExecution;
@@ -43,18 +42,15 @@ import org.junit.runner.RunWith;
 public class RestartIT {
 
 	private static final Logger LOGGER = Logger.getLogger( RestartIT.class );
-
-	private final boolean JOB_PURGE_AT_START = true;
-	private final int JOB_FETCH_SIZE = 100 * 1000;
-	private final int JOB_MAX_RESULTS = 200 * 1000;
-	private final int JOB_MAX_THREADS = 3;
-	private final int JOB_ROWS_PER_PARTITION = 1000;
-
-	private final long DB_COMP_ROWS = 2500;
-	private final long DB_PERS_ROWS = 2600;
-
-	private final int MAX_TRIES = 40;
-	private final int THREAD_SLEEP = 1000;
+	private static final boolean JOB_PURGE_AT_START = true;
+	private static final int JOB_FETCH_SIZE = 100 * 1000;
+	private static final int JOB_MAX_RESULTS = 200 * 1000;
+	private static final int JOB_MAX_THREADS = 3;
+	private static final int JOB_ROWS_PER_PARTITION = 1000;
+	private static final int DB_COMP_ROWS = 2500;
+	private static final int DB_PERS_ROWS = 2600;
+	private static final int MAX_TRIES = 40;
+	private static final int THREAD_SLEEP = 1000;
 
 	@Inject
 	private CompanyManager companyManager;
@@ -87,14 +83,19 @@ public class RestartIT {
 
 		// Start the job. This is the 1st execution.
 		// Keep the execution alive and wait Byteman to stop the job
-		JobOperator jobOperator = BatchRuntime.getJobOperator();
-		long execId1 = createAndStartJob( jobOperator );
-		JobExecution jobExec1 = jobOperator.getJobExecution( execId1 );
+		long execId1 = BatchIndexingJob.forEntities( Company.class, Person.class )
+				.fetchSize( JOB_FETCH_SIZE )
+				.maxResults( JOB_MAX_RESULTS )
+				.maxThreads( JOB_MAX_THREADS )
+				.purgeAtStart( JOB_PURGE_AT_START )
+				.rowsPerPartition( JOB_ROWS_PER_PARTITION )
+				.start();
+		JobExecution jobExec1 = BatchRuntime.getJobOperator().getJobExecution( execId1 );
 		jobExec1 = keepTestAlive( jobExec1 );
 
 		// Restart the job. This is the 2nd execution.
-		long execId2 = jobOperator.restart( execId1, null );
-		JobExecution jobExec2 = jobOperator.getJobExecution( execId2 );
+		long execId2 = BatchIndexingJob.restart( execId1 );
+		JobExecution jobExec2 = BatchRuntime.getJobOperator().getJobExecution( execId2 );
 		jobExec2 = keepTestAlive( jobExec2 );
 		assertEquals( BatchStatus.COMPLETED, jobExec2.getBatchStatus() );
 
@@ -106,7 +107,7 @@ public class RestartIT {
 		// TODO this method should not belong to company manager
 		// but how to create an all context query ?
 		int totalDocs = companyManager.findAll().size();
-		assertEquals( (int) ( DB_COMP_ROWS + DB_PERS_ROWS ), totalDocs );
+		assertEquals( DB_COMP_ROWS + DB_PERS_ROWS, totalDocs );
 	}
 
 	private void insertData() {
@@ -117,36 +118,27 @@ public class RestartIT {
 				{ "Facebook", "Mark", "Zuckerberg" },
 				{ "Amazon", "Jeff", "Bezos" }
 		};
-		List<Person> people = new ArrayList<>( (int) DB_PERS_ROWS );
-		List<Company> companies = new ArrayList<>( (int) DB_COMP_ROWS );
-		for ( int i = 0; i < DB_PERS_ROWS; i++ ) {
-			Person p = new Person( i, str[i % 5][1], str[i % 5][2] );
-			people.add( p );
-		}
+
+		List<Company> companies = new ArrayList<>( DB_COMP_ROWS );
 		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
-			Company c = new Company( str[i % 5][0] );
-			companies.add( c );
+			String companyName = str[i % 5][0];
+			companies.add( new Company( companyName ) );
+		}
+		companyManager.persist( companies );
+
+		List<Person> people = new ArrayList<>( DB_PERS_ROWS );
+		for ( int i = 0; i < DB_PERS_ROWS; i++ ) {
+			String firstName = str[i % 5][1];
+			String lastName = str[i % 5][2];
+			people.add( new Person( i, firstName, lastName ) );
 		}
 		personManager.persist( people );
-		companyManager.persist( companies );
-	}
-
-	private long createAndStartJob(JobOperator jobOperator) throws IOException {
-		long executionId = BatchIndexingJob.forEntities( Company.class, Person.class )
-				.fetchSize( JOB_FETCH_SIZE )
-				.maxResults( JOB_MAX_RESULTS )
-				.maxThreads( JOB_MAX_THREADS )
-				.purgeAtStart( JOB_PURGE_AT_START )
-				.rowsPerPartition( JOB_ROWS_PER_PARTITION )
-				.start();
-		return executionId;
 	}
 
 	private JobExecution keepTestAlive(JobExecution jobExecution)
 			throws InterruptedException {
 
 		int tries = 0;
-		JobOperator jobOperator = BatchRuntime.getJobOperator();
 		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED )
 				&& !jobExecution.getBatchStatus().equals( BatchStatus.STOPPED )
 				&& !jobExecution.getBatchStatus().equals( BatchStatus.FAILED )
@@ -159,7 +151,7 @@ public class RestartIT {
 					jobExecution.getBatchStatus(),
 					THREAD_SLEEP );
 			Thread.sleep( THREAD_SLEEP );
-			jobExecution = jobOperator.getJobExecution( executionId );
+			jobExecution = BatchRuntime.getJobOperator().getJobExecution( executionId );
 			tries++;
 		}
 		return jobExecution;

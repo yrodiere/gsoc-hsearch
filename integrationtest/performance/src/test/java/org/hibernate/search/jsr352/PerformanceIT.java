@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.JobExecution;
@@ -47,13 +46,12 @@ import org.junit.runner.RunWith;
 public class PerformanceIT {
 
 	private static final Logger LOGGER = Logger.getLogger( PerformanceIT.class );
-
 	private static final int JOB_FETCH_SIZE = 100 * 1000;
 	private static final int JOB_MAX_THREADS = 10;
 	private static final int JOB_ROWS_PER_PARTITION = 20 * 1000;
 	private static final int JOB_ITEM_COUNT = 500;
-	private static final long DB_COMP_ROWS = 10 * 1000;
-	private static final long DB_PERS_ROWS = 10 * 1000;
+	private static final int DB_COMP_ROWS = 10 * 1000;
+	private static final int DB_PERS_ROWS = 10 * 1000;
 
 	@PersistenceContext(unitName = "h2")
 	private EntityManager em;
@@ -84,20 +82,23 @@ public class PerformanceIT {
 				{ "Facebook", "Mark", "Zuckerberg" },
 				{ "Amazon", "Jeff", "Bezos" }
 		};
-		List<Person> people = new ArrayList<>( (int) DB_PERS_ROWS );
-		List<Company> companies = new ArrayList<>( (int) DB_COMP_ROWS );
-		for ( int i = 0; i < DB_PERS_ROWS - 1; i++ ) {
-			Person p = new Person( i, str[i % 5][1], str[i % 5][2] );
-			people.add( p );
+
+		List<Company> companies = new ArrayList<>( DB_COMP_ROWS );
+		for ( int i = 0; i < DB_COMP_ROWS - 1; i++ ) {
+			String companyName = str[i % 5][0];
+			companies.add( new Company( companyName ) );
 		}
-		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
-			Company c = new Company( str[i % 5][0] );
-			companies.add( c );
-		}
-		people.add( new Person( (int) DB_PERS_ROWS, "Mincong", "Huang" ) );
 		companies.add( new Company( "hibernate" ) );
-		personManager.persist( people );
 		companyManager.persist( companies );
+
+		List<Person> people = new ArrayList<>( DB_PERS_ROWS );
+		for ( int i = 0; i < DB_PERS_ROWS - 1; i++ ) {
+			String firstName = str[i % 5][1];
+			String lastName = str[i % 5][2];
+			people.add( new Person( i, firstName, lastName ) );
+		}
+		people.add( new Person( DB_PERS_ROWS, "Mincong", "Huang" ) );
+		personManager.persist( people );
 	}
 
 	@Test
@@ -153,14 +154,13 @@ public class PerformanceIT {
 		assertEquals( 0, mincong.size() );
 
 		// Start the job
-		JobOperator jobOperator = BatchRuntime.getJobOperator();
 		long executionId = BatchIndexingJob.forEntities( Company.class, Person.class )
 				.fetchSize( JOB_FETCH_SIZE )
 				.maxThreads( JOB_MAX_THREADS )
 				.rowsPerPartition( JOB_ROWS_PER_PARTITION )
 				.checkpointFreq( JOB_ITEM_COUNT )
 				.start();
-		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
+		JobExecution jobExecution = BatchRuntime.getJobOperator().getJobExecution( executionId );
 		jobExecution = keepTestAlive( jobExecution );
 		assertEquals( BatchStatus.COMPLETED, jobExecution.getBatchStatus() );
 
@@ -175,7 +175,6 @@ public class PerformanceIT {
 			throws InterruptedException {
 
 		int tries = 0;
-		JobOperator jobOperator = BatchRuntime.getJobOperator();
 		while ( ( jobExecution.getBatchStatus().equals( BatchStatus.STARTING )
 				|| jobExecution.getBatchStatus().equals( BatchStatus.STARTED ) )
 				&& tries < 300 ) {
@@ -186,7 +185,7 @@ public class PerformanceIT {
 					jobExecution.getBatchStatus(),
 					1000 );
 			Thread.sleep( 1000 );
-			jobExecution = jobOperator.getJobExecution( executionId );
+			jobExecution = BatchRuntime.getJobOperator().getJobExecution( executionId );
 			tries++;
 		}
 		return jobExecution;
