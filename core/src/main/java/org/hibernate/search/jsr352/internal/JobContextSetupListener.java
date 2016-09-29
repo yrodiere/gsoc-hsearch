@@ -63,7 +63,7 @@ public class JobContextSetupListener extends AbstractJobListener {
 		try {
 			LOGGER.debug( "Creating entity manager ..." );
 			if ( isJavaSE ) {
-				emf = JobSEEnvironment.getEntityManagerFactory();
+				emf = JobSEEnvironment.getInstance().getEntityManagerFactory();
 			}
 			em = emf.createEntityManager();
 			String[] entityNamesToIndex = rootEntities.split( "," );
@@ -104,7 +104,7 @@ public class JobContextSetupListener extends AbstractJobListener {
 	@Override
 	public void afterJob() throws Exception {
 		if ( isJavaSE ) {
-			JobSEEnvironment.setEntityManagerFactory( null );
+			JobSEEnvironment.getInstance().setEntityManagerFactory( null );
 		}
 	}
 }

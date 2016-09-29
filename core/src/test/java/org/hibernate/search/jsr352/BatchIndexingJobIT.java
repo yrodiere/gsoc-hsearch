@@ -38,9 +38,9 @@ import org.junit.Test;
 /**
  * @author Mincong Huang
  */
-public class MassIndexerIT {
+public class BatchIndexingJobIT {
 
-	private static final Logger LOGGER = Logger.getLogger( MassIndexerIT.class );
+	private static final Logger LOGGER = Logger.getLogger( BatchIndexingJobIT.class );
 
 	// example dataset
 	private final long DB_COMP_ROWS = 3;
@@ -107,11 +107,8 @@ public class MassIndexerIT {
 		assertEquals( 0, people.size() );
 
 		JobOperator jobOperator = JobFactory.getJobOperator();
-		long executionId = new MassIndexer()
-				.addRootEntities( Company.class, Person.class )
-				.jobOperator( jobOperator )
-				.isJavaSE( true )
-				.entityManagerFactory( emf )
+		long executionId = BatchIndexingJob.forEntities( Company.class , Person.class )
+				.underJavaSE( emf, jobOperator )
 				.start();
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
 		jobExecution = keepTestAlive( jobExecution );
@@ -147,12 +144,9 @@ public class MassIndexerIT {
 		assertEquals( 0, findClass( Company.class, "name", "Microsoft" ).size() );
 
 		JobOperator jobOperator = JobFactory.getJobOperator();
-		long executionId = new MassIndexer()
-				.addRootEntity( Company.class )
-				.addRestriction( Restrictions.in( "name", "Google", "Red Hat" ) )
-				.jobOperator( jobOperator )
-				.isJavaSE( true )
-				.entityManagerFactory( emf )
+		long executionId = BatchIndexingJob.forEntity( Company.class )
+				.restrictedBy( Restrictions.in( "name", "Google", "Red Hat" ) )
+				.underJavaSE( emf, jobOperator )
 				.start();
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
 		jobExecution = keepTestAlive( jobExecution );
@@ -182,12 +176,9 @@ public class MassIndexerIT {
 		assertEquals( 0, findClass( Company.class, "name", "Microsoft" ).size() );
 
 		JobOperator jobOperator = JobFactory.getJobOperator();
-		long executionId = new MassIndexer()
-				.addRootEntity( Company.class )
-				.hql( "select c from Company c where c.name in ( 'Google', 'Red Hat' )" )
-				.jobOperator( jobOperator )
-				.isJavaSE( true )
-				.entityManagerFactory( emf )
+		long executionId = BatchIndexingJob.forEntity( Company.class )
+				.restrictedBy( "select c from Company c where c.name in ( 'Google', 'Red Hat' )" )
+				.underJavaSE( emf, jobOperator )
 				.start();
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
 		jobExecution = keepTestAlive( jobExecution );

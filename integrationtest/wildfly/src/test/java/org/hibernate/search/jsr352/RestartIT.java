@@ -132,15 +132,13 @@ public class RestartIT {
 	}
 
 	private long createAndStartJob(JobOperator jobOperator) throws IOException {
-		MassIndexer massIndexer = new MassIndexer()
+		long executionId = BatchIndexingJob.forEntities( Company.class, Person.class )
 				.fetchSize( JOB_FETCH_SIZE )
 				.maxResults( JOB_MAX_RESULTS )
 				.maxThreads( JOB_MAX_THREADS )
 				.purgeAtStart( JOB_PURGE_AT_START )
 				.rowsPerPartition( JOB_ROWS_PER_PARTITION )
-				.jobOperator( jobOperator )
-				.addRootEntities( Company.class, Person.class );
-		long executionId = massIndexer.start();
+				.start();
 		return executionId;
 	}
 

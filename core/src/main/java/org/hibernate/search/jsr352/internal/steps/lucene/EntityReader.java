@@ -199,7 +199,7 @@ public class EntityReader extends AbstractItemReader {
 		LOGGER.debug( unit );
 
 		if ( Boolean.parseBoolean( isJavaSE ) ) {
-			emf = JobSEEnvironment.getEntityManagerFactory();
+			emf = JobSEEnvironment.getInstance().getEntityManagerFactory();
 		}
 		sessionFactory = emf.unwrap( SessionFactory.class );
 		ss = sessionFactory.openStatelessSession();

@@ -101,12 +101,9 @@ public class RestartChunkIT {
 		assertEquals( 0, people.size() );
 
 		// start the job
-		MassIndexer massIndexer = new MassIndexer()
-				.isJavaSE( true )
-				.addRootEntities( Company.class, Person.class )
-				.entityManagerFactory( emf )
-				.jobOperator( jobOperator );
-		long execId1 = massIndexer.start();
+		long execId1 = BatchIndexingJob.forEntities( Company.class, Person.class )
+				.underJavaSE( emf, jobOperator )
+				.start();
 		JobExecution jobExec1 = jobOperator.getJobExecution( execId1 );
 		jobExec1 = keepTestAlive( jobExec1 );
 		// job will be stopped by the byteman
@@ -117,7 +114,7 @@ public class RestartChunkIT {
 		}
 
 		// restart the job
-		long execId2 = massIndexer.restart();
+		long execId2 = BatchIndexingJob.restart( execId1, emf, jobOperator );
 		JobExecution jobExec2 = jobOperator.getJobExecution( execId2 );
 		jobExec2 = keepTestAlive( jobExec2 );
 		for ( StepExecution stepExec : jobOperator.getStepExecutions( execId2 ) ) {

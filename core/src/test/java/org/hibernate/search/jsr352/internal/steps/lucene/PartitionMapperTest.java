@@ -74,7 +74,7 @@ public class PartitionMapperTest {
 			}
 		}
 
-		JobSEEnvironment.setEntityManagerFactory( emf );
+		JobSEEnvironment.getInstance().setEntityManagerFactory( emf );
 		final String isJavaSE = String.valueOf( true );
 		final String fetchSize = String.valueOf( 200 * 1000 );
 		final String hql = null;

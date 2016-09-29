@@ -111,7 +111,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 		try {
 			if ( Boolean.parseBoolean( isJavaSE ) ) {
-				emf = JobSEEnvironment.getEntityManagerFactory();
+				emf = JobSEEnvironment.getInstance().getEntityManagerFactory();
 			}
 			sessionFactory = emf.unwrap( SessionFactory.class );
 			session = sessionFactory.openSession();

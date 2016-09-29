@@ -75,7 +75,7 @@ public class EntityReaderTest {
 			}
 		}
 
-		JobSEEnvironment.setEntityManagerFactory( emf );
+		JobSEEnvironment.getInstance().setEntityManagerFactory( emf );
 		final String cacheable = String.valueOf( false );
 		final String entityName = String.valueOf( Company.class );
 		final String fetchSize = String.valueOf( 1000 );

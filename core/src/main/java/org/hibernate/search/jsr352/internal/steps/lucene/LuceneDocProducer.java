@@ -99,7 +99,7 @@ public class LuceneDocProducer implements ItemProcessor {
 		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
 		docBuilder = entityIndexBinding.getDocumentBuilder();
 		if ( Boolean.parseBoolean( isJavaSE ) ) {
-			emf = JobSEEnvironment.getEntityManagerFactory();
+			emf = JobSEEnvironment.getInstance().getEntityManagerFactory();
 		}
 	}
 

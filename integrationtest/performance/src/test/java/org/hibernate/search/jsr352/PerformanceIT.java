@@ -154,12 +154,11 @@ public class PerformanceIT {
 
 		// Start the job
 		JobOperator jobOperator = BatchRuntime.getJobOperator();
-		long executionId = new MassIndexer()
+		long executionId = BatchIndexingJob.forEntities( Company.class, Person.class )
 				.fetchSize( JOB_FETCH_SIZE )
 				.maxThreads( JOB_MAX_THREADS )
 				.rowsPerPartition( JOB_ROWS_PER_PARTITION )
 				.checkpointFreq( JOB_ITEM_COUNT )
-				.addRootEntities( Company.class, Person.class )
 				.start();
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
 		jobExecution = keepTestAlive( jobExecution );

@@ -40,6 +40,7 @@ import org.jboss.logging.Logger;
  * @author Mincong Huang
  */
 @Named
+@SuppressWarnings("deprecation")
 public class LuceneDocWriter extends AbstractItemWriter {
 
 	private static final Logger LOGGER = Logger.getLogger( LuceneDocWriter.class );
@@ -96,7 +97,7 @@ public class LuceneDocWriter extends AbstractItemWriter {
 
 		LOGGER.debug( "open(Seriliazable) called" );
 		if ( Boolean.parseBoolean( isJavaSE ) ) {
-			emf = JobSEEnvironment.getEntityManagerFactory();
+			emf = JobSEEnvironment.getInstance().getEntityManagerFactory();
 		}
 		em = emf.createEntityManager();
 

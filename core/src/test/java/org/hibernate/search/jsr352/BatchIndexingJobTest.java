@@ -17,6 +17,8 @@ import java.util.Properties;
 import javax.batch.operations.JobOperator;
 import javax.persistence.EntityManagerFactory;
 
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +31,7 @@ import org.mockito.runners.MockitoJUnitRunner;
  * @author Mincong Huang
  */
 @RunWith(MockitoJUnitRunner.class)
-public class MassIndexerTest {
+public class BatchIndexingJobTest {
 
 	private final boolean OPTIMIZE_AFTER_PURGE = true;
 	private final boolean OPTIMIZE_AT_END = true;
@@ -56,10 +58,8 @@ public class MassIndexerTest {
 	public void testJobParamsAll() throws IOException {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
-		long executionID = new MassIndexer().isJavaSE( true )
-				.jobOperator( mockedOperator )
-				.entityManagerFactory( mockedEMF )
-				.addRootEntities( String.class, Integer.class )
+		long executionID = BatchIndexingJob.forEntities( String.class, Integer.class )
+				.underJavaSE( mockedEMF, mockedOperator )
 				.fetchSize( FETCH_SIZE )
 				.maxResults( MAX_RESULTS )
 				.maxThreads( MAX_THREADS )
@@ -89,14 +89,11 @@ public class MassIndexerTest {
 	}
 
 	@Test
-	public void testAddRootEntity_notNull() throws IOException {
+	public void testForEntities_notNull() throws IOException {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
-		long executionID = new MassIndexer().isJavaSE( true )
-				.jobOperator( mockedOperator )
-				.entityManagerFactory( mockedEMF )
-				.addRootEntity( Integer.class )
-				.addRootEntity( String.class )
+		long executionID = BatchIndexingJob.forEntities( Integer.class, String.class )
+				.underJavaSE( mockedEMF, mockedOperator )
 				.start();
 		assertEquals( 1L, executionID );
 
@@ -107,21 +104,14 @@ public class MassIndexerTest {
 		entityNames.forEach( entityName -> entityName = entityName.trim() );
 		assertTrue( entityNames.contains( Integer.class.getName() ) );
 		assertTrue( entityNames.contains( String.class.getName() ) );
-	}
-
-	@Test(expected = NullPointerException.class)
-	public void testAddRootEntity_null() {
-		new MassIndexer().addRootEntity( null );
 	}
 
 	@Test
-	public void testAddRootEntities_notNull() throws IOException {
+	public void testForEntity_notNull() throws IOException {
 
 		ArgumentCaptor<Properties> propsCaptor = ArgumentCaptor.forClass( Properties.class );
-		long executionID = new MassIndexer().isJavaSE( true )
-				.jobOperator( mockedOperator )
-				.entityManagerFactory( mockedEMF )
-				.addRootEntities( String.class, Integer.class )
+		long executionID = BatchIndexingJob.forEntity( Integer.class )
+				.underJavaSE( mockedEMF, mockedOperator )
 				.start();
 		assertEquals( 1L, executionID );
 
@@ -131,16 +121,37 @@ public class MassIndexerTest {
 		List<String> entityNames = Arrays.asList( rootEntities.split( "," ) );
 		entityNames.forEach( entityName -> entityName = entityName.trim() );
 		assertTrue( entityNames.contains( Integer.class.getName() ) );
-		assertTrue( entityNames.contains( String.class.getName() ) );
 	}
 
 	@Test(expected = NullPointerException.class)
-	public void testAddRootEntities_null() {
-		new MassIndexer().addRootEntities( null );
+	public void testForEntity_null() {
+		BatchIndexingJob.forEntity( null );
 	}
 
 	@Test(expected = NullPointerException.class)
-	public void testHql_null() {
-		new MassIndexer().hql( null );
+	public void testForEntitiy_null() {
+		BatchIndexingJob.forEntities( null );
+	}
+
+	@Test(expected = NullPointerException.class)
+	public void testRestrictedBy_stringNull() {
+		BatchIndexingJob.forEntity( String.class ).restrictedBy( (String) null );
+	}
+
+	@Test(expected = NullPointerException.class)
+	public void testRestrictedBy_criterionNull() {
+		BatchIndexingJob.forEntity( String.class ).restrictedBy( (Criterion) null ); 
+	}
+
+	/**
+	 * A batch indexing job cannot have 2 types of restrictions in the same
+	 * time. Either JPQL / HQL or Criteria approach is used. Using both will
+	 * leads to illegal argument exception.
+	 */
+	@Test(expected = IllegalArgumentException.class)
+	public void testRestrictedBy_twoRestrictionTypes() {
+		BatchIndexingJob.forEntity( String.class )
+				.restrictedBy( "from string" )
+				.restrictedBy( Restrictions.isEmpty( "dummy" ) );
 	}
 }
