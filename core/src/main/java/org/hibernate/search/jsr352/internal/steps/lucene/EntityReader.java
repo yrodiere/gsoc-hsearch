@@ -86,8 +86,8 @@ public class EntityReader extends AbstractItemReader {
 	private String maxResults;
 
 	@Inject
-	@BatchProperty
-	private String partitionID;
+	@BatchProperty(name = "partitionID")
+	private String partitionIdStr;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
@@ -111,7 +111,7 @@ public class EntityReader extends AbstractItemReader {
 	 * @param hql
 	 * @param isJavaSE
 	 * @param maxResults
-	 * @param partitionID
+	 * @param partitionIdStr
 	 */
 	EntityReader(String cacheable,
 			String entityName,
@@ -119,14 +119,14 @@ public class EntityReader extends AbstractItemReader {
 			String hql,
 			String isJavaSE,
 			String maxResults,
-			String partitionID) {
+			String partitionIdStr) {
 		this.cacheable = cacheable;
 		this.entityName = entityName;
 		this.fetchSize = fetchSize;
 		this.hql = hql;
 		this.isJavaSE = isJavaSE;
 		this.maxResults = maxResults;
-		this.partitionID = partitionID;
+		this.partitionIdStr = partitionIdStr;
 	}
 
 	/**
@@ -192,10 +192,12 @@ public class EntityReader extends AbstractItemReader {
 	@Override
 	public void open(Serializable checkpointID) throws Exception {
 
+		final int partitionID = Integer.parseInt( partitionIdStr );
+
 		LOGGER.debugf( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		entityClazz = jobData.getIndexedType( entityName );
-		PartitionUnit unit = jobData.getPartitionUnit( Integer.parseInt( partitionID ) );
+		PartitionUnit unit = jobData.getPartitionUnit( partitionID );
 		LOGGER.debug( unit );
 
 		if ( Boolean.parseBoolean( isJavaSE ) ) {
@@ -214,14 +216,14 @@ public class EntityReader extends AbstractItemReader {
 			// restart, will it create duplicate index for the same entity,
 			// since there's no purge?
 			scroll = buildScrollUsingHQL( ss, hql );
-			stepData = new StepContextData( Integer.parseInt( partitionID ), entityName );
+			stepData = new StepContextData( partitionID, entityName );
 			stepData.setRestarted( false );
 		}
 		// Criteria approach
 		else {
 			scroll = buildScrollUsingCriteria( ss, unit, checkpointID, jobData );
 			if ( checkpointID == null ) {
-				stepData = new StepContextData( Integer.parseInt( partitionID ), entityName );
+				stepData = new StepContextData( partitionID, entityName );
 				stepData.setRestarted( false );
 			}
 			else {

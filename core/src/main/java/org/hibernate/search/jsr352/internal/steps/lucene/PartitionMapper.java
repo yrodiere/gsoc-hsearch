@@ -47,6 +47,10 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 	private static final Logger LOGGER = Logger.getLogger( PartitionMapper.class );
 
+	private enum Type {
+		HQL, CRITERIA, FULL_ENTITY
+	}
+
 	@Inject
 	private JobContext jobContext;
 
@@ -119,33 +123,30 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 			Set<Class<?>> rootEntities = jobData.getEntityClazzSet();
 			List<PartitionUnit> partitionUnits = new ArrayList<>();
+			Class<?> clazz;
 
-			// HQL approach
-			if ( hql != null && !hql.isEmpty() ) {
-
-				// TODO add partition plan here
-				Class<?> clazz = rootEntities.toArray( new Class<?>[1] )[0];
-				setMonitor( clazz, session );
-				int rpp = Integer.parseInt( rowsPerPartition );
-				partitionUnits.add( new PartitionUnit( clazz, rpp, null, null ) );
-			}
-			// Criteria approach
-			else if ( jobData.getCriterions() != null && jobData.getCriterions().size() > 0 ) {
-
-				// TODO add partition plan here
-				Class<?> clazz = rootEntities.toArray( new Class<?>[1] )[0];
-				setMonitor( clazz, session );
-				scroll = buildScrollableResults( ss, session, clazz, jobData.getCriterions() );
-				partitionUnits = buildPartitionUnitsFrom( scroll, clazz );
-
-			}
-			// Full indexing approach
-			else {
-				for ( Class<?> clazz : rootEntities ) {
+			switch ( typeOfSelection( hql, jobData.getCriterions() ) ) {
+				case HQL:
+					clazz = rootEntities.toArray( new Class<?>[1] )[0];
 					setMonitor( clazz, session );
-					scroll = buildScrollableResults( ss, session, clazz, null );
-					partitionUnits.addAll( buildPartitionUnitsFrom( scroll, clazz ) );
-				}
+					int rpp = Integer.parseInt( rowsPerPartition );
+					partitionUnits.add( new PartitionUnit( clazz, rpp, null, null ) );
+					break;
+
+				case CRITERIA:
+					clazz = rootEntities.toArray( new Class<?>[1] )[0];
+					setMonitor( clazz, session );
+					scroll = buildScrollableResults( ss, session, clazz, jobData.getCriterions() );
+					partitionUnits = buildPartitionUnitsFrom( scroll, clazz );
+					break;
+
+				case FULL_ENTITY:
+					for ( Class<?> clz : rootEntities ) {
+						setMonitor( clz, session );
+						scroll = buildScrollableResults( ss, session, clz, null );
+						partitionUnits.addAll( buildPartitionUnitsFrom( scroll, clz ) );
+					}
+					break;
 			}
 			jobData.setPartitionUnits( partitionUnits );
 
@@ -169,7 +170,9 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		}
 		finally {
 			try {
-				scroll.close();
+				if ( scroll != null ) {
+					scroll.close();
+				}
 			}
 			catch (Exception e) {
 				LOGGER.error( e );
@@ -186,6 +189,18 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			catch (Exception e) {
 				LOGGER.error( e );
 			}
+		}
+	}
+
+	private Type typeOfSelection(String hql, Set<Criterion> criterions) {
+		if ( hql != null && !hql.isEmpty() ) {
+			return Type.HQL;
+		}
+		else if ( criterions != null && criterions.size() > 0 ) {
+			return Type.CRITERIA;
+		}
+		else {
+			return Type.FULL_ENTITY;
 		}
 	}
 

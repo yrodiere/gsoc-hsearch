@@ -9,6 +9,8 @@ package org.hibernate.search.jsr352;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,19 +18,25 @@ import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.JobExecution;
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
-import org.hibernate.search.jsr352.test.entity.Company;
-import org.hibernate.search.jsr352.test.entity.CompanyManager;
-import org.hibernate.search.jsr352.test.entity.Person;
-import org.hibernate.search.jsr352.test.entity.PersonManager;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.jpa.Search;
+import org.hibernate.search.jsr352.test.Message;
+import org.hibernate.search.jsr352.test.MessageManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.logging.Logger;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
 /**
  * This integration test (IT) aims to test the restartability of the job
@@ -39,56 +47,85 @@ import org.junit.runner.RunWith;
  * @author Mincong Huang
  */
 @RunWith(Arquillian.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RestartIT {
 
 	private static final Logger LOGGER = Logger.getLogger( RestartIT.class );
-	private static final boolean JOB_PURGE_AT_START = true;
-	private static final int JOB_FETCH_SIZE = 100 * 1000;
-	private static final int JOB_MAX_RESULTS = 200 * 1000;
-	private static final int JOB_MAX_THREADS = 3;
-	private static final int JOB_ROWS_PER_PARTITION = 1000;
-	private static final int DB_COMP_ROWS = 2500;
-	private static final int DB_PERS_ROWS = 2600;
+	private static final SimpleDateFormat SDF = new SimpleDateFormat( "dd/MM/yyyy" );
+	private static final int DB_DAY1_ROWS = 2000;
+	private static final int DB_DAY2_ROWS = 3000;
 	private static final int MAX_TRIES = 40;
 	private static final int THREAD_SLEEP = 1000;
 
 	@Inject
-	private CompanyManager companyManager;
+	private MessageManager messageManager;
 
-	@Inject
-	private PersonManager personManager;
+	@PersistenceUnit(unitName = "h2")
+	private EntityManagerFactory emf;
 
 	@Deployment
 	public static WebArchive createDeployment() {
-		WebArchive war = ShrinkWrap.create( WebArchive.class, RestartIT.class.getSimpleName() + ".war"  )
+		WebArchive war = ShrinkWrap
+				.create( WebArchive.class, RestartIT.class.getSimpleName() + ".war" )
 				.addAsResource( "META-INF/persistence.xml" )
 				.addAsResource( "META-INF/batch-jobs/make-deployment-as-batch-app.xml" ) // WFLY-7000
 				.addAsWebInfResource( "jboss-deployment-structure.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" )
-				.addPackage( Company.class.getPackage() );
+				.addPackage( Message.class.getPackage() );
 		return war;
 	}
 
-	@Test
-	public void testJob() throws InterruptedException, IOException {
+	public void insertData() throws ParseException {
+		List<Message> messages = new ArrayList<>( DB_DAY1_ROWS + DB_DAY2_ROWS );
+		for ( int i = 0; i < DB_DAY1_ROWS; i++ ) {
+			messages.add( new Message( String.valueOf( i ), SDF.parse( "31/08/2016" ) ) );
+		}
+		for ( int i = 0; i < DB_DAY2_ROWS; i++ ) {
+			messages.add( new Message( String.valueOf( i ), SDF.parse( "01/09/2016" ) ) );
+		}
+		messageManager.persist( messages );
+	}
 
-		final String google = "google";
-		final String googleCEO = "Sundar";
+	@Test
+	public void testJob() throws InterruptedException, IOException, ParseException {
 
 		insertData();
-		List<Company> googles = companyManager.findCompanyByName( google );
-		List<Person> googleCEOs = personManager.findPerson( googleCEO );
-		assertEquals( 0, googles.size() );
-		assertEquals( 0, googleCEOs.size() );
 
-		// Start the job. This is the 1st execution.
-		// Keep the execution alive and wait Byteman to stop the job
-		long execId1 = BatchIndexingJob.forEntities( Company.class, Person.class )
-				.fetchSize( JOB_FETCH_SIZE )
-				.maxResults( JOB_MAX_RESULTS )
-				.maxThreads( JOB_MAX_THREADS )
-				.purgeAtStart( JOB_PURGE_AT_START )
-				.rowsPerPartition( JOB_ROWS_PER_PARTITION )
+		assertEquals( 0, messageManager.findMessagesFor( SDF.parse( "31/08/2016" ) ).size() );
+		assertEquals( 0, messageManager.findMessagesFor( SDF.parse( "01/09/2016" ) ).size() );
+
+		// The 1st execution. Keep it alive and wait Byteman to stop it
+		long execId1 = BatchIndexingJob.forEntity( Message.class ).start();
+		JobExecution jobExec1 = BatchRuntime.getJobOperator().getJobExecution( execId1 );
+		jobExec1 = keepTestAlive( jobExec1 );
+
+		// Restart the job. This is the 2nd execution.
+		long execId2 = BatchIndexingJob.restart( execId1 );
+		JobExecution jobExec2 = BatchRuntime.getJobOperator().getJobExecution( execId2 );
+		jobExec2 = keepTestAlive( jobExec2 );
+
+		assertEquals( BatchStatus.COMPLETED, jobExec2.getBatchStatus() );
+		assertEquals( DB_DAY1_ROWS, messageManager.findMessagesFor( SDF.parse( "31/08/2016" ) ).size() );
+		assertEquals( DB_DAY2_ROWS, messageManager.findMessagesFor( SDF.parse( "01/09/2016" ) ).size() );
+	}
+
+	@Test
+	public void testJob_usingCriteria() throws InterruptedException, IOException, ParseException {
+
+		// purge all before start
+		// TODO Can the creation of a new EM and FTEM be avoided?
+		EntityManager em = emf.createEntityManager();
+		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
+		ftem.purgeAll( Message.class );
+		ftem.flushToIndexes();
+		em.close();
+
+		assertEquals( 0, messageManager.findMessagesFor( SDF.parse( "31/08/2016" ) ).size() );
+		assertEquals( 0, messageManager.findMessagesFor( SDF.parse( "01/09/2016" ) ).size() );
+
+		// The 1st execution. Keep it alive and wait Byteman to stop it
+		long execId1 = BatchIndexingJob.forEntity( Message.class )
+				.restrictedBy( Restrictions.ge( "date", SDF.parse( "01/09/2016" ) ) )
 				.start();
 		JobExecution jobExec1 = BatchRuntime.getJobOperator().getJobExecution( execId1 );
 		jobExec1 = keepTestAlive( jobExec1 );
@@ -97,42 +134,35 @@ public class RestartIT {
 		long execId2 = BatchIndexingJob.restart( execId1 );
 		JobExecution jobExec2 = BatchRuntime.getJobOperator().getJobExecution( execId2 );
 		jobExec2 = keepTestAlive( jobExec2 );
+
 		assertEquals( BatchStatus.COMPLETED, jobExec2.getBatchStatus() );
-
-		googles = companyManager.findCompanyByName( google );
-		googleCEOs = personManager.findPerson( googleCEO );
-		assertEquals( DB_COMP_ROWS / 5, googles.size() );
-		assertEquals( DB_PERS_ROWS / 5, googleCEOs.size() );
-
-		// TODO this method should not belong to company manager
-		// but how to create an all context query ?
-		int totalDocs = companyManager.findAll().size();
-		assertEquals( DB_COMP_ROWS + DB_PERS_ROWS, totalDocs );
+		assertEquals( 0, messageManager.findMessagesFor( SDF.parse( "31/08/2016" ) ).size() );
+		assertEquals( DB_DAY2_ROWS, messageManager.findMessagesFor( SDF.parse( "01/09/2016" ) ).size() );
 	}
 
-	private void insertData() {
-		final String[][] str = new String[][]{
-				{ "Google", "Sundar", "Pichai" },
-				{ "Red Hat", "James", "M. Whitehurst" },
-				{ "Microsoft", "Satya", "Nadella" },
-				{ "Facebook", "Mark", "Zuckerberg" },
-				{ "Amazon", "Jeff", "Bezos" }
-		};
+	@Test
+	public void testJob_usingHQL() throws InterruptedException, IOException, ParseException {
 
-		List<Company> companies = new ArrayList<>( DB_COMP_ROWS );
-		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
-			String companyName = str[i % 5][0];
-			companies.add( new Company( companyName ) );
-		}
-		companyManager.persist( companies );
+		// purge all before start
+		// TODO Can the creation of a new EM and FTEM be avoided?
+		EntityManager em = emf.createEntityManager();
+		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
+		ftem.purgeAll( Message.class );
+		ftem.flushToIndexes();
+		em.close();
 
-		List<Person> people = new ArrayList<>( DB_PERS_ROWS );
-		for ( int i = 0; i < DB_PERS_ROWS; i++ ) {
-			String firstName = str[i % 5][1];
-			String lastName = str[i % 5][2];
-			people.add( new Person( i, firstName, lastName ) );
-		}
-		personManager.persist( people );
+		assertEquals( 0, messageManager.findMessagesFor( SDF.parse( "31/08/2016" ) ).size() );
+		assertEquals( 0, messageManager.findMessagesFor( SDF.parse( "01/09/2016" ) ).size() );
+
+		long execId1 = BatchIndexingJob.forEntity( Message.class )
+				.restrictedBy( "select m from Message m where day( m.date ) = 31" )
+				.start();
+		JobExecution jobExec1 = BatchRuntime.getJobOperator().getJobExecution( execId1 );
+		jobExec1 = keepTestAlive( jobExec1 );
+
+		assertEquals( BatchStatus.COMPLETED, jobExec1.getBatchStatus() );
+		assertEquals( DB_DAY1_ROWS, messageManager.findMessagesFor( SDF.parse( "31/08/2016" ) ).size() );
+		assertEquals( 0, messageManager.findMessagesFor( SDF.parse( "01/09/2016" ) ).size() );
 	}
 
 	private JobExecution keepTestAlive(JobExecution jobExecution)
@@ -142,7 +172,7 @@ public class RestartIT {
 		while ( !jobExecution.getBatchStatus().equals( BatchStatus.COMPLETED )
 				&& !jobExecution.getBatchStatus().equals( BatchStatus.STOPPED )
 				&& !jobExecution.getBatchStatus().equals( BatchStatus.FAILED )
-				&& tries < MAX_TRIES) {
+				&& tries < MAX_TRIES ) {
 
 			long executionId = jobExecution.getExecutionId();
 			LOGGER.infof(
