@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.criterion.Criterion;
+import org.hibernate.search.jsr352.internal.steps.lucene.StepProgress;
 import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 
 /**
@@ -35,10 +36,9 @@ public class JobContextData implements Serializable {
 	private Map<String, Class<?>> entityClazzMap;
 
 	/**
-	 * The map of key value pair (string, long), designed for storage of name
-	 * and number of rows to index of all root entities.
+	 * Indexing progress for the step "produceLuceneDoc".
 	 */
-	private Map<String, Long> entityCountMap = new HashMap<>();
+	private StepProgress indexingProgress;
 
 	/**
 	 * The total number of entities to index over all the entity types.
@@ -53,6 +53,7 @@ public class JobContextData implements Serializable {
 	private Set<Criterion> criterions;
 
 	public JobContextData() {
+		indexingProgress = new StepProgress();
 	}
 
 	public void setEntityClazzSet(Set<Class<?>> entityClazzes) {
@@ -112,11 +113,11 @@ public class JobContextData implements Serializable {
 	}
 
 	public long getRowsToIndex(String entityName) {
-		return entityCountMap.get( entityName );
+		return indexingProgress.getRowsToIndex( entityName );
 	}
 
 	public void setRowsToIndex(String entityName, long rowsToIndex) {
-		entityCountMap.put( entityName, rowsToIndex );
+		indexingProgress.setRowsToIndex( entityName, rowsToIndex );
 	}
 
 	public void setCriterions(Set<Criterion> criterions) {
@@ -125,8 +126,8 @@ public class JobContextData implements Serializable {
 
 	@Override
 	public String toString() {
-		return "JobContextData [entityClazzMap=" + entityClazzMap + ", entityCountMap="
-				+ entityCountMap + ", totalEntityToIndex=" + totalEntityToIndex
+		return "JobContextData [entityClazzMap=" + entityClazzMap + ", indexingProgress="
+				+ indexingProgress + ", totalEntityToIndex=" + totalEntityToIndex
 				+ ", partitionUnits=" + partitionUnits + "]";
 	}
 }
