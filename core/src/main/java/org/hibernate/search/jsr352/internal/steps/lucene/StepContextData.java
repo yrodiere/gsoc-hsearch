@@ -52,8 +52,4 @@ public class StepContextData implements Serializable {
 	public void setSession(Session session) {
 		this.session = session;
 	}
-
-	public void setRestarted(boolean isRestarted) {
-		partitionProgress.setRestarted( isRestarted );
-	}
 }

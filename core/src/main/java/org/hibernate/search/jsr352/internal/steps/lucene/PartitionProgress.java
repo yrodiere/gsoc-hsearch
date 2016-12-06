@@ -18,7 +18,6 @@ public class PartitionProgress implements Serializable {
 	private String entityName;
 	private int partitionID;
 	private int increment;
-	private boolean isRestarted = false;
 
 	public PartitionProgress(int partitionID, String entityName) {
 		this.partitionID = partitionID;
@@ -54,14 +53,6 @@ public class PartitionProgress implements Serializable {
 
 	public void setPartitionID(int partitionID) {
 		this.partitionID = partitionID;
-	}
-
-	public boolean isRestarted() {
-		return isRestarted;
-	}
-
-	public void setRestarted(boolean isRestarted) {
-		this.isRestarted = isRestarted;
 	}
 
 	public long getWorkDone() {

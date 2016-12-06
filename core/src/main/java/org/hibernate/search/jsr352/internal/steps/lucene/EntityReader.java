@@ -217,18 +217,15 @@ public class EntityReader extends AbstractItemReader {
 			// since there's no purge?
 			scroll = buildScrollUsingHQL( ss, hql );
 			stepData = new StepContextData( partitionID, entityName );
-			stepData.setRestarted( false );
 		}
 		// Criteria approach
 		else {
 			scroll = buildScrollUsingCriteria( ss, unit, checkpointID, jobData );
 			if ( checkpointID == null ) {
 				stepData = new StepContextData( partitionID, entityName );
-				stepData.setRestarted( false );
 			}
 			else {
 				stepData = (StepContextData) stepContext.getPersistentUserData();
-				stepData.setRestarted( true );
 			}
 		}
 

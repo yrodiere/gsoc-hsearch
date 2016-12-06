@@ -99,7 +99,7 @@ public class EntityReaderTest {
 
 		Object upper = null;
 		Object lower = null;
-		PartitionUnit partitionUnit = new PartitionUnit( Company.class, COMPANIES.length, lower, upper );
+		PartitionUnit partitionUnit = new PartitionUnit( Company.class, lower, upper );
 
 		// mock job context
 		JobContextData jobData = new JobContextData();

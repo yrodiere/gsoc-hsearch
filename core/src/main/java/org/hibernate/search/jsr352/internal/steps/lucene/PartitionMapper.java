@@ -129,8 +129,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				case HQL:
 					clazz = rootEntities.toArray( new Class<?>[1] )[0];
 					setMonitor( clazz, session );
-					int rpp = Integer.parseInt( rowsPerPartition );
-					partitionUnits.add( new PartitionUnit( clazz, rpp, null, null ) );
+					partitionUnits.add( new PartitionUnit( clazz, null, null ) );
 					break;
 
 				case CRITERIA:
@@ -213,12 +212,12 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		while ( scroll.scroll( rowsPerPartition ) ) {
 			lowerID = upperID;
 			upperID = scroll.get( 0 );
-			partitionUnits.add( new PartitionUnit( clazz, rowsPerPartition, lowerID, upperID ) );
+			partitionUnits.add( new PartitionUnit( clazz, lowerID, upperID ) );
 		}
 		// add an additional partition on the tail
 		lowerID = upperID;
 		upperID = null;
-		partitionUnits.add( new PartitionUnit( clazz, rowsPerPartition, lowerID, upperID ) );
+		partitionUnits.add( new PartitionUnit( clazz, lowerID, upperID ) );
 		return partitionUnits;
 	}
 
