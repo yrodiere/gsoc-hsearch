@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.criterion.Criterion;
+import org.hibernate.search.jsr352.internal.steps.lucene.PartitionProgress;
 import org.hibernate.search.jsr352.internal.steps.lucene.StepProgress;
 import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 
@@ -38,7 +39,7 @@ public class JobContextData implements Serializable {
 	/**
 	 * Indexing progress for the step "produceLuceneDoc".
 	 */
-	private StepProgress indexingProgress;
+	private StepProgress stepProgress;
 
 	/**
 	 * The total number of entities to index over all the entity types.
@@ -53,7 +54,7 @@ public class JobContextData implements Serializable {
 	private Set<Criterion> criterions;
 
 	public JobContextData() {
-		indexingProgress = new StepProgress();
+		stepProgress = new StepProgress();
 	}
 
 	public void setEntityClazzSet(Set<Class<?>> entityClazzes) {
@@ -100,7 +101,7 @@ public class JobContextData implements Serializable {
 	 *
 	 * @param increment the entity number to index for one entity type
 	 */
-	public void incrementTotalEntity( long increment ) {
+	public void incrementTotalEntity(long increment) {
 		totalEntityToIndex += increment;
 	}
 
@@ -113,11 +114,31 @@ public class JobContextData implements Serializable {
 	}
 
 	public long getRowsToIndex(String entityName) {
-		return indexingProgress.getRowsToIndex( entityName );
+		return stepProgress.getRowsToIndex( entityName );
 	}
 
 	public void setRowsToIndex(String entityName, long rowsToIndex) {
-		indexingProgress.setRowsToIndex( entityName, rowsToIndex );
+		stepProgress.setRowsToIndex( entityName, rowsToIndex );
+	}
+
+	/**
+	 * Update the step-level indexing progress using the partition-level
+	 * indexing progress. (step-level is higher, one step contains multiple
+	 * partitions)
+	 *
+	 * @param pp partition-level indexing progress
+	 */
+	public void updateStepProgress(PartitionProgress pp) {
+		stepProgress.updateProgress( pp );
+	}
+
+	/**
+	 * Get progresses of each entity at step-level.
+	 *
+	 * @return an iterable results in string format.
+	 */
+	public Iterable<String> getStepProgresses() {
+		return stepProgress.getProgresses();
 	}
 
 	public void setCriterions(Set<Criterion> criterions) {
@@ -126,8 +147,8 @@ public class JobContextData implements Serializable {
 
 	@Override
 	public String toString() {
-		return "JobContextData [entityClazzMap=" + entityClazzMap + ", indexingProgress="
-				+ indexingProgress + ", totalEntityToIndex=" + totalEntityToIndex
+		return "JobContextData [entityClazzMap=" + entityClazzMap + ", stepProgress="
+				+ stepProgress + ", totalEntityToIndex=" + totalEntityToIndex
 				+ ", partitionUnits=" + partitionUnits + "]";
 	}
 }

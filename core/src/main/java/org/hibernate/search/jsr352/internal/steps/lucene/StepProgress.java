@@ -8,6 +8,8 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,8 +23,18 @@ import java.util.Map;
 public class StepProgress implements Serializable {
 
 	private static final long serialVersionUID = 7808926033388850340L;
-//	private Map<Integer, Long> partitionProgress;
-//	private Map<Integer, Long> partitionTotal;
+
+	/**
+	 * A map of the total number of rows having already been indexed across all
+	 * the partitions. Key: the partition id; Value: the number of rows indexed.
+	 */
+	private Map<Integer, Long> partitionProgress;
+
+	/**
+	 * A map of the total number of rows to index across all the partitions.
+	 * Key: the partition id; Value: the number of rows to index.
+	 */
+	private Map<Integer, Long> partitionTotal;
 
 	/**
 	 * A map of the total number of rows having already been indexed across all
@@ -38,15 +50,22 @@ public class StepProgress implements Serializable {
 	private Map<String, Long> entityTotal;
 
 	public StepProgress() {
-//		partitionProgress = new HashMap<>();
-//		partitionTotal = new HashMap<>();
+		partitionProgress = new HashMap<>();
+		partitionTotal = new HashMap<>();
 		entityProgress = new HashMap<>();
 		entityTotal = new HashMap<>();
 	}
 
-	public void increment(String entityName, int pid, long increment) {
-		increment( entityName, increment );
-//		increment( pid, increment );
+	/**
+	 * Update the step-level indexing progress using the partition-level
+	 * indexing progress. (step-level is higher, one step contains multiple
+	 * partitions)
+	 *
+	 * @param pp partition-level indexing progress
+	 */
+	public void updateProgress(PartitionProgress pp) {
+		increment( pp.getEntityName(), pp.getIncrement() );
+		increment( pp.getPartitionID(), pp.getIncrement() );
 	}
 
 	private void increment(String entityName, long increment) {
@@ -54,28 +73,28 @@ public class StepProgress implements Serializable {
 		entityProgress.put( entityName, prevDone + increment );
 	}
 
-//	private void increment(int pid, long increment) {
-//		long prevDone = partitionProgress.getOrDefault( pid, 0L );
-//		partitionProgress.put( pid, prevDone + increment );
-//	}
+	private void increment(int pid, long increment) {
+		long prevDone = partitionProgress.getOrDefault( pid, 0L );
+		partitionProgress.put( pid, prevDone + increment );
+	}
 
-//	/**
-//	 * Get the progress of a given partition ID.
-//	 * 
-//	 * @param pid partition ID
-//	 * @return a progress value varies between {@literal [0.0, 1.0]}.
-//	 */
-//	public double getProgress(int pid) {
-//		if ( !partitionProgress.containsKey( pid )
-//				|| !partitionTotal.containsKey( pid ) ) {
-//			throw new NullPointerException( "PartitionId=" + pid + " not found." );
-//		}
-//		return partitionProgress.get( pid ) * 1.0 / partitionTotal.get( pid );
-//	}
+	/**
+	 * Get the progress of a given partition ID.
+	 *
+	 * @param pid partition ID
+	 * @return a progress value varies between {@literal [0.0, 1.0]}.
+	 */
+	public double getProgress(int pid) {
+		if ( !partitionProgress.containsKey( pid )
+				|| !partitionTotal.containsKey( pid ) ) {
+			throw new NullPointerException( "PartitionId=" + pid + " not found." );
+		}
+		return partitionProgress.get( pid ) * 1.0 / partitionTotal.get( pid );
+	}
 
 	/**
 	 * Get the progress of a given entity.
-	 * 
+	 *
 	 * @param entityName the name of entity
 	 * @return a progress value varies between {@literal [0.0, 1.0]}.
 	 */
@@ -87,11 +106,30 @@ public class StepProgress implements Serializable {
 		return entityProgress.get( entityName ) * 1.0 / entityTotal.get( entityName );
 	}
 
+	/**
+	 * Get progresses of each entity at step-level.
+	 *
+	 * @return an iterable results in string format.
+	 */
+	public Iterable<String> getProgresses() {
+		List<String> results = new LinkedList<>();
+		for ( String entity : entityTotal.keySet() ) {
+			String msg = String.format( "%s: %d/%d works processed (%.2f%%).",
+					entity,
+					entityProgress.get( entity ),
+					entityTotal.get( entity ),
+					entityProgress.get( entity ) * 100F / entityTotal.get( entity ) );
+			results.add( msg );
+		}
+		return results;
+	}
+
 	public long getRowsToIndex(String entityName) {
 		return entityTotal.get( entityName );
 	}
 
 	public void setRowsToIndex(String entityName, long rowsToIndex) {
+		entityProgress.put( entityName, 0L );
 		entityTotal.put( entityName, rowsToIndex );
 	}
 }

@@ -17,6 +17,7 @@ public class PartitionProgress implements Serializable {
 	private long workDone = 0L;
 	private String entityName;
 	private int partitionID;
+	private int increment;
 	private boolean isRestarted = false;
 
 	public PartitionProgress(int partitionID, String entityName) {
@@ -25,13 +26,18 @@ public class PartitionProgress implements Serializable {
 	}
 
 	/**
-	 * documentsAdded is an elementary count. It records
-	 * how many items have been written in the current chunk. This value is
-	 * overwritten be the item writer at the end of each
+	 * documentsAdded is an elementary count. It records how many items have
+	 * been written in the current chunk. This value is overwritten be the item
+	 * writer at the end of each
 	 * {@link org.hibernate.search.jsr352.internal.steps.lucene.ItemWriter#writeItems}
 	 */
-	public void documentsAdded(long increment) {
+	public void documentsAdded(int increment) {
+		this.increment = increment;
 		this.workDone += increment;
+	}
+
+	public int getIncrement() {
+		return increment;
 	}
 
 	public String getEntityName() {
@@ -53,7 +59,7 @@ public class PartitionProgress implements Serializable {
 	public boolean isRestarted() {
 		return isRestarted;
 	}
-	
+
 	public void setRestarted(boolean isRestarted) {
 		this.isRestarted = isRestarted;
 	}

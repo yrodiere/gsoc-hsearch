@@ -37,7 +37,7 @@ public class StepContextData implements Serializable {
 		partitionProgress = new PartitionProgress( partitionID, entityName );
 	}
 
-	public void documentAdded(long increment) {
+	public void documentAdded(int increment) {
 		partitionProgress.documentsAdded( increment );
 	}
 
