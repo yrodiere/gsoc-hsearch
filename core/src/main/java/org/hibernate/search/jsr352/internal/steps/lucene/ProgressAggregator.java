@@ -9,11 +9,10 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 import java.io.Serializable;
 
 import javax.batch.api.partition.AbstractPartitionAnalyzer;
-import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
 /**
@@ -26,11 +25,11 @@ import org.jboss.logging.Logger;
 public class ProgressAggregator extends AbstractPartitionAnalyzer {
 
 	private static final Logger LOGGER = Logger.getLogger( ProgressAggregator.class );
-	private final JobContext jobContext;
+	private final StepContext stepContext;
 
 	@Inject
-	public ProgressAggregator(JobContext jobContext) {
-		this.jobContext = jobContext;
+	public ProgressAggregator(StepContext stepContext) {
+		this.stepContext = stepContext;
 	}
 
 	/**
@@ -46,14 +45,14 @@ public class ProgressAggregator extends AbstractPartitionAnalyzer {
 	@Override
 	public void analyzeCollectorData(Serializable fromCollector) throws Exception {
 
+		// update step-level progress using partition-level progress
 		PartitionProgress partitionProgress = (PartitionProgress) fromCollector;
+		StepProgress stepProgress = (StepProgress) stepContext.getTransientUserData();
+		stepProgress.updateProgress( partitionProgress );
 
-		// update step-level progress
-		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		jobData.updateStepProgress( partitionProgress );
-
+		// logging
 		StringBuilder sb = new StringBuilder( System.lineSeparator() );
-		for ( String msg : jobData.getStepProgresses() ) {
+		for ( String msg : stepProgress.getProgresses() ) {
 			sb.append( System.lineSeparator() ).append( "\t" ).append( msg );
 		}
 		sb.append( System.lineSeparator() );

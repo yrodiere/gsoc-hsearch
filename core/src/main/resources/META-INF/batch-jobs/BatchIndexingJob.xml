@@ -28,6 +28,13 @@
     </step>
 
     <step id="produceLuceneDoc" next="afterChunk">
+        <listeners>
+            <listener ref="stepProgressSetupListener">
+                <properties>
+                    <property name="isJavaSE" value="#{jobParameters['isJavaSE']}" />
+                </properties>
+            </listener>
+        </listeners>
         <chunk checkpoint-policy="custom">
             <reader ref="entityReader">
                 <properties>

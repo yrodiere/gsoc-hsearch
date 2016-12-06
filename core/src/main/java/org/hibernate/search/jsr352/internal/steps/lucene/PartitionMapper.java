@@ -128,20 +128,17 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			switch ( typeOfSelection( hql, jobData.getCriterions() ) ) {
 				case HQL:
 					clazz = rootEntities.toArray( new Class<?>[1] )[0];
-					setMonitor( clazz, session );
 					partitionUnits.add( new PartitionUnit( clazz, null, null ) );
 					break;
 
 				case CRITERIA:
 					clazz = rootEntities.toArray( new Class<?>[1] )[0];
-					setMonitor( clazz, session );
 					scroll = buildScrollableResults( ss, session, clazz, jobData.getCriterions() );
 					partitionUnits = buildPartitionUnitsFrom( scroll, clazz );
 					break;
 
 				case FULL_ENTITY:
 					for ( Class<?> clz : rootEntities ) {
-						setMonitor( clz, session );
 						scroll = buildScrollableResults( ss, session, clz, null );
 						partitionUnits.addAll( buildPartitionUnitsFrom( scroll, clz ) );
 					}
@@ -235,16 +232,5 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 				.setReadOnly( true )
 				.scroll( ScrollMode.FORWARD_ONLY );
 		return scroll;
-	}
-
-	private void setMonitor(Class<?> clazz, Session session) {
-		long rowCount = (long) session.createCriteria( clazz )
-				.setProjection( Projections.rowCount() )
-				.setCacheable( false )
-				.uniqueResult();
-		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		LOGGER.infof( "%d rows to index for entity type %s", rowCount, clazz.toString() );
-		jobData.setRowsToIndex( clazz.toString(), rowCount );
-		jobData.incrementTotalEntity( rowCount );
 	}
 }

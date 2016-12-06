@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.criterion.Criterion;
-import org.hibernate.search.jsr352.internal.steps.lucene.PartitionProgress;
-import org.hibernate.search.jsr352.internal.steps.lucene.StepProgress;
 import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 
 /**
@@ -37,11 +35,6 @@ public class JobContextData implements Serializable {
 	private Map<String, Class<?>> entityClazzMap;
 
 	/**
-	 * Indexing progress for the step "produceLuceneDoc".
-	 */
-	private StepProgress stepProgress;
-
-	/**
 	 * The total number of entities to index over all the entity types.
 	 */
 	private long totalEntityToIndex;
@@ -52,10 +45,6 @@ public class JobContextData implements Serializable {
 	private List<PartitionUnit> partitionUnits;
 
 	private Set<Criterion> criterions;
-
-	public JobContextData() {
-		stepProgress = new StepProgress();
-	}
 
 	public void setEntityClazzSet(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
@@ -113,42 +102,14 @@ public class JobContextData implements Serializable {
 		return partitionUnits.get( partitionID );
 	}
 
-	public long getRowsToIndex(String entityName) {
-		return stepProgress.getRowsToIndex( entityName );
-	}
-
-	public void setRowsToIndex(String entityName, long rowsToIndex) {
-		stepProgress.setRowsToIndex( entityName, rowsToIndex );
-	}
-
-	/**
-	 * Update the step-level indexing progress using the partition-level
-	 * indexing progress. (step-level is higher, one step contains multiple
-	 * partitions)
-	 *
-	 * @param pp partition-level indexing progress
-	 */
-	public void updateStepProgress(PartitionProgress pp) {
-		stepProgress.updateProgress( pp );
-	}
-
-	/**
-	 * Get progresses of each entity at step-level.
-	 *
-	 * @return an iterable results in string format.
-	 */
-	public Iterable<String> getStepProgresses() {
-		return stepProgress.getProgresses();
-	}
-
 	public void setCriterions(Set<Criterion> criterions) {
 		this.criterions = criterions;
 	}
 
 	@Override
 	public String toString() {
-		return "JobContextData [entityClazzMap=" + entityClazzMap + ", stepProgress="
-				+ stepProgress + ", totalEntityToIndex=" + totalEntityToIndex
-				+ ", partitionUnits=" + partitionUnits + "]";
+		return "JobContextData [entityClazzMap=" + entityClazzMap + ", totalEntityToIndex="
+				+ totalEntityToIndex + ", partitionUnits=" + partitionUnits + ", criterions="
+				+ criterions + "]";
 	}
 }
