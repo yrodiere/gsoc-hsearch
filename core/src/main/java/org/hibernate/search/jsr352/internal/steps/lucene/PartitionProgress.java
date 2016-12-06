@@ -17,7 +17,6 @@ public class PartitionProgress implements Serializable {
 	private long workDone = 0L;
 	private String entityName;
 	private int partitionID;
-	private int increment;
 
 	public PartitionProgress(int partitionID, String entityName) {
 		this.partitionID = partitionID;
@@ -31,12 +30,7 @@ public class PartitionProgress implements Serializable {
 	 * {@link org.hibernate.search.jsr352.internal.steps.lucene.ItemWriter#writeItems}
 	 */
 	public void documentsAdded(int increment) {
-		this.increment = increment;
 		this.workDone += increment;
-	}
-
-	public int getIncrement() {
-		return increment;
 	}
 
 	public String getEntityName() {
