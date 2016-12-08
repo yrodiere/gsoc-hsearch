@@ -6,8 +6,11 @@
  */
 package org.hibernate.search.jsr352.internal;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.batch.api.BatchProperty;
 import javax.batch.api.listener.AbstractJobListener;
@@ -65,29 +68,19 @@ public class JobContextSetupListener extends AbstractJobListener {
 				emf = JobSEEnvironment.getInstance().getEntityManagerFactory();
 			}
 			em = emf.createEntityManager();
-			String[] entityNamesToIndex = rootEntities.split( "," );
-			Set<Class<?>> entityClazzesToIndex = new HashSet<>();
-			Set<Class<?>> indexedTypes = Search
+			List<String> entityNamesToIndex = Arrays.asList( rootEntities.split( "," ) );
+			Set<Class<?>> entityTypesToIndex = Search
 					.getFullTextEntityManager( em )
 					.getSearchFactory()
-					.getIndexedTypes();
-
-			// TODO move to JobContextData directly
-			// check the root entities selected do exist
-			// in full-text entity session
-			for ( String entityName : entityNamesToIndex ) {
-				for ( Class<?> indexedType : indexedTypes ) {
-					if ( indexedType.getName().equals( entityName.trim() ) ) {
-						entityClazzesToIndex.add( indexedType );
-						continue;
-					}
-				}
-			}
+					.getIndexedTypes()
+					.stream()
+					.filter( clz -> entityNamesToIndex.contains( clz.getName() ) )
+					.collect( Collectors.toCollection( HashSet::new ) );
 
 			JobContextData jobContextData = MassIndexerUtil
 					.deserializeJobContextData( serializedJobContextData );
 			LOGGER.infof( "%d criterions found.", jobContextData.getCriterions().size() );
-			jobContextData.setEntityClazzSet( entityClazzesToIndex );
+			jobContextData.setEntityClazzSet( entityTypesToIndex );
 			jobContext.setTransientUserData( jobContextData );
 		}
 		finally {
