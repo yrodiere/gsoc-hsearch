@@ -60,7 +60,7 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 			session = emf.unwrap( SessionFactory.class ).openSession();
 			fts = Search.getFullTextSession( session );
 			JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-			jobData.getEntityTypeSet().forEach( clz -> fts.purgeAll( clz ) );
+			jobData.getEntityTypes().forEach( clz -> fts.purgeAll( clz ) );
 
 			if ( Boolean.parseBoolean( this.optimizeAfterPurge ) ) {
 				LOGGER.info( "optimizing all entities ..." );

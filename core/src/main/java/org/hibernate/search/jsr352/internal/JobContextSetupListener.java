@@ -80,7 +80,7 @@ public class JobContextSetupListener extends AbstractJobListener {
 			JobContextData jobContextData = MassIndexerUtil
 					.deserializeJobContextData( serializedJobContextData );
 			LOGGER.infof( "%d criterions found.", jobContextData.getCriterions().size() );
-			jobContextData.setEntityTypeSet( entityTypesToIndex );
+			jobContextData.setEntityTypes( entityTypesToIndex );
 			jobContext.setTransientUserData( jobContextData );
 		}
 		finally {

@@ -8,7 +8,6 @@ package org.hibernate.search.jsr352.internal.steps.lucene;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 
@@ -103,7 +102,7 @@ public class PartitionMapperTest {
 		// mock job context
 		JobContextData jobData = new JobContextData();
 		jobData.setCriterions( new HashSet<>() );
-		jobData.setEntityTypeSet( new HashSet<>( Arrays.asList( Company.class, Person.class ) ) );
+		jobData.setEntityTypes( Company.class, Person.class );
 		Mockito.when( mockedJobContext.getTransientUserData() ).thenReturn( jobData );
 
 		PartitionPlan partitionPlan = partitionMapper.mapPartitions();

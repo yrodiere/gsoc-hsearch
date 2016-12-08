@@ -104,7 +104,7 @@ public class EntityReaderTest {
 		// mock job context
 		JobContextData jobData = new JobContextData();
 		jobData.setCriterions( new HashSet<>() );
-		jobData.setEntityTypeSet( new HashSet<>( Arrays.asList( Company.class ) ) );
+		jobData.setEntityTypes( Company.class );
 		jobData.setPartitionBounds( Arrays.asList( partitionBound ) );
 		Mockito.when( mockedJobContext.getTransientUserData() ).thenReturn( jobData );
 

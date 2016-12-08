@@ -7,8 +7,9 @@
 package org.hibernate.search.jsr352.internal;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,21 +50,19 @@ public class JobContextData implements Serializable {
 		entityTypeMap = new HashMap<>();
 	}
 
-	public void setEntityTypeSet(Set<Class<?>> entityTypes) {
+	public void setEntityTypes(Collection<Class<?>> entityTypes) {
 		entityTypes.forEach( clz -> entityTypeMap.put( clz.getName(), clz ) );
 	}
 
-	public Set<String> getEntityNameSet() {
-		return entityTypeMap.keySet();
+	public void setEntityTypes(Class<?> firstEntityType, Class<?>... otherEntityTypes) {
+		entityTypeMap.put( firstEntityType.getName(), firstEntityType );
+		for ( Class<?> type : otherEntityTypes ) {
+			entityTypeMap.put( type.getName(), type );
+		}
 	}
 
-	public Set<Class<?>> getEntityTypeSet() {
-		return new HashSet<Class<?>>( entityTypeMap.values() );
-	}
-
-	public String[] getEntityNameArray() {
-		Set<String> keySet = entityTypeMap.keySet();
-		return keySet.toArray( new String[keySet.size()] );
+	public List<Class<?>> getEntityTypes() {
+		return new ArrayList<Class<?>>( entityTypeMap.values() );
 	}
 
 	public Class<?> getIndexedType(String entityName) throws ClassNotFoundException {

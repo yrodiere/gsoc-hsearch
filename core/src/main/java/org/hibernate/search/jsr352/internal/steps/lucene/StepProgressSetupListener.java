@@ -71,7 +71,7 @@ public class StepProgressSetupListener extends AbstractStepListener {
 				}
 				sessionFactory = emf.unwrap( SessionFactory.class );
 				session = sessionFactory.openSession();
-				for ( Class<?> entityType : jobData.getEntityTypeSet() ) {
+				for ( Class<?> entityType : jobData.getEntityTypes() ) {
 					long rowCount = rowCount( entityType, session );
 					stepProgress.setRowsToIndex( entityType.getName(), rowCount );
 				}
