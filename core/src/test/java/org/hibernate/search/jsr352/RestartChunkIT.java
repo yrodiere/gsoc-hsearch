@@ -90,6 +90,7 @@ public class RestartChunkIT {
 		// start the job
 		long execId1 = BatchIndexingJob.forEntities( Company.class, Person.class )
 				.underJavaSE( emf, jobOperator )
+				.checkpointFreq( 10 )
 				.start();
 		JobExecution jobExec1 = jobOperator.getJobExecution( execId1 );
 		jobExec1 = keepTestAlive( jobExec1 );

@@ -61,7 +61,7 @@
             </writer>
             <checkpoint-algorithm ref="checkpointAlgorithm">
                 <properties>
-                    <property name="itemCount" value="#{jobParameters['itemCount']}?:3;" />
+                    <property name="itemCount" value="#{jobParameters['itemCount']}?:200;" />
                 </properties>
             </checkpoint-algorithm>
         </chunk>

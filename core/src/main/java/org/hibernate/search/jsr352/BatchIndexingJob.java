@@ -79,7 +79,7 @@ public class BatchIndexingJob {
 		private boolean optimizeAtEnd = false;
 		private boolean purgeAtStart = false;
 		private int fetchSize = 200 * 1000;
-		private int itemCount = 3;
+		private int itemCount = 200;
 		private int maxResults = 1000 * 1000;
 		private int rowsPerPartition = 250;
 		private int maxThreads = 1;
