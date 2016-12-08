@@ -48,15 +48,12 @@ public class StepProgressSetupListener extends AbstractStepListener {
 	}
 
 	/**
-	 * Setup the step-level indexing progress. The {@code StepProgress} will be
-	 * initialized if this is the first start, or remain as it is if this is a
-	 * restart. {@code StepProgress} is stored as the transient user data <b>for
-	 * the principle thread</b>(*). Transient user data is shared with
-	 * {@code ProgressAggregator}, therefore, {@code ProgressAggregator} can
-	 * update the indexing progress through transient user data.
+	 * Setup the step-level indexing progress. The {@code StepProgress} will be initialized if this is the first start,
+	 * or remain as it is if this is a restart. {@code StepProgress} is stored as the transient user data <b>for the
+	 * principle thread</b>(*). Transient user data is shared with {@code ProgressAggregator}, therefore,
+	 * {@code ProgressAggregator} can update the indexing progress through transient user data.
 	 * <p>
-	 * (*): for partitions' sub-threads, they store other things as a transient
-	 * user data.
+	 * (*): for partitions' sub-threads, they store other things as a transient user data.
 	 */
 	@Override
 	public void beforeStep() {
@@ -87,9 +84,8 @@ public class StepProgressSetupListener extends AbstractStepListener {
 	}
 
 	/**
-	 * Persist the step-level indexing progress after the end of the step's
-	 * execution. This method is called when the step is terminated by any
-	 * reason, e.g. finished, stopped.
+	 * Persist the step-level indexing progress after the end of the step's execution. This method is called when the
+	 * step is terminated by any reason, e.g. finished, stopped.
 	 */
 	@Override
 	public void afterStep() {

@@ -30,7 +30,7 @@ public final class JobSEEnvironment {
 		return emf;
 	}
 
-	public void setEntityManagerFactory( EntityManagerFactory entityManagerFactory ) {
+	public void setEntityManagerFactory(EntityManagerFactory entityManagerFactory) {
 		emf = entityManagerFactory;
 	}
 }

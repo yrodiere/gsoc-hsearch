@@ -23,8 +23,7 @@ import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
 /**
- * Enhancements before the chunk step "produceLuceneDoc" (lucene document
- * production)
+ * Enhancements before the chunk step {@code produceLuceneDoc} (lucene document production)
  *
  * @author Mincong Huang
  */
@@ -76,7 +75,7 @@ public class BeforeChunkBatchlet extends AbstractBatchlet {
 		try {
 			session.close();
 		}
-		catch ( Exception e ) {
+		catch (Exception e) {
 			LOGGER.error( e );
 		}
 	}

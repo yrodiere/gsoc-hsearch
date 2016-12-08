@@ -16,8 +16,8 @@ import javax.inject.Named;
 import org.jboss.logging.Logger;
 
 /**
- * Progress aggregator aggregates the intermediary chunk progress received from
- * each partition sent via the collectors. It runs on the step main thread.
+ * Progress aggregator aggregates the intermediary chunk progress received from each partition sent via the collectors.
+ * It runs on the step main thread.
  *
  * @author Mincong Huang
  */
@@ -33,14 +33,12 @@ public class ProgressAggregator extends AbstractPartitionAnalyzer {
 	}
 
 	/**
-	 * Analyze data obtained from different partition plans via partition data
-	 * collectors. The current analyze is to summarize to their progresses :
-	 * workDone = workDone1 + workDone2 + ... + workDoneN. Then it displays the
-	 * total mass index progress in percentage. This method is very similar to
-	 * the current simple progress monitor.
+	 * Analyze data obtained from different partition plans via partition data collectors. The current analyze is to
+	 * summarize to their progresses : workDone = workDone1 + workDone2 + ... + workDoneN. Then it displays the total
+	 * mass index progress in percentage. This method is very similar to the current simple progress monitor.
 	 * 
-	 * @param fromCollector the indexing progress of one partition, obtained
-	 * from partition collector's method #collectPartitionData()
+	 * @param fromCollector the indexing progress of one partition, obtained from partition collector's method
+	 * #collectPartitionData()
 	 */
 	@Override
 	public void analyzeCollectorData(Serializable fromCollector) throws Exception {

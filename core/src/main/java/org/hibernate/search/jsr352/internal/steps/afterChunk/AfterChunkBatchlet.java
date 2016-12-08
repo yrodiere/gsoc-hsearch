@@ -19,8 +19,7 @@ import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.jboss.logging.Logger;
 
 /**
- * Enhancements after the chunk step "produceLuceneDoc" (lucene document
- * production)
+ * Enhancements after the chunk step {@code produceLuceneDoc} (lucene document production)
  *
  * @author Mincong Huang
  */
@@ -57,7 +56,7 @@ public class AfterChunkBatchlet extends AbstractBatchlet {
 		try {
 			session.close();
 		}
-		catch ( Exception e ) {
+		catch (Exception e) {
 			LOGGER.error( e );
 		}
 	}

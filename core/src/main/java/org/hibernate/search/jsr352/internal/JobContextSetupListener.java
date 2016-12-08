@@ -24,8 +24,7 @@ import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
 import org.jboss.logging.Logger;
 
 /**
- * Listener before the start of the job. It aims to setup the job context data,
- * shared by all the steps.
+ * Listener before the start of the job. It aims to setup the job context data, shared by all the steps.
  *
  * @author Mincong Huang
  */

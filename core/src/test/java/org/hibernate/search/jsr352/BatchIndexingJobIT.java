@@ -107,7 +107,7 @@ public class BatchIndexingJobIT {
 		assertEquals( 0, people.size() );
 
 		JobOperator jobOperator = JobFactory.getJobOperator();
-		long executionId = BatchIndexingJob.forEntities( Company.class , Person.class )
+		long executionId = BatchIndexingJob.forEntities( Company.class, Person.class )
 				.underJavaSE( emf, jobOperator )
 				.start();
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
@@ -239,8 +239,7 @@ public class BatchIndexingJobIT {
 	}
 
 	/**
-	 * Convert the Metric array contained in StepExecution to a key-value map
-	 * for easy access to Metric parameters.
+	 * Convert the Metric array contained in StepExecution to a key-value map for easy access to Metric parameters.
 	 *
 	 * @param metrics a Metric array contained in StepExecution.
 	 * @return a map view of the metrics array.

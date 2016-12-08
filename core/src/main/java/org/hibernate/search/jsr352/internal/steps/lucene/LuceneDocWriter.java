@@ -33,9 +33,8 @@ import org.hibernate.search.store.IndexShardingStrategy;
 import org.jboss.logging.Logger;
 
 /**
- * Batch item writer writes a list of items into Lucene documents. Here, items
- * mean the luceneWorks, given by the processor. These items will be executed
- * using StreamingOperationExecutor.
+ * Batch item writer writes a list of items into Lucene documents. Here, items mean the luceneWorks, given by the
+ * processor. These items will be executed using StreamingOperationExecutor.
  *
  * @author Mincong Huang
  */
@@ -69,10 +68,8 @@ public class LuceneDocWriter extends AbstractItemWriter {
 	}
 
 	/**
-	 * The close method marks the end of use of the ItemWriter. This method is
-	 * called when the job stops for any reason. In case of job interruption,
-	 * the job might need to be restarted. That's why the step context data is
-	 * persisted.
+	 * The close method marks the end of use of the ItemWriter. This method is called when the job stops for any reason.
+	 * In case of job interruption, the job might need to be restarted. That's why the step context data is persisted.
 	 *
 	 * @throws Exception is thrown for any errors.
 	 */

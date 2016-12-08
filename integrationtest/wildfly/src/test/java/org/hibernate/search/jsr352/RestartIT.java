@@ -39,10 +39,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
 /**
- * This integration test (IT) aims to test the restartability of the job
- * execution mass-indexer under Java EE environment, with step partitioning
- * (parallelism). We need to prove that the job restart from the checkpoint
- * where it was stopped, but not from the very beginning.
+ * This integration test (IT) aims to test the restartability of the job execution mass-indexer under Java EE
+ * environment, with step partitioning (parallelism). We need to prove that the job restart from the checkpoint where it
+ * was stopped, but not from the very beginning.
  *
  * @author Mincong Huang
  */

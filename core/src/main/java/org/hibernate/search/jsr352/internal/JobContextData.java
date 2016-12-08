@@ -27,10 +27,9 @@ public class JobContextData implements Serializable {
 	private static final long serialVersionUID = 4465274690302894983L;
 
 	/**
-	 * The map of key value pair (string, class-type), designed for storage of
-	 * name and class type of all root entities. In JSR 352 standard, only
-	 * string values can be propagated using job properties, but class types are
-	 * frequently used too. So this map facilites this kind of lookup.
+	 * The map of key value pair (string, class-type), designed for storage of name and class type of all root entities.
+	 * In JSR 352 standard, only string values can be propagated using job properties, but class types are frequently
+	 * used too. So this map facilitates this kind of lookup.
 	 */
 	private Map<String, Class<?>> entityClazzMap;
 

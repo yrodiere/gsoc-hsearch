@@ -54,7 +54,7 @@ public class MessageManager {
 				.add( numericRangeQuery, BooleanClause.Occur.MUST )
 				.build();
 		return ftem.createFullTextQuery( booleanQuery, Message.class )
-			.getResultList();
+				.getResultList();
 	}
 
 	public EntityManager getEntityManager() {

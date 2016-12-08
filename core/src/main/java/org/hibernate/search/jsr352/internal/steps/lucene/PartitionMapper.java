@@ -36,9 +36,8 @@ import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 import org.jboss.logging.Logger;
 
 /**
- * Lucene partition mapper provides a partition plan to the Lucene production
- * step: "produceLuceneDoc". The partition plan is defined dynamically,
- * according to the number of partitions given by the user.
+ * Lucene partition mapper provides a partition plan to the Lucene production step: "produceLuceneDoc". The partition
+ * plan is defined dynamically, according to the number of partitions given by the user.
  *
  * @author Mincong Huang
  */

@@ -140,13 +140,12 @@ public class BatchIndexingJobTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testRestrictedBy_criterionNull() {
-		BatchIndexingJob.forEntity( String.class ).restrictedBy( (Criterion) null ); 
+		BatchIndexingJob.forEntity( String.class ).restrictedBy( (Criterion) null );
 	}
 
 	/**
-	 * A batch indexing job cannot have 2 types of restrictions in the same
-	 * time. Either JPQL / HQL or Criteria approach is used. Using both will
-	 * leads to illegal argument exception.
+	 * A batch indexing job cannot have 2 types of restrictions in the same time. Either JPQL / HQL or Criteria approach
+	 * is used. Using both will leads to illegal argument exception.
 	 */
 	@Test(expected = IllegalArgumentException.class)
 	public void testRestrictedBy_twoRestrictionTypes() {

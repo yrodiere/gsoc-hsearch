@@ -35,8 +35,8 @@ import org.hibernate.search.spi.InstanceInitializer;
 import org.jboss.logging.Logger;
 
 /**
- * ItemProcessor receives entities coming from item reader and process then into
- * an AddLuceneWorks. Only one entity is received and processed at each time.
+ * ItemProcessor receives entities coming from item reader and process then into an AddLuceneWorks. Only one entity is
+ * received and processed at each time.
  *
  * @author Mincong Huang
  */
@@ -85,8 +85,7 @@ public class LuceneDocProducer implements ItemProcessor {
 	/**
 	 * Set up environment for lucene work production.
 	 *
-	 * @throws ClassNotFoundException if the entityName does not match any
-	 * indexed class type in the job context data.
+	 * @throws ClassNotFoundException if the entityName does not match any indexed class type in the job context data.
 	 * @throws NamingException if JNDI lookup for entity manager failed
 	 */
 	private void setup() throws ClassNotFoundException, NamingException {
@@ -104,11 +103,9 @@ public class LuceneDocProducer implements ItemProcessor {
 	}
 
 	/**
-	 * Build addLuceneWork using input entity. This method is inspired by the
-	 * current mass indexer implementation.
+	 * Build addLuceneWork using input entity. This method is inspired by the current mass indexer implementation.
 	 *
-	 * @param entity selected entity, obtained from JPA entity manager. It is
-	 * used to build Lucene work.
+	 * @param entity selected entity, obtained from JPA entity manager. It is used to build Lucene work.
 	 * @param entityClazz the class type of selected entity
 	 * @return an addLuceneWork
 	 */

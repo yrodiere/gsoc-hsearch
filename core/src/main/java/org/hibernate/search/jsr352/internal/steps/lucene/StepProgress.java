@@ -15,10 +15,9 @@ import java.util.Map;
 import org.jboss.logging.Logger;
 
 /**
- * Step level progress. It contains the indexing progress of the step level. In
- * another word, it is the sum of all the elementary, partition-local level
- * progress. The progress is initialized at the first start of the indexing job
- * and reused after the restart.
+ * Step level progress. It contains the indexing progress of the step level. In another word, it is the sum of all the
+ * elementary, partition-local level progress. The progress is initialized at the first start of the indexing job and
+ * reused after the restart.
  *
  * @author Mincong Huang
  */
@@ -28,27 +27,26 @@ public class StepProgress implements Serializable {
 	private static final long serialVersionUID = 7808926033388850340L;
 
 	/**
-	 * A map of the total number of rows having already been indexed across all
-	 * the partitions. Key: the partition id; Value: the number of rows indexed.
+	 * A map of the total number of rows having already been indexed across all the partitions. Key: the partition id;
+	 * Value: the number of rows indexed.
 	 */
 	private Map<Integer, Long> partitionProgress;
 
 	/**
-	 * A map of the total number of rows to index across all the partitions.
-	 * Key: the partition id; Value: the number of rows to index.
+	 * A map of the total number of rows to index across all the partitions. Key: the partition id; Value: the number of
+	 * rows to index.
 	 */
 	private Map<Integer, Long> partitionTotal;
 
 	/**
-	 * A map of the total number of rows having already been indexed across all
-	 * the entity types. Key: the entity name in string; Value: the number of
-	 * rows indexed.
+	 * A map of the total number of rows having already been indexed across all the entity types. Key: the entity name
+	 * in string; Value: the number of rows indexed.
 	 */
 	private Map<String, Long> entityProgress;
 
 	/**
-	 * A map of the total number of rows to index across all the entity types.
-	 * Key: the entity name in string; Value: the number of rows to index.
+	 * A map of the total number of rows to index across all the entity types. Key: the entity name in string; Value:
+	 * the number of rows to index.
 	 */
 	private Map<String, Long> entityTotal;
 
@@ -60,9 +58,8 @@ public class StepProgress implements Serializable {
 	}
 
 	/**
-	 * Update the step-level indexing progress using the partition-level
-	 * indexing progress. (step-level is higher, one step contains multiple
-	 * partitions)
+	 * Update the step-level indexing progress using the partition-level indexing progress. (step-level is higher, one
+	 * step contains multiple partitions)
 	 *
 	 * @param pp partition-level indexing progress
 	 */

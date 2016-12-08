@@ -22,8 +22,7 @@ import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
 
 /**
- * An alternative to the current mass indexer, using the Java Batch architecture
- * as defined by JSR 352.
+ * An alternative to the current mass indexer, using the Java Batch architecture as defined by JSR 352.
  *
  * @author Mincong Huang
  */
@@ -102,11 +101,9 @@ public class BatchIndexingJob {
 		}
 
 		/**
-		 * Whether the Hibernate queries are cacheable. This setting will be
-		 * applied to
-		 * {@link org.hibernate.search.jsr352.internal.steps.lucene.EntityReader}
-		 * . The default value is false. Set it to true when reading a complex
-		 * graph with relations.
+		 * Whether the Hibernate queries are cacheable. This setting will be applied to
+		 * {@link org.hibernate.search.jsr352.internal.steps.lucene.EntityReader} . The default value is false. Set it
+		 * to true when reading a complex graph with relations.
 		 *
 		 * @param cacheable
 		 * @return
@@ -117,11 +114,10 @@ public class BatchIndexingJob {
 		}
 
 		/**
-		 * Checkpoint frequency during the mass index process. The checkpoint
-		 * will be done every N items read, where N is the given item count.
+		 * Checkpoint frequency during the mass index process. The checkpoint will be done every N items read, where N
+		 * is the given item count.
 		 *
-		 * @param itemCount the number of item count before starting the next
-		 * checkpoint.
+		 * @param itemCount the number of item count before starting the next checkpoint.
 		 * @return
 		 */
 		public Builder checkpointFreq(int itemCount) {
@@ -130,9 +126,8 @@ public class BatchIndexingJob {
 		}
 
 		/**
-		 * Configure additional parameters for Java SE: assign the entity
-		 * manager factory and assign the job operator. You should NOT use this
-		 * method if you're under Java EE.
+		 * Configure additional parameters for Java SE: assign the entity manager factory and assign the job operator.
+		 * You should NOT use this method if you're under Java EE.
 		 */
 		public Builder underJavaSE(EntityManagerFactory entityManagerFactory,
 				JobOperator jobOperator) {
@@ -166,8 +161,8 @@ public class BatchIndexingJob {
 		}
 
 		/**
-		 * The maximum number of results will be return from the HQL / criteria.
-		 * It is equivalent to keyword `LIMIT` in SQL.
+		 * The maximum number of results will be return from the HQL / criteria. It is equivalent to keyword `LIMIT` in
+		 * SQL.
 		 *
 		 * @param maxResults
 		 * @return
@@ -181,11 +176,9 @@ public class BatchIndexingJob {
 		}
 
 		/**
-		 * Specify the maximum number of threads on which to execute the
-		 * partitions of this step. Note the batch runtime cannot guarantee the
-		 * request number of threads are available; it will use as many as it
-		 * can up to the request maximum. This an an optional attribute. The
-		 * default is the number of partitions.
+		 * Specify the maximum number of threads on which to execute the partitions of this step. Note the batch runtime
+		 * cannot guarantee the request number of threads are available; it will use as many as it can up to the request
+		 * maximum. This an an optional attribute. The default is the number of partitions.
 		 *
 		 * @param maxThreads
 		 * @return
@@ -199,10 +192,9 @@ public class BatchIndexingJob {
 		}
 
 		/**
-		 * Specify whether the mass indexer should be optimized at the beginning
-		 * of the job. This operation takes place after the purge operation and
-		 * before the step of lucene document production. The default value is
-		 * false. TODO: specify what is the optimization exactly
+		 * Specify whether the mass indexer should be optimized at the beginning of the job. This operation takes place
+		 * after the purge operation and before the step of lucene document production. The default value is false.
+		 * TODO: specify what is the optimization exactly
 		 *
 		 * @param optimizeAfterPurge
 		 * @return
@@ -213,10 +205,9 @@ public class BatchIndexingJob {
 		}
 
 		/**
-		 * Specify whether the mass indexer should be optimized at the end of
-		 * the job. This operation takes place after the step of lucene document
-		 * production. The default value is false. TODO: specify what is the
-		 * optimization exactly
+		 * Specify whether the mass indexer should be optimized at the end of the job. This operation takes place after
+		 * the step of lucene document production. The default value is false. TODO: specify what is the optimization
+		 * exactly
 		 *
 		 * @param optimizeAtEnd
 		 * @return
@@ -227,9 +218,8 @@ public class BatchIndexingJob {
 		}
 
 		/**
-		 * Specify whether the existing lucene index should be purged at the
-		 * beginning of the job. This operation takes place before the step of
-		 * lucene document production. The default value is false.
+		 * Specify whether the existing lucene index should be purged at the beginning of the job. This operation takes
+		 * place before the step of lucene document production. The default value is false.
 		 *
 		 * @param purgeAtStart
 		 * @return

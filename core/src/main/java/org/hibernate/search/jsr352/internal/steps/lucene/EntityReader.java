@@ -32,13 +32,11 @@ import org.hibernate.search.jsr352.internal.util.PartitionUnit;
 import org.jboss.logging.Logger;
 
 /**
- * Item reader reads entities using scrollable results. For each reader, there's
- * only one target entity type. The range to read is defined by the partition
- * unit. This range is always a left-closed interval.
+ * Item reader reads entities using scrollable results. For each reader, there's only one target entity type. The range
+ * to read is defined by the partition unit. This range is always a left-closed interval.
  * <p>
- * For example, there 2 entity types Company and Employee. The number of rows
- * are respectively 5 and 4500. The rowsPerPartition is set to 1000. Then, there
- * will be 6 readers and their ranges are :
+ * For example, there 2 entity types Company and Employee. The number of rows are respectively 5 and 4500. The
+ * rowsPerPartition is set to 1000. Then, there will be 6 readers and their ranges are :
  * <ul>
  * <li>partitionID = 0, entityType = Company, range = [null, null[
  * <li>partitionID = 1, entityType = Employee, range = [null, 1000[
@@ -130,8 +128,8 @@ public class EntityReader extends AbstractItemReader {
 	}
 
 	/**
-	 * The checkpointInfo method returns the current checkpoint data for this
-	 * reader. It is called before a chunk checkpoint is committed.
+	 * The checkpointInfo method returns the current checkpoint data for this reader. It is called before a chunk
+	 * checkpoint is committed.
 	 *
 	 * @return the checkpoint info
 	 * @throws Exception thrown for any errors.
@@ -180,13 +178,11 @@ public class EntityReader extends AbstractItemReader {
 	}
 
 	/**
-	 * Initialize the environment. If checkpoint does not exist, then it should
-	 * be the first open. If checkpoint exists, then it isn't the first open,
-	 * re-use the input object "checkpoint" as the last ID already read.
+	 * Initialize the environment. If checkpoint does not exist, then it should be the first open. If checkpoint exists,
+	 * then it isn't the first open, re-use the input object "checkpoint" as the last ID already read.
 	 *
-	 * @param checkpoint The last checkpoint info persisted in the batch
-	 * runtime, previously given by checkpointInfo(). If this is the first
-	 * start, then the checkpoint will be null.
+	 * @param checkpoint The last checkpoint info persisted in the batch runtime, previously given by checkpointInfo().
+	 * If this is the first start, then the checkpoint will be null.
 	 * @throws Exception thrown for any errors.
 	 */
 	@Override
@@ -281,8 +277,7 @@ public class EntityReader extends AbstractItemReader {
 	}
 
 	/**
-	 * Read item from database using JPA. Each read, there will be only one
-	 * entity fetched.
+	 * Read item from database using JPA. Each read, there will be only one entity fetched.
 	 *
 	 * @throws Exception thrown for any errors.
 	 */
