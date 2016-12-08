@@ -32,7 +32,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
-import org.hibernate.search.jsr352.internal.util.PartitionUnit;
+import org.hibernate.search.jsr352.internal.util.PartitionBound;
 import org.jboss.logging.Logger;
 
 /**
@@ -121,39 +121,39 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			ss = sessionFactory.openStatelessSession();
 
 			Set<Class<?>> rootEntities = jobData.getEntityClazzSet();
-			List<PartitionUnit> partitionUnits = new ArrayList<>();
+			List<PartitionBound> partitionBounds = new ArrayList<>();
 			Class<?> clazz;
 
 			switch ( typeOfSelection( hql, jobData.getCriterions() ) ) {
 				case HQL:
 					clazz = rootEntities.toArray( new Class<?>[1] )[0];
-					partitionUnits.add( new PartitionUnit( clazz, null, null ) );
+					partitionBounds.add( new PartitionBound( clazz, null, null ) );
 					break;
 
 				case CRITERIA:
 					clazz = rootEntities.toArray( new Class<?>[1] )[0];
 					scroll = buildScrollableResults( ss, session, clazz, jobData.getCriterions() );
-					partitionUnits = buildPartitionUnitsFrom( scroll, clazz );
+					partitionBounds = buildPartitionUnitsFrom( scroll, clazz );
 					break;
 
 				case FULL_ENTITY:
 					for ( Class<?> clz : rootEntities ) {
 						scroll = buildScrollableResults( ss, session, clz, null );
-						partitionUnits.addAll( buildPartitionUnitsFrom( scroll, clz ) );
+						partitionBounds.addAll( buildPartitionUnitsFrom( scroll, clz ) );
 					}
 					break;
 			}
-			jobData.setPartitionUnits( partitionUnits );
+			jobData.setPartitionBounds( partitionBounds );
 
 			// Build partition plan
 			final int threads = Integer.valueOf( maxThreads );
-			final int partitions = partitionUnits.size();
+			final int partitions = partitionBounds.size();
 			final Properties[] props = new Properties[partitions];
 			LOGGER.infof( "%d partitions, %d threads.", partitions, threads );
 
-			for ( int i = 0; i < partitionUnits.size(); i++ ) {
+			for ( int i = 0; i < partitionBounds.size(); i++ ) {
 				props[i] = new Properties();
-				props[i].setProperty( "entityName", partitionUnits.get( i ).getEntityName() );
+				props[i].setProperty( "entityName", partitionBounds.get( i ).getEntityName() );
 				props[i].setProperty( "partitionID", String.valueOf( i ) );
 			}
 
@@ -199,21 +199,21 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 		}
 	}
 
-	private List<PartitionUnit> buildPartitionUnitsFrom(ScrollableResults scroll, Class<?> clazz) {
+	private List<PartitionBound> buildPartitionUnitsFrom(ScrollableResults scroll, Class<?> clazz) {
 
-		List<PartitionUnit> partitionUnits = new ArrayList<>();
+		List<PartitionBound> partitionUnits = new ArrayList<>();
 		final int rowsPerPartition = Integer.parseInt( this.rowsPerPartition );
 		Object lowerID = null;
 		Object upperID = null;
 		while ( scroll.scroll( rowsPerPartition ) ) {
 			lowerID = upperID;
 			upperID = scroll.get( 0 );
-			partitionUnits.add( new PartitionUnit( clazz, lowerID, upperID ) );
+			partitionUnits.add( new PartitionBound( clazz, lowerID, upperID ) );
 		}
 		// add an additional partition on the tail
 		lowerID = upperID;
 		upperID = null;
-		partitionUnits.add( new PartitionUnit( clazz, lowerID, upperID ) );
+		partitionUnits.add( new PartitionBound( clazz, lowerID, upperID ) );
 		return partitionUnits;
 	}
 

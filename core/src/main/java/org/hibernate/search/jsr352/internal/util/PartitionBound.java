@@ -14,20 +14,20 @@ package org.hibernate.search.jsr352.internal.util;
  *
  * @author Mincong Huang
  */
-public class PartitionUnit {
+public class PartitionBound {
 
 	private Class<?> entityClazz;
 	private Object lowerBound;
 	private Object upperBound;
 
-	public PartitionUnit() {
+	public PartitionBound() {
 	}
 
-	public PartitionUnit(Class<?> entityClazz) {
+	public PartitionBound(Class<?> entityClazz) {
 		this.entityClazz = entityClazz;
 	}
 
-	public PartitionUnit(Class<?> entityClazz, Object lowerBound, Object upperBound) {
+	public PartitionBound(Class<?> entityClazz, Object lowerBound, Object upperBound) {
 		this.entityClazz = entityClazz;
 		this.lowerBound = lowerBound;
 		this.upperBound = upperBound;
@@ -67,7 +67,6 @@ public class PartitionUnit {
 
 	@Override
 	public String toString() {
-		return "PartitionUnit [entityClazz=" + entityClazz + ", lowerBound=" + lowerBound
-				+ ", upperBound=" + upperBound + "]";
+		return "PartitionBound [entityClazz=" + entityClazz + ", lowerBound=" + lowerBound + ", upperBound=" + upperBound + "]";
 	}
 }

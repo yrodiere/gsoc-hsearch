@@ -28,7 +28,7 @@ import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
-import org.hibernate.search.jsr352.internal.util.PartitionUnit;
+import org.hibernate.search.jsr352.internal.util.PartitionBound;
 import org.jboss.logging.Logger;
 
 /**
@@ -193,8 +193,8 @@ public class EntityReader extends AbstractItemReader {
 		LOGGER.debugf( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		entityClazz = jobData.getIndexedType( entityName );
-		PartitionUnit unit = jobData.getPartitionUnit( partitionID );
-		LOGGER.debug( unit );
+		PartitionBound bound = jobData.getPartitionBound( partitionID );
+		LOGGER.debug( bound );
 
 		if ( Boolean.parseBoolean( isJavaSE ) ) {
 			emf = JobSEEnvironment.getInstance().getEntityManagerFactory();
@@ -216,7 +216,7 @@ public class EntityReader extends AbstractItemReader {
 		}
 		// Criteria approach
 		else {
-			scroll = buildScrollUsingCriteria( ss, unit, checkpointID, jobData );
+			scroll = buildScrollUsingCriteria( ss, bound, checkpointID, jobData );
 			if ( checkpointID == null ) {
 				partitionData = new PartitionContextData( partitionID, entityName );
 			}
@@ -240,7 +240,7 @@ public class EntityReader extends AbstractItemReader {
 	}
 
 	private ScrollableResults buildScrollUsingCriteria(StatelessSession ss,
-			PartitionUnit unit, Object checkpointID, JobContextData jobData) {
+			PartitionBound unit, Object checkpointID, JobContextData jobData) {
 
 		String idName = MassIndexerUtil.getIdName( entityClazz, session );
 		Criteria criteria = ss.createCriteria( entityClazz );

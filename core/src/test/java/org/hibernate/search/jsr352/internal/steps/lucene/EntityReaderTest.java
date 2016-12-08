@@ -22,7 +22,7 @@ import org.hibernate.search.jsr352.entity.Company;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
 import org.hibernate.search.jsr352.internal.steps.lucene.EntityReader;
-import org.hibernate.search.jsr352.internal.util.PartitionUnit;
+import org.hibernate.search.jsr352.internal.util.PartitionBound;
 import org.jboss.logging.Logger;
 import org.junit.Before;
 import org.junit.Test;
@@ -99,13 +99,13 @@ public class EntityReaderTest {
 
 		Object upper = null;
 		Object lower = null;
-		PartitionUnit partitionUnit = new PartitionUnit( Company.class, lower, upper );
+		PartitionBound partitionBound = new PartitionBound( Company.class, lower, upper );
 
 		// mock job context
 		JobContextData jobData = new JobContextData();
 		jobData.setCriterions( new HashSet<>() );
 		jobData.setEntityClazzSet( new HashSet<>( Arrays.asList( Company.class ) ) );
-		jobData.setPartitionUnits( Arrays.asList( partitionUnit ) );
+		jobData.setPartitionBounds( Arrays.asList( partitionBound ) );
 		Mockito.when( mockedJobContext.getTransientUserData() ).thenReturn( jobData );
 
 		// mock step context

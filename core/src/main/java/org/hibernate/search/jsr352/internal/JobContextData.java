@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.criterion.Criterion;
-import org.hibernate.search.jsr352.internal.util.PartitionUnit;
+import org.hibernate.search.jsr352.internal.util.PartitionBound;
 
 /**
  * Container for data shared across the entire batch job.
@@ -39,9 +39,9 @@ public class JobContextData implements Serializable {
 	private long totalEntityToIndex;
 
 	/**
-	 * The list of units containing properties for each partition.
+	 * The list of partition boundaries, one element per partition
 	 */
-	private List<PartitionUnit> partitionUnits;
+	private List<PartitionBound> partitionBounds;
 
 	private Set<Criterion> criterions;
 
@@ -96,12 +96,12 @@ public class JobContextData implements Serializable {
 		totalEntityToIndex += increment;
 	}
 
-	public void setPartitionUnits(List<PartitionUnit> partitionUnits) {
-		this.partitionUnits = partitionUnits;
+	public void setPartitionBounds(List<PartitionBound> partitionBounds) {
+		this.partitionBounds = partitionBounds;
 	}
 
-	public PartitionUnit getPartitionUnit(int partitionID) {
-		return partitionUnits.get( partitionID );
+	public PartitionBound getPartitionBound(int partitionID) {
+		return partitionBounds.get( partitionID );
 	}
 
 	public void setCriterions(Set<Criterion> criterions) {
@@ -110,8 +110,7 @@ public class JobContextData implements Serializable {
 
 	@Override
 	public String toString() {
-		return "JobContextData [entityClazzMap=" + entityClazzMap + ", totalEntityToIndex="
-				+ totalEntityToIndex + ", partitionUnits=" + partitionUnits + ", criterions="
-				+ criterions + "]";
+		return "JobContextData [entityClazzMap=" + entityClazzMap + ", totalEntityToIndex=" + totalEntityToIndex + ", partitionBounds=" + partitionBounds
+				+ ", criterions=" + criterions + "]";
 	}
 }
