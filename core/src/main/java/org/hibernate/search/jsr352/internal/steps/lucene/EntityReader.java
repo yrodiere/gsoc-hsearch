@@ -174,9 +174,9 @@ public class EntityReader extends AbstractItemReader {
 		}
 		// reset the chunk work count to avoid over-count in item collector
 		// release session
-		StepContextData stepData = (StepContextData) stepContext.getTransientUserData();
-		stepData.setSession( null );
-		stepContext.setPersistentUserData( stepData );
+		PartitionContextData partitionData = (PartitionContextData) stepContext.getTransientUserData();
+		partitionData.setSession( null );
+		stepContext.setPersistentUserData( partitionData );
 	}
 
 	/**
@@ -207,7 +207,7 @@ public class EntityReader extends AbstractItemReader {
 		ss = sessionFactory.openStatelessSession();
 		session = sessionFactory.openSession();
 
-		StepContextData stepData = null;
+		PartitionContextData partitionData = null;
 		// HQL approach
 		// In this approach, the checkpoint mechanism is disabled, because we
 		// don't know if the selection is ordered by ID ascendingly in the query.
@@ -216,21 +216,21 @@ public class EntityReader extends AbstractItemReader {
 			// restart, will it create duplicate index for the same entity,
 			// since there's no purge?
 			scroll = buildScrollUsingHQL( ss, hql );
-			stepData = new StepContextData( partitionID, entityName );
+			partitionData = new PartitionContextData( partitionID, entityName );
 		}
 		// Criteria approach
 		else {
 			scroll = buildScrollUsingCriteria( ss, unit, checkpointID, jobData );
 			if ( checkpointID == null ) {
-				stepData = new StepContextData( partitionID, entityName );
+				partitionData = new PartitionContextData( partitionID, entityName );
 			}
 			else {
-				stepData = (StepContextData) stepContext.getPersistentUserData();
+				partitionData = (PartitionContextData) stepContext.getPersistentUserData();
 			}
 		}
 
-		stepData.setSession( session );
-		stepContext.setTransientUserData( stepData );
+		partitionData.setSession( session );
+		stepContext.setTransientUserData( partitionData );
 	}
 
 	private ScrollableResults buildScrollUsingHQL(StatelessSession ss, String HQL) {

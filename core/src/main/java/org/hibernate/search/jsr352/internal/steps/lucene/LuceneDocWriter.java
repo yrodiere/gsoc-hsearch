@@ -138,7 +138,7 @@ public class LuceneDocWriter extends AbstractItemWriter {
 		}
 
 		// update work count
-		StepContextData stepContextData = (StepContextData) stepContext.getTransientUserData();
-		stepContextData.documentAdded( items.size() );
+		PartitionContextData partitionData = (PartitionContextData) stepContext.getTransientUserData();
+		partitionData.documentAdded( items.size() );
 	}
 }

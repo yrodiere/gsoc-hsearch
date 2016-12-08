@@ -93,8 +93,8 @@ public class LuceneDocProducer implements ItemProcessor {
 
 		entityClazz = ( (JobContextData) jobContext.getTransientUserData() )
 				.getIndexedType( entityName );
-		StepContextData stepData = (StepContextData) stepContext.getTransientUserData();
-		session = stepData.getSession();
+		PartitionContextData partitionData = (PartitionContextData) stepContext.getTransientUserData();
+		session = partitionData.getSession();
 		searchIntegrator = ContextHelper.getSearchintegrator( session );
 		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
 		docBuilder = entityIndexBinding.getDocumentBuilder();

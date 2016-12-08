@@ -11,29 +11,27 @@ import java.io.Serializable;
 import org.hibernate.Session;
 
 /**
- * Container for data specific to the entity indexing batch step
- * `produceLuceneDoc`. There're 2 types of counter here : partitionWorkCount and
- * chunkWorkCount. Notice that the batch runtime maintain one container-clone
- * per partition. So counters are not shared with other threads / partitions.
+ * Data model for each partition of step {@code produceLuceneDoc}. It contains a partition-level indexing progress and
+ * the session attached to this partition. Notice that the batch runtime maintains one clone per partition and each
+ * partition is running on a single thread. Therefore, session is not shared with other threads / partitions.
  * 
  * @author Gunnar Morling
  * @author Mincong Huang
  */
-public class StepContextData implements Serializable {
+public class PartitionContextData implements Serializable {
 
 	private static final long serialVersionUID = 1961574468720628080L;
+
 	private PartitionProgress partitionProgress;
 
 	/**
-	 * Hibernate session, unwrapped from EntityManager. It is stored for sharing
-	 * the session between item reader and item processor. Notice that item
-	 * reader and item processor of the same partition always run in the same
-	 * thread, so it should be OK. When the job stops, session object will be
-	 * released before persisting this class's instance.
+	 * Hibernate session, unwrapped from EntityManager. It is stored for sharing the session between item reader and
+	 * item processor. Notice that item reader and item processor of the same partition always run in the same thread,
+	 * so it should be OK. When the job stops, session object will be released before persisting this class's instance.
 	 */
 	private Session session;
 
-	public StepContextData(int partitionID, String entityName) {
+	public PartitionContextData(int partitionID, String entityName) {
 		partitionProgress = new PartitionProgress( partitionID, entityName );
 	}
 

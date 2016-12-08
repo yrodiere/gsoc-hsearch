@@ -42,7 +42,7 @@ public class ProgressCollector implements PartitionCollector {
 	@Override
 	public Serializable collectPartitionData() throws Exception {
 		LOGGER.debug( "Collecting partition data ..." );
-		return ( (StepContextData) stepContext.getTransientUserData() )
+		return ( (PartitionContextData) stepContext.getTransientUserData() )
 				.getPartitionProgress();
 	}
 }
