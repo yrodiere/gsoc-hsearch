@@ -39,7 +39,7 @@
             <reader ref="entityReader">
                 <properties>
                     <property name="entityName" value="#{partitionPlan['entityName']}" />
-                    <property name="partitionID" value="#{partitionPlan['partitionID']}" />
+                    <property name="partitionId" value="#{partitionPlan['partitionId']}" />
                     <property name="cacheable" value="#{jobParameters['cacheable']}?:false;" />
                     <property name="fetchSize" value="#{jobParameters['fetchSize']}?:200000;" />
                     <property name="hql" value="#{jobParameters['hql']}" />

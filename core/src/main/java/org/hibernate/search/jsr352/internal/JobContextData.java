@@ -100,8 +100,8 @@ public class JobContextData implements Serializable {
 		this.partitionBounds = partitionBounds;
 	}
 
-	public PartitionBound getPartitionBound(int partitionID) {
-		return partitionBounds.get( partitionID );
+	public PartitionBound getPartitionBound(int partitionId) {
+		return partitionBounds.get( partitionId );
 	}
 
 	public void setCriterions(Set<Criterion> criterions) {

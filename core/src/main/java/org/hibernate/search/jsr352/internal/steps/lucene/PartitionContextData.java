@@ -31,8 +31,8 @@ public class PartitionContextData implements Serializable {
 	 */
 	private Session session;
 
-	public PartitionContextData(int partitionID, String entityName) {
-		partitionProgress = new PartitionProgress( partitionID, entityName );
+	public PartitionContextData(int partitionId, String entityName) {
+		partitionProgress = new PartitionProgress( partitionId, entityName );
 	}
 
 	public void documentAdded(int increment) {

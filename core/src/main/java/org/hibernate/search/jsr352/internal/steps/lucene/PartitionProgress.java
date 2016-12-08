@@ -14,13 +14,14 @@ import java.io.Serializable;
 public class PartitionProgress implements Serializable {
 
 	private static final long serialVersionUID = -5923539799807235429L;
-	private long workDone = 0L;
 	private String entityName;
-	private int partitionID;
+	private int partitionId;
+	private long workDone;
 
-	public PartitionProgress(int partitionID, String entityName) {
-		this.partitionID = partitionID;
+	public PartitionProgress(int partitionId, String entityName) {
+		this.partitionId = partitionId;
 		this.entityName = entityName;
+		this.workDone = 0L;
 	}
 
 	/**
@@ -40,12 +41,12 @@ public class PartitionProgress implements Serializable {
 		this.entityName = entityName;
 	}
 
-	public int getPartitionID() {
-		return partitionID;
+	public int getPartitionId() {
+		return partitionId;
 	}
 
-	public void setPartitionID(int partitionID) {
-		this.partitionID = partitionID;
+	public void setPartitionId(int partitionId) {
+		this.partitionId = partitionId;
 	}
 
 	public long getWorkDone() {
@@ -59,6 +60,6 @@ public class PartitionProgress implements Serializable {
 	@Override
 	public String toString() {
 		return "PartitionProgress [workDone=" + workDone + ", entityName=" + entityName
-				+ ", partitionID=" + partitionID + "]";
+				+ ", partitionId=" + partitionId + "]";
 	}
 }

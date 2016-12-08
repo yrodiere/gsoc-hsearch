@@ -38,12 +38,12 @@ import org.jboss.logging.Logger;
  * For example, there 2 entity types Company and Employee. The number of rows are respectively 5 and 4500. The
  * rowsPerPartition is set to 1000. Then, there will be 6 readers and their ranges are :
  * <ul>
- * <li>partitionID = 0, entityType = Company, range = [null, null[
- * <li>partitionID = 1, entityType = Employee, range = [null, 1000[
- * <li>partitionID = 2, entityType = Employee, range = [1000, 2000[
- * <li>partitionID = 3, entityType = Employee, range = [2000, 3000[
- * <li>partitionID = 4, entityType = Employee, range = [3000, 4000[
- * <li>partitionID = 5, entityType = Employee, range = [4000, null[
+ * <li>partitionId = 0, entityType = Company, range = [null, null[
+ * <li>partitionId = 1, entityType = Employee, range = [null, 1000[
+ * <li>partitionId = 2, entityType = Employee, range = [1000, 2000[
+ * <li>partitionId = 3, entityType = Employee, range = [2000, 3000[
+ * <li>partitionId = 4, entityType = Employee, range = [3000, 4000[
+ * <li>partitionId = 5, entityType = Employee, range = [4000, null[
  * </ul>
  *
  * @author Mincong Huang
@@ -84,14 +84,14 @@ public class EntityReader extends AbstractItemReader {
 	private String maxResults;
 
 	@Inject
-	@BatchProperty(name = "partitionID")
+	@BatchProperty(name = "partitionId")
 	private String partitionIdStr;
 
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
 
 	private Class<?> entityType;
-	private Serializable checkpointID;
+	private Serializable checkpointId;
 	private Session session;
 	private StatelessSession ss;
 	private ScrollableResults scroll;
@@ -138,7 +138,7 @@ public class EntityReader extends AbstractItemReader {
 	public Serializable checkpointInfo() throws Exception {
 		LOGGER.debug( "checkpointInfo() called. "
 				+ "Saving last read ID to batch runtime..." );
-		return checkpointID;
+		return checkpointId;
 	}
 
 	/**
@@ -186,14 +186,14 @@ public class EntityReader extends AbstractItemReader {
 	 * @throws Exception thrown for any errors.
 	 */
 	@Override
-	public void open(Serializable checkpointID) throws Exception {
+	public void open(Serializable checkpointId) throws Exception {
 
-		final int partitionID = Integer.parseInt( partitionIdStr );
+		final int partitionId = Integer.parseInt( partitionIdStr );
 
-		LOGGER.debugf( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
+		LOGGER.debugf( "[partitionId=%d] open reader for entity %s ...", partitionId, entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
 		entityType = jobData.getIndexedType( entityName );
-		PartitionBound bound = jobData.getPartitionBound( partitionID );
+		PartitionBound bound = jobData.getPartitionBound( partitionId );
 		LOGGER.debug( bound );
 
 		if ( Boolean.parseBoolean( isJavaSE ) ) {
@@ -212,13 +212,13 @@ public class EntityReader extends AbstractItemReader {
 			// restart, will it create duplicate index for the same entity,
 			// since there's no purge?
 			scroll = buildScrollUsingHQL( ss, hql );
-			partitionData = new PartitionContextData( partitionID, entityName );
+			partitionData = new PartitionContextData( partitionId, entityName );
 		}
 		// Criteria approach
 		else {
-			scroll = buildScrollUsingCriteria( ss, bound, checkpointID, jobData );
-			if ( checkpointID == null ) {
-				partitionData = new PartitionContextData( partitionID, entityName );
+			scroll = buildScrollUsingCriteria( ss, bound, checkpointId, jobData );
+			if ( checkpointId == null ) {
+				partitionData = new PartitionContextData( partitionId, entityName );
 			}
 			else {
 				partitionData = (PartitionContextData) stepContext.getPersistentUserData();
@@ -240,14 +240,14 @@ public class EntityReader extends AbstractItemReader {
 	}
 
 	private ScrollableResults buildScrollUsingCriteria(StatelessSession ss,
-			PartitionBound unit, Object checkpointID, JobContextData jobData) {
+			PartitionBound unit, Object checkpointId, JobContextData jobData) {
 
 		String idName = MassIndexerUtil.getIdName( entityType, session );
 		Criteria criteria = ss.createCriteria( entityType );
 
 		// build criteria using checkpoint ID
-		if ( checkpointID != null ) {
-			criteria.add( Restrictions.ge( idName, checkpointID ) );
+		if ( checkpointId != null ) {
+			criteria.add( Restrictions.ge( idName, checkpointId ) );
 		}
 
 		// build criteria using partition unit
@@ -288,7 +288,7 @@ public class EntityReader extends AbstractItemReader {
 
 		if ( scroll.next() ) {
 			entity = scroll.get( 0 );
-			checkpointID = (Serializable) emf.getPersistenceUnitUtil()
+			checkpointId = (Serializable) emf.getPersistenceUnitUtil()
 					.getIdentifier( entity );
 		}
 		else {

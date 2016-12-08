@@ -82,14 +82,14 @@ public class EntityReaderTest {
 		final String hql = null;
 		final String isJavaSE = String.valueOf( true );
 		final String maxResults = String.valueOf( Integer.MAX_VALUE );
-		final String partitionID = String.valueOf( 0 );
+		final String partitionId = String.valueOf( 0 );
 		entityReader = new EntityReader( cacheable,
 				entityName,
 				fetchSize,
 				hql,
 				isJavaSE,
 				maxResults,
-				partitionID );
+				partitionId );
 
 		MockitoAnnotations.initMocks( this );
 	}

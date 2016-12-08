@@ -64,7 +64,7 @@ public class StepProgress implements Serializable {
 	 * @param pp partition-level indexing progress
 	 */
 	public void updateProgress(PartitionProgress pp) {
-		long prevDone = partitionProgress.getOrDefault( pp.getPartitionID(), 0L );
+		long prevDone = partitionProgress.getOrDefault( pp.getPartitionId(), 0L );
 		long currDone = pp.getWorkDone();
 		if ( currDone < prevDone ) {
 			throw new ArithmeticException( "Current indexed works (" + currDone
@@ -72,7 +72,7 @@ public class StepProgress implements Serializable {
 					+ prevDone + " indexed)." );
 		}
 		increment( pp.getEntityName(), currDone - prevDone );
-		increment( pp.getPartitionID(), currDone - prevDone );
+		increment( pp.getPartitionId(), currDone - prevDone );
 	}
 
 	private void increment(String entityName, long increment) {
@@ -94,7 +94,7 @@ public class StepProgress implements Serializable {
 	public double getProgress(int pid) {
 		if ( !partitionProgress.containsKey( pid )
 				|| !partitionTotal.containsKey( pid ) ) {
-			throw new NullPointerException( "PartitionId=" + pid + " not found." );
+			throw new NullPointerException( "partitionId=" + pid + " not found." );
 		}
 		return partitionProgress.get( pid ) * 1.0 / partitionTotal.get( pid );
 	}

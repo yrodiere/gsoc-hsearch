@@ -154,7 +154,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			for ( int i = 0; i < partitionBounds.size(); i++ ) {
 				props[i] = new Properties();
 				props[i].setProperty( "entityName", partitionBounds.get( i ).getEntityName() );
-				props[i].setProperty( "partitionID", String.valueOf( i ) );
+				props[i].setProperty( "partitionId", String.valueOf( i ) );
 			}
 
 			PartitionPlan partitionPlan = new PartitionPlanImpl();
