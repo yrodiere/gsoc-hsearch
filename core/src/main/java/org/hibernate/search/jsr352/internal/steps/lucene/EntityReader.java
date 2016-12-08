@@ -90,7 +90,7 @@ public class EntityReader extends AbstractItemReader {
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
 
-	private Class<?> entityClazz;
+	private Class<?> entityType;
 	private Serializable checkpointID;
 	private Session session;
 	private StatelessSession ss;
@@ -192,7 +192,7 @@ public class EntityReader extends AbstractItemReader {
 
 		LOGGER.debugf( "[partitionID=%d] open reader for entity %s ...", partitionID, entityName );
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		entityClazz = jobData.getIndexedType( entityName );
+		entityType = jobData.getIndexedType( entityName );
 		PartitionBound bound = jobData.getPartitionBound( partitionID );
 		LOGGER.debug( bound );
 
@@ -242,8 +242,8 @@ public class EntityReader extends AbstractItemReader {
 	private ScrollableResults buildScrollUsingCriteria(StatelessSession ss,
 			PartitionBound unit, Object checkpointID, JobContextData jobData) {
 
-		String idName = MassIndexerUtil.getIdName( entityClazz, session );
-		Criteria criteria = ss.createCriteria( entityClazz );
+		String idName = MassIndexerUtil.getIdName( entityType, session );
+		Criteria criteria = ss.createCriteria( entityType );
 
 		// build criteria using checkpoint ID
 		if ( checkpointID != null ) {

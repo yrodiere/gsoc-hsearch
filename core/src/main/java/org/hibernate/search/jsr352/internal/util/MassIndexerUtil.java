@@ -25,10 +25,10 @@ public class MassIndexerUtil {
 
 	public static final Logger LOGGER = Logger.getLogger( MassIndexerUtil.class );
 
-	public static String getIdName(Class<?> clazz, Session session) {
+	public static String getIdName(Class<?> entityType, Session session) {
 		return ContextHelper.getSearchintegrator( session )
 				.getIndexBindings()
-				.get( clazz )
+				.get( entityType )
 				.getDocumentBuilder()
 				.getIdentifierName();
 	}

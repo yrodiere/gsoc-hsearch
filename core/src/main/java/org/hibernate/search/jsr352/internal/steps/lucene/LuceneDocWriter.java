@@ -99,12 +99,12 @@ public class LuceneDocWriter extends AbstractItemWriter {
 		em = emf.createEntityManager();
 
 		JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-		Class<?> entityClazz = jobData.getIndexedType( entityName );
+		Class<?> entityType = jobData.getIndexedType( entityName );
 		entityIndexBinding = Search
 				.getFullTextEntityManager( em )
 				.getSearchFactory()
 				.unwrap( SearchIntegrator.class )
-				.getIndexBinding( entityClazz );
+				.getIndexBinding( entityType );
 	}
 
 	/**

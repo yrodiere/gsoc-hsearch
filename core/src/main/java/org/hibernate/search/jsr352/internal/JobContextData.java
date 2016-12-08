@@ -31,7 +31,7 @@ public class JobContextData implements Serializable {
 	 * In JSR 352 standard, only string values can be propagated using job properties, but class types are frequently
 	 * used too. So this map facilitates this kind of lookup.
 	 */
-	private Map<String, Class<?>> entityClazzMap;
+	private Map<String, Class<?>> entityTypeMap;
 
 	/**
 	 * The total number of entities to index over all the entity types.
@@ -46,33 +46,33 @@ public class JobContextData implements Serializable {
 	private Set<Criterion> criterions;
 
 	public JobContextData() {
-		entityClazzMap = new HashMap<>();
+		entityTypeMap = new HashMap<>();
 	}
 
-	public void setEntityClazzSet(Set<Class<?>> entityClazzes) {
-		entityClazzes.forEach( clz -> entityClazzMap.put( clz.getName(), clz ) );
+	public void setEntityTypeSet(Set<Class<?>> entityTypes) {
+		entityTypes.forEach( clz -> entityTypeMap.put( clz.getName(), clz ) );
 	}
 
 	public Set<String> getEntityNameSet() {
-		return entityClazzMap.keySet();
+		return entityTypeMap.keySet();
 	}
 
-	public Set<Class<?>> getEntityClazzSet() {
-		return new HashSet<Class<?>>( entityClazzMap.values() );
+	public Set<Class<?>> getEntityTypeSet() {
+		return new HashSet<Class<?>>( entityTypeMap.values() );
 	}
 
 	public String[] getEntityNameArray() {
-		Set<String> keySet = entityClazzMap.keySet();
+		Set<String> keySet = entityTypeMap.keySet();
 		return keySet.toArray( new String[keySet.size()] );
 	}
 
 	public Class<?> getIndexedType(String entityName) throws ClassNotFoundException {
-		Class<?> clazz = entityClazzMap.get( entityName );
-		if ( clazz == null ) {
+		Class<?> entityType = entityTypeMap.get( entityName );
+		if ( entityType == null ) {
 			String msg = String.format( "entityName %s not found.", entityName );
 			throw new ClassNotFoundException( msg );
 		}
-		return clazz;
+		return entityType;
 	}
 
 	public long getTotalEntityToIndex() {
@@ -110,7 +110,7 @@ public class JobContextData implements Serializable {
 
 	@Override
 	public String toString() {
-		return "JobContextData [entityClazzMap=" + entityClazzMap + ", totalEntityToIndex=" + totalEntityToIndex + ", partitionBounds=" + partitionBounds
+		return "JobContextData [entityTypeMap=" + entityTypeMap + ", totalEntityToIndex=" + totalEntityToIndex + ", partitionBounds=" + partitionBounds
 				+ ", criterions=" + criterions + "]";
 	}
 }

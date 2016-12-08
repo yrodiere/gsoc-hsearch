@@ -16,29 +16,29 @@ package org.hibernate.search.jsr352.internal.util;
  */
 public class PartitionBound {
 
-	private Class<?> entityClazz;
+	private Class<?> entityType;
 	private Object lowerBound;
 	private Object upperBound;
 
 	public PartitionBound() {
 	}
 
-	public PartitionBound(Class<?> entityClazz) {
-		this.entityClazz = entityClazz;
+	public PartitionBound(Class<?> entityType) {
+		this.entityType = entityType;
 	}
 
-	public PartitionBound(Class<?> entityClazz, Object lowerBound, Object upperBound) {
-		this.entityClazz = entityClazz;
+	public PartitionBound(Class<?> entityType, Object lowerBound, Object upperBound) {
+		this.entityType = entityType;
 		this.lowerBound = lowerBound;
 		this.upperBound = upperBound;
 	}
 
-	public Class<?> getEntityClazz() {
-		return entityClazz;
+	public Class<?> getEntityType() {
+		return entityType;
 	}
 
 	public String getEntityName() {
-		return entityClazz.getName();
+		return entityType.getName();
 	}
 
 	public Object getLowerBound() {
@@ -61,12 +61,12 @@ public class PartitionBound {
 		return lowerBound == null && upperBound == null;
 	}
 
-	public void setEntityClazz(Class<?> entityClazz) {
-		this.entityClazz = entityClazz;
+	public void setEntityType(Class<?> entityType) {
+		this.entityType = entityType;
 	}
 
 	@Override
 	public String toString() {
-		return "PartitionBound [entityClazz=" + entityClazz + ", lowerBound=" + lowerBound + ", upperBound=" + upperBound + "]";
+		return "PartitionBound [entityType=" + entityType + ", lowerBound=" + lowerBound + ", upperBound=" + upperBound + "]";
 	}
 }

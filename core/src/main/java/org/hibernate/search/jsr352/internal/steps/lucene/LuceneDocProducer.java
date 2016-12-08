@@ -63,7 +63,7 @@ public class LuceneDocProducer implements ItemProcessor {
 	private EntityIndexBinding entityIndexBinding;
 	private DocumentBuilderIndexedEntity docBuilder;
 	private boolean isSetup = false;
-	private Class<?> entityClazz;
+	private Class<?> entityType;
 
 	@Inject
 	public LuceneDocProducer(JobContext jobContext, StepContext stepContext) {
@@ -78,7 +78,7 @@ public class LuceneDocProducer implements ItemProcessor {
 			setup();
 			isSetup = true;
 		}
-		AddLuceneWork addWork = buildAddLuceneWork( item, entityClazz );
+		AddLuceneWork addWork = buildAddLuceneWork( item, entityType );
 		return addWork;
 	}
 
@@ -90,12 +90,12 @@ public class LuceneDocProducer implements ItemProcessor {
 	 */
 	private void setup() throws ClassNotFoundException, NamingException {
 
-		entityClazz = ( (JobContextData) jobContext.getTransientUserData() )
+		entityType = ( (JobContextData) jobContext.getTransientUserData() )
 				.getIndexedType( entityName );
 		PartitionContextData partitionData = (PartitionContextData) stepContext.getTransientUserData();
 		session = partitionData.getSession();
 		searchIntegrator = ContextHelper.getSearchintegrator( session );
-		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityClazz );
+		entityIndexBinding = searchIntegrator.getIndexBindings().get( entityType );
 		docBuilder = entityIndexBinding.getDocumentBuilder();
 		if ( Boolean.parseBoolean( isJavaSE ) ) {
 			emf = JobSEEnvironment.getInstance().getEntityManagerFactory();
@@ -106,10 +106,10 @@ public class LuceneDocProducer implements ItemProcessor {
 	 * Build addLuceneWork using input entity. This method is inspired by the current mass indexer implementation.
 	 *
 	 * @param entity selected entity, obtained from JPA entity manager. It is used to build Lucene work.
-	 * @param entityClazz the class type of selected entity
+	 * @param entityType the class type of selected entity
 	 * @return an addLuceneWork
 	 */
-	private AddLuceneWork buildAddLuceneWork(Object entity, Class<?> entityClazz) {
+	private AddLuceneWork buildAddLuceneWork(Object entity, Class<?> entityType) {
 
 		// TODO: tenant ID should not be null
 		// Or may it be fine to be null? Gunnar's integration test in Hibernate
@@ -128,7 +128,7 @@ public class LuceneDocProducer implements ItemProcessor {
 		String idInString = null;
 		try {
 			idInString = conversionContext
-					.setClass( entityClazz )
+					.setClass( entityType )
 					.twoWayConversionContext( idBridge )
 					.objectToString( id );
 			LOGGER.debugf( "idInString=%s", idInString );
@@ -138,7 +138,7 @@ public class LuceneDocProducer implements ItemProcessor {
 		}
 		AddLuceneWork addWork = docBuilder.createAddWork(
 				tenantId,
-				entityClazz,
+				entityType,
 				entity,
 				id,
 				idInString,

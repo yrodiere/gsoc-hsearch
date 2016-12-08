@@ -103,7 +103,7 @@ public class PartitionMapperTest {
 		// mock job context
 		JobContextData jobData = new JobContextData();
 		jobData.setCriterions( new HashSet<>() );
-		jobData.setEntityClazzSet( new HashSet<>( Arrays.asList( Company.class, Person.class ) ) );
+		jobData.setEntityTypeSet( new HashSet<>( Arrays.asList( Company.class, Person.class ) ) );
 		Mockito.when( mockedJobContext.getTransientUserData() ).thenReturn( jobData );
 
 		PartitionPlan partitionPlan = partitionMapper.mapPartitions();
