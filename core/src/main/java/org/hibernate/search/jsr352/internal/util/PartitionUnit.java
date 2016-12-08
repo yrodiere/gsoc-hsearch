@@ -39,7 +39,7 @@ public class PartitionUnit {
 	}
 
 	public String getEntityName() {
-		return entityClazz.toString();
+		return entityClazz.getName();
 	}
 
 	public Object getLowerBound() {

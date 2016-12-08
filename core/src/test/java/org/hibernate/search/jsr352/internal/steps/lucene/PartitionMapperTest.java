@@ -113,10 +113,10 @@ public class PartitionMapperTest {
 		int persPartitions = 0;
 		for ( Properties p : partitionPlan.getPartitionProperties() ) {
 			String entityName = p.getProperty( "entityName" );
-			if ( entityName.equals( Company.class.toString() ) ) {
+			if ( entityName.equals( Company.class.getName() ) ) {
 				compPartitions++;
 			}
-			if ( entityName.equals( Person.class.toString() ) ) {
+			if ( entityName.equals( Person.class.getName() ) ) {
 				persPartitions++;
 			}
 		}

@@ -48,7 +48,7 @@ public class JobContextData implements Serializable {
 
 	public void setEntityClazzSet(Set<Class<?>> entityClazzes) {
 		entityClazzMap = new HashMap<>();
-		entityClazzes.forEach( clz -> entityClazzMap.put( clz.toString(), clz ) );
+		entityClazzes.forEach( clz -> entityClazzMap.put( clz.getName(), clz ) );
 	}
 
 	public Set<String> getEntityNameSet() {

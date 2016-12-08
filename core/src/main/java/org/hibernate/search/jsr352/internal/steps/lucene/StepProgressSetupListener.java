@@ -76,7 +76,7 @@ public class StepProgressSetupListener extends AbstractStepListener {
 				session = sessionFactory.openSession();
 				for ( Class<?> entityType : jobData.getEntityClazzSet() ) {
 					long rowCount = rowCount( entityType, session );
-					stepProgress.setRowsToIndex( entityType.toString(), rowCount );
+					stepProgress.setRowsToIndex( entityType.getName(), rowCount );
 				}
 			}
 			finally {
@@ -102,7 +102,7 @@ public class StepProgressSetupListener extends AbstractStepListener {
 				.setProjection( Projections.rowCount() )
 				.setCacheable( false )
 				.uniqueResult();
-		LOGGER.infof( "%d rows to index for entity type %s", rowCount, clazz.toString() );
+		LOGGER.infof( "%d rows to index for entity type %s", rowCount, clazz.getName() );
 		return rowCount;
 	}
 }
