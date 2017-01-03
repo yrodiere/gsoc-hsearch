@@ -24,10 +24,10 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
-import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
 import org.hibernate.search.jsr352.internal.util.PartitionBound;
 import org.jboss.logging.Logger;
 
@@ -242,7 +242,8 @@ public class EntityReader extends AbstractItemReader {
 	private ScrollableResults buildScrollUsingCriteria(StatelessSession ss,
 			PartitionBound unit, Object checkpointId, JobContextData jobData) {
 
-		String idName = MassIndexerUtil.getIdName( entityType, session );
+		String idName = Projections.id().toString();
+
 		Criteria criteria = ss.createCriteria( entityType );
 
 		// build criteria using checkpoint ID
