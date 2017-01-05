@@ -242,7 +242,8 @@ public class EntityReader extends AbstractItemReader {
 	private ScrollableResults buildScrollUsingCriteria(StatelessSession ss,
 			PartitionBound unit, Object checkpointId, JobContextData jobData) {
 
-		String idName = Projections.id().toString();
+		String idName = sessionFactory.getClassMetadata( entityType )
+				.getIdentifierPropertyName();
 
 		Criteria criteria = ss.createCriteria( entityType );
 
