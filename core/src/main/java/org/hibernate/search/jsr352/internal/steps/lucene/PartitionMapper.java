@@ -224,7 +224,6 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			criterions.forEach( c -> criteria.add( c ) );
 		}
 		ScrollableResults scroll = criteria
-				.setProjection( Projections.id() )
 				.setProjection( Projections.alias( Projections.id(), "aliasedId" ) )
 				.setFetchSize( Integer.parseInt( fetchSize ) )
 				.setReadOnly( true )
