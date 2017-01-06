@@ -30,6 +30,7 @@ import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.entity.Company;
 import org.hibernate.search.jsr352.entity.Person;
+import org.hibernate.search.jsr352.entity.WhoAmI;
 import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.Before;
@@ -45,6 +46,8 @@ public class BatchIndexingJobIT {
 	// example dataset
 	private final long DB_COMP_ROWS = 3;
 	private final long DB_PERS_ROWS = 3;
+	private final long DB_WHOS_ROWS = 3;
+	private final long DB_TOTAL_ROWS = DB_COMP_ROWS + DB_PERS_ROWS + DB_WHOS_ROWS;
 
 	private EntityManagerFactory emf;
 	private JobOperator jobOperator;
@@ -62,6 +65,10 @@ public class BatchIndexingJobIT {
 				new Person( "BG", "Bill", "Gates" ),
 				new Person( "LT", "Linus", "Torvalds" ),
 				new Person( "SJ", "Steven", "Jobs" ) );
+		List<WhoAmI> whos = Arrays.asList(
+				new WhoAmI( "cid01", "id01", "uid01" ),
+				new WhoAmI( "cid02", "id02", "uid02" ),
+				new WhoAmI( "cid03", "id03", "uid03" ) );
 		EntityManager em = null;
 
 		try {
@@ -73,6 +80,9 @@ public class BatchIndexingJobIT {
 			}
 			for ( Person p : people ) {
 				em.persist( p );
+			}
+			for ( WhoAmI w : whos ) {
+				em.persist( w );
 			}
 			em.getTransaction().commit();
 		}
@@ -96,6 +106,7 @@ public class BatchIndexingJobIT {
 		FullTextEntityManager ftem = Search.getFullTextEntityManager( em );
 		ftem.purgeAll( Person.class );
 		ftem.purgeAll( Company.class );
+		ftem.purgeAll( WhoAmI.class );
 		ftem.flushToIndexes();
 		em.close();
 
@@ -103,11 +114,13 @@ public class BatchIndexingJobIT {
 		// expected no results for each search
 		List<Company> companies = findClass( Company.class, "name", "Google" );
 		List<Person> people = findClass( Person.class, "firstName", "Linus" );
+		List<WhoAmI> whos = findClass( WhoAmI.class, "id", "id01" );
 		assertEquals( 0, companies.size() );
 		assertEquals( 0, people.size() );
+		assertEquals( 0, whos.size() );
 
 		JobOperator jobOperator = JobFactory.getJobOperator();
-		long executionId = BatchIndexingJob.forEntities( Company.class, Person.class )
+		long executionId = BatchIndexingJob.forEntities( Company.class, Person.class, WhoAmI.class )
 				.underJavaSE( emf, jobOperator )
 				.start();
 		JobExecution jobExecution = jobOperator.getJobExecution( executionId );
@@ -120,8 +133,10 @@ public class BatchIndexingJobIT {
 
 		companies = findClass( Company.class, "name", "Google" );
 		people = findClass( Person.class, "firstName", "Linus" );
+		whos = findClass( WhoAmI.class, "id", "id01" );
 		assertEquals( 1, companies.size() );
 		assertEquals( 1, people.size() );
+		assertEquals( 1, whos.size() );
 	}
 
 	@Test
@@ -224,10 +239,10 @@ public class BatchIndexingJobIT {
 			case "produceLuceneDoc":
 				for ( Metric m : stepExecution.getMetrics() ) {
 					if ( m.getType().equals( MetricType.READ_COUNT ) ) {
-						assertEquals( DB_COMP_ROWS + DB_PERS_ROWS, m.getValue() );
+						assertEquals( DB_TOTAL_ROWS, m.getValue() );
 					}
 					else if ( m.getType().equals( MetricType.WRITE_COUNT ) ) {
-						assertEquals( DB_COMP_ROWS + DB_PERS_ROWS, m.getValue() );
+						assertEquals( DB_TOTAL_ROWS, m.getValue() );
 					}
 				}
 				assertEquals( BatchStatus.COMPLETED, batchStatus );

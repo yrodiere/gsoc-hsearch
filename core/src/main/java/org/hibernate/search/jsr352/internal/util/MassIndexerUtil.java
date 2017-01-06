@@ -13,8 +13,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Base64;
 
-import org.hibernate.Session;
-import org.hibernate.search.hcore.util.impl.ContextHelper;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.jboss.logging.Logger;
 
@@ -24,14 +22,6 @@ import org.jboss.logging.Logger;
 public class MassIndexerUtil {
 
 	public static final Logger LOGGER = Logger.getLogger( MassIndexerUtil.class );
-
-	public static String getIdName(Class<?> entityType, Session session) {
-		return ContextHelper.getSearchintegrator( session )
-				.getIndexBindings()
-				.get( entityType )
-				.getDocumentBuilder()
-				.getIdentifierName();
-	}
 
 	public static String serialize(JobContextData ctxData)
 			throws IOException {

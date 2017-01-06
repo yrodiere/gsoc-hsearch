@@ -31,7 +31,6 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.search.jsr352.internal.JobContextData;
 import org.hibernate.search.jsr352.internal.se.JobSEEnvironment;
-import org.hibernate.search.jsr352.internal.util.MassIndexerUtil;
 import org.hibernate.search.jsr352.internal.util.PartitionBound;
 import org.jboss.logging.Logger;
 
@@ -220,15 +219,15 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	private ScrollableResults buildScrollableResults(StatelessSession ss,
 			Session session, Class<?> clazz, Set<Criterion> criterions) {
 
-		String fieldID = MassIndexerUtil.getIdName( clazz, session );
 		Criteria criteria = ss.createCriteria( clazz );
 		if ( criterions != null ) {
 			criterions.forEach( c -> criteria.add( c ) );
 		}
-		ScrollableResults scroll = criteria.addOrder( Order.asc( fieldID ) )
-				.setProjection( Projections.id() )
+		ScrollableResults scroll = criteria
+				.setProjection( Projections.alias( Projections.id(), "aliasedId" ) )
 				.setFetchSize( Integer.parseInt( fetchSize ) )
 				.setReadOnly( true )
+				.addOrder( Order.asc( "aliasedId" ) )
 				.scroll( ScrollMode.FORWARD_ONLY );
 		return scroll;
 	}
