@@ -16,7 +16,6 @@ import javax.batch.api.partition.PartitionPlan;
 import javax.batch.api.partition.PartitionPlanImpl;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
@@ -40,7 +39,6 @@ import org.jboss.logging.Logger;
  *
  * @author Mincong Huang
  */
-@Named
 public class PartitionMapper implements javax.batch.api.partition.PartitionMapper {
 
 	private static final Logger LOGGER = Logger.getLogger( PartitionMapper.class );
@@ -75,7 +73,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 	@PersistenceUnit(unitName = "h2")
 	private EntityManagerFactory emf;
 
-	PartitionMapper() {
+	public PartitionMapper() {
 	}
 
 	/**

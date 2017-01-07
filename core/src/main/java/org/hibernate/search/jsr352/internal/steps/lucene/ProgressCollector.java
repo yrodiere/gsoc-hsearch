@@ -11,7 +11,6 @@ import java.io.Serializable;
 import javax.batch.api.partition.PartitionCollector;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import org.jboss.logging.Logger;
 
@@ -21,16 +20,12 @@ import org.jboss.logging.Logger;
  * 
  * @author Mincong Huang
  */
-@Named
 public class ProgressCollector implements PartitionCollector {
 
 	private static final Logger LOGGER = Logger.getLogger( ProgressCollector.class );
-	private StepContext stepContext;
 
 	@Inject
-	public ProgressCollector(StepContext stepContext) {
-		this.stepContext = stepContext;
-	}
+	private StepContext stepContext;
 
 	/**
 	 * The collectPartitionData method receives control periodically during partition processing. This method receives
