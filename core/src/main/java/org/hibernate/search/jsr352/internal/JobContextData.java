@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.EntityManagerFactory;
+
 import org.hibernate.criterion.Criterion;
 import org.hibernate.search.jsr352.internal.util.PartitionBound;
 
@@ -23,6 +25,8 @@ import org.hibernate.search.jsr352.internal.util.PartitionBound;
  * @author Mincong Huang
  */
 public class JobContextData {
+
+	private EntityManagerFactory entityManagerFactory;
 
 	/**
 	 * The map of key value pair (string, class-type), designed for storage of name and class type of all root entities.
@@ -45,6 +49,14 @@ public class JobContextData {
 
 	public JobContextData() {
 		entityTypeMap = new HashMap<>();
+	}
+
+	public EntityManagerFactory getEntityManagerFactory() {
+		return entityManagerFactory;
+	}
+
+	public void setEntityManagerFactory(EntityManagerFactory entityManagerFactory) {
+		this.entityManagerFactory = entityManagerFactory;
 	}
 
 	public void setEntityTypes(Collection<Class<?>> entityTypes) {
@@ -108,7 +120,8 @@ public class JobContextData {
 	public String toString() {
 		return new StringBuilder()
 				.append( "JobContextData [" )
-				.append( "entityTypeMap=" ).append( entityTypeMap )
+				.append( "entityManagerFactory=" ).append( entityManagerFactory )
+				.append( ", entityTypeMap=" ).append( entityTypeMap )
 				.append( ", totalEntityToIndex=" ).append( totalEntityToIndex )
 				.append( ", partitionBounds=" ).append( partitionBounds )
 				.append( ", criteria=" ).append( criteria )
