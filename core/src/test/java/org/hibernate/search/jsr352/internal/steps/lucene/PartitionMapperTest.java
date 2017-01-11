@@ -101,7 +101,7 @@ public class PartitionMapperTest {
 
 		// mock job context
 		JobContextData jobData = new JobContextData();
-		jobData.setCriterions( new HashSet<>() );
+		jobData.setCriteria( new HashSet<>() );
 		jobData.setEntityTypes( Company.class, Person.class );
 		Mockito.when( mockedJobContext.getTransientUserData() ).thenReturn( jobData );
 

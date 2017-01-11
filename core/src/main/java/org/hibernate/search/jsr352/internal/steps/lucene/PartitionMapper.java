@@ -123,7 +123,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 			List<PartitionBound> partitionBounds = new ArrayList<>();
 			Class<?> entityType;
 
-			switch ( typeOfSelection( hql, jobData.getCriterions() ) ) {
+			switch ( typeOfSelection( hql, jobData.getCriteria() ) ) {
 				case HQL:
 					entityType = rootEntities.get( 0 );
 					partitionBounds.add( new PartitionBound( entityType, null, null ) );
@@ -131,7 +131,7 @@ public class PartitionMapper implements javax.batch.api.partition.PartitionMappe
 
 				case CRITERIA:
 					entityType = rootEntities.get( 0 );
-					scroll = buildScrollableResults( ss, session, entityType, jobData.getCriterions() );
+					scroll = buildScrollableResults( ss, session, entityType, jobData.getCriteria() );
 					partitionBounds = buildPartitionUnitsFrom( scroll, entityType );
 					break;
 
