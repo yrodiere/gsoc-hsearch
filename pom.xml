@@ -29,6 +29,9 @@
         <org.wildfly.arquillian>8.2.1.Final</org.wildfly.arquillian>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <hibernate.search.version>${project.version}</hibernate.search.version>
+        <hibernate.search.module.slot>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</hibernate.search.module.slot>
+        <hibernate-orm.module.slot>5.2</hibernate-orm.module.slot>
     </properties>
 
     <modules>
@@ -138,6 +141,23 @@
 
     <build>
         <finalName>${project.artifactId}-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <!-- This defines the properties 'parsedVersion.majorVersion'
+                    and 'parsedVersion.minorVersion' to be in synch with the current project version -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.9.1</version>
+                <executions>
+                    <execution>
+                    <id>parse-version</id>
+                    <goals>
+                        <goal>parse-version</goal>
+                    </goals>
+                  </execution>
+                </executions>
+            </plugin>
+        </plugins>
         <pluginManagement>
             <plugins>
                 <plugin>
