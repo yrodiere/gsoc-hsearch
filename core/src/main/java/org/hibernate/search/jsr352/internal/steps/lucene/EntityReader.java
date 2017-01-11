@@ -267,7 +267,7 @@ public class EntityReader extends AbstractItemReader {
 		}
 
 		// build criteria using job context data
-		jobData.getCriterions().forEach( c -> criteria.add( c ) );
+		jobData.getCriteria().forEach( c -> criteria.add( c ) );
 
 		return criteria.addOrder( Order.asc( idName ) )
 				.setReadOnly( true )

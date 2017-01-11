@@ -44,7 +44,7 @@ public class JobContextData implements Serializable {
 	 */
 	private List<PartitionBound> partitionBounds;
 
-	private Set<Criterion> criterions;
+	private Set<Criterion> criteria;
 
 	public JobContextData() {
 		entityTypeMap = new HashMap<>();
@@ -78,8 +78,8 @@ public class JobContextData implements Serializable {
 		return totalEntityToIndex;
 	}
 
-	public Set<Criterion> getCriterions() {
-		return criterions;
+	public Set<Criterion> getCriteria() {
+		return criteria;
 	}
 
 	public void setTotalEntityToIndex(long totalEntityToIndex) {
@@ -103,13 +103,19 @@ public class JobContextData implements Serializable {
 		return partitionBounds.get( partitionId );
 	}
 
-	public void setCriterions(Set<Criterion> criterions) {
-		this.criterions = criterions;
+	public void setCriteria(Set<Criterion> criteria) {
+		this.criteria = criteria;
 	}
 
 	@Override
 	public String toString() {
-		return "JobContextData [entityTypeMap=" + entityTypeMap + ", totalEntityToIndex=" + totalEntityToIndex + ", partitionBounds=" + partitionBounds
-				+ ", criterions=" + criterions + "]";
+		return new StringBuilder()
+				.append( "JobContextData [" )
+				.append( "entityTypeMap=" ).append( entityTypeMap )
+				.append( ", totalEntityToIndex=" ).append( totalEntityToIndex )
+				.append( ", partitionBounds=" ).append( partitionBounds )
+				.append( ", criteria=" ).append( criteria )
+				.append( "]" )
+				.toString();
 	}
 }
