@@ -38,9 +38,9 @@ import org.mockito.MockitoAnnotations;
  */
 public class PartitionMapperTest {
 
-	private final Logger LOGGER = Logger.getLogger( PartitionMapperTest.class );
-	private final int COMP_ROWS = 3;
-	private final int PERS_ROWS = 8;
+	private static final Logger LOGGER = Logger.getLogger( PartitionMapperTest.class );
+	private static final int COMP_ROWS = 3;
+	private static final int PERS_ROWS = 8;
 	private EntityManagerFactory emf;
 
 	@Mock

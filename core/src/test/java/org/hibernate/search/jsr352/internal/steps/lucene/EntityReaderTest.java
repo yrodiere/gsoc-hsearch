@@ -39,7 +39,7 @@ import org.mockito.MockitoAnnotations;
 public class EntityReaderTest {
 
 	private static final Logger LOGGER = Logger.getLogger( EntityReaderTest.class );
-	private final Company[] COMPANIES = new Company[]{
+	private static final Company[] COMPANIES = new Company[]{
 			new Company( "Red Hat" ),
 			new Company( "Google" ),
 			new Company( "Microsoft" ) };
