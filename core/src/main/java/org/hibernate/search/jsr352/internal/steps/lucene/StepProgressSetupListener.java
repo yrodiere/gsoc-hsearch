@@ -31,8 +31,6 @@ public class StepProgressSetupListener extends AbstractStepListener {
 	private final JobContext jobContext;
 	private final StepContext stepContext;
 
-	private EntityManagerFactory emf;
-
 	@Inject
 	public StepProgressSetupListener(JobContext jobContext, StepContext stepContext) {
 		this.jobContext = jobContext;
@@ -55,11 +53,12 @@ public class StepProgressSetupListener extends AbstractStepListener {
 		if ( stepProgress == null ) {
 			stepProgress = new StepProgress();
 			JobContextData jobData = (JobContextData) jobContext.getTransientUserData();
-			SessionFactory sessionFactory = null;
+			EntityManagerFactory emf = jobData.getEntityManagerFactory();
+
+			SessionFactory sessionFactory = emf.unwrap( SessionFactory.class );
 			Session session = null;
+
 			try {
-				emf = jobData.getEntityManagerFactory();
-				sessionFactory = emf.unwrap( SessionFactory.class );
 				session = sessionFactory.openSession();
 				for ( Class<?> entityType : jobData.getEntityTypes() ) {
 					long rowCount = rowCount( entityType, session );
@@ -67,7 +66,9 @@ public class StepProgressSetupListener extends AbstractStepListener {
 				}
 			}
 			finally {
-				session.close();
+				if ( session != null ) {
+					session.close();
+				}
 			}
 		}
 		stepContext.setTransientUserData( stepProgress );
