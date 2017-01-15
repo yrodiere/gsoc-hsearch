@@ -9,6 +9,9 @@ package org.hibernate.search.jsr352;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 
 import javax.batch.operations.JobOperator;
@@ -23,6 +26,7 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.jsr352.entity.Company;
+import org.hibernate.search.jsr352.entity.MyDate;
 import org.hibernate.search.jsr352.entity.Person;
 import org.jboss.byteman.contrib.bmunit.BMRule;
 import org.jboss.byteman.contrib.bmunit.BMRules;
@@ -37,21 +41,36 @@ import org.junit.runner.RunWith;
  */
 @RunWith(org.jboss.byteman.contrib.bmunit.BMUnitRunner.class)
 @BMRules(rules = {
-		@BMRule(name = "Create count-down before the step partitioning", targetClass = "org.hibernate.search.jsr352.internal.steps.lucene.PartitionMapper", targetMethod = "mapPartitions", targetLocation = "AT EXIT", action = "createCountDown(\"beforeRestart\", 100)"),
-		@BMRule(name = "Count down for each item read, interrupt the job when counter is 0", targetClass = "org.hibernate.search.jsr352.internal.steps.lucene.EntityReader", targetMethod = "readItem", targetLocation = "AT ENTRY", condition = "countDown(\"beforeRestart\")", action = "throw new java.lang.InterruptedException(\"Job is interrupted by Byteman.\")")
+		@BMRule(name = "Create count-down before the step partitioning", //
+				targetClass = "org.hibernate.search.jsr352.internal.steps.lucene.PartitionMapper", //
+				targetMethod = "mapPartitions", //
+				targetLocation = "AT EXIT", //
+				action = "createCountDown(\"beforeRestart\", 100)" //
+		),
+		@BMRule(name = "Count down for each item read, interrupt the job when counter is 0", //
+				targetClass = "org.hibernate.search.jsr352.internal.steps.lucene.EntityReader", //
+				targetMethod = "readItem", //
+				targetLocation = "AT ENTRY", //
+				condition = "countDown(\"beforeRestart\")", //
+				action = "throw new java.lang.InterruptedException(\"Job is interrupted by Byteman.\")" //
+		)
 })
 public class RestartChunkIT {
 
 	private static final Logger LOGGER = Logger.getLogger( RestartChunkIT.class );
 
 	private static final long DB_COMP_ROWS = 100;
+	private static final long DB_DATE_ROWS = 365;
 	private static final long DB_PERS_ROWS = 50;
 
 	private JobOperator jobOperator;
 	private EntityManagerFactory emf;
 
+	/**
+	 * @throws ParseException if date-string cannot be parsed.
+	 */
 	@Before
-	public void setup() {
+	public void setup() throws ParseException {
 
 		String[][] str = new String[][]{
 				{ "Google", "Sundar", "Pichai" },
@@ -63,37 +82,59 @@ public class RestartChunkIT {
 
 		jobOperator = JobFactory.getJobOperator();
 		emf = Persistence.createEntityManagerFactory( "h2" );
-
 		EntityManager em = emf.createEntityManager();
 		em.getTransaction().begin();
+
 		for ( int i = 0; i < DB_COMP_ROWS; i++ ) {
 			em.persist( new Company( str[i % 5][0] ) );
 		}
+
 		for ( int i = 0; i < DB_PERS_ROWS; i++ ) {
 			String firstName = str[i % 5][1];
 			String lastName = str[i % 5][2];
 			String id = String.format( "%2d%c", i, firstName.charAt( 0 ) );
 			em.persist( new Person( id, firstName, lastName ) );
 		}
+
+		SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd" );
+		Calendar c = Calendar.getInstance();
+		c.setTime( sdf.parse( "2017-01-01" ) );
+		for ( int i = 0; i < DB_DATE_ROWS; i++ ) {
+			int year = c.get( Calendar.YEAR );
+			int month = c.get( Calendar.MONTH );
+			int day = c.get( Calendar.DAY_OF_MONTH );
+
+			em.persist( new MyDate( year, month, day ) );
+			c.add( Calendar.DATE, 1 ); // increment one day
+		}
+
 		em.getTransaction().commit();
 		em.close();
+	}
+
+	@After
+	public void shutdownJPA() {
+		emf.close();
 	}
 
 	@Test
 	public void testJob() throws InterruptedException, IOException {
 
 		List<Company> companies = findClasses( Company.class, "name", "Google" );
+		List<MyDate> sundays = findClasses( MyDate.class, "weekday", "sun" );
 		List<Person> people = findClasses( Person.class, "firstName", "Sundar" );
 		assertEquals( 0, companies.size() );
+		assertEquals( 0, sundays.size() );
 		assertEquals( 0, people.size() );
 
 		// start the job
-		long execId1 = BatchIndexingJob.forEntities( Company.class, Person.class )
+		long execId1 = BatchIndexingJob.forEntities( MyDate.class, Company.class, Person.class )
 				.underJavaSE( emf, jobOperator )
 				.checkpointFreq( 10 )
 				.start();
 		JobExecution jobExec1 = jobOperator.getJobExecution( execId1 );
 		jobExec1 = keepTestAlive( jobExec1 );
+
 		// job will be stopped by the byteman
 		for ( StepExecution stepExec : jobOperator.getStepExecutions( execId1 ) ) {
 			if ( stepExec.getStepName().equals( "produceLuceneDoc" ) ) {
@@ -111,9 +152,11 @@ public class RestartChunkIT {
 
 		// search again
 		companies = findClasses( Company.class, "name", "google" );
+		sundays = findClasses( MyDate.class, "weekday", "sun" );
 		people = findClasses( Person.class, "firstName", "Sundar" );
 		assertEquals( DB_COMP_ROWS / 5, companies.size() );
 		assertEquals( DB_PERS_ROWS / 5, people.size() );
+		assertEquals( 52, sundays.size() );
 	}
 
 	private <T> List<T> findClasses(Class<T> clazz, String key, String value) {
@@ -143,10 +186,5 @@ public class RestartChunkIT {
 			tries++;
 		}
 		return jobExecution;
-	}
-
-	@After
-	public void shutdownJPA() {
-		emf.close();
 	}
 }
